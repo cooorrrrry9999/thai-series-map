@@ -604,42 +604,178 @@ window.pubApp=async function(appId,locId){
 window.renderAdd=function(){
   const allCps=[...new Set([...APPS.map(a=>a.cp),...CP_M.map(m=>m.name)].filter(Boolean))].sort();
   const allSeries=[...new Set([...APPS.map(a=>a.series),...SERIES_M.map(m=>m.name)].filter(Boolean))].sort();
+  // 下書き復元
+  const draft=loadDraft();
   setBody(`<div class="form-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700">新しいスポットを追加</div>
+      <div id="draft-status" style="font-size:11px;color:var(--sub)">
+        ${draft?'📝 下書きあり（自動復元済み）':''}
+      </div>
+    </div>
+
     <div class="form-section">場所情報</div>
-    <div class="form-group" style="margin-bottom:10px"><label class="form-label">場所名 <span class="req">*</span></label><input class="form-input" id="a-name" placeholder="例: 99 House Studio"></div>
-    <div class="form-group" style="margin-bottom:10px"><label class="form-label">GoogleマップURL（貼ると座標を自動取得）</label>
-      <input class="form-input" id="a-gmap" placeholder="https://www.google.com/maps/place/.../@13.75,100.50..." oninput="autoCoords(this.value,'a-lat','a-lng','a-cmsg')">
-      <div id="a-cmsg" class="form-hint"></div></div>
-    <div class="form-grid three" style="margin-bottom:10px">
-      <div class="form-group"><label class="form-label">緯度 <span class="req">*</span></label><input class="form-input" id="a-lat" type="number" step="any" placeholder="13.7563"></div>
-      <div class="form-group"><label class="form-label">経度 <span class="req">*</span></label><input class="form-input" id="a-lng" type="number" step="any" placeholder="100.5018"></div>
-      <div class="form-group"><label class="form-label">カテゴリー</label><select class="form-select" id="a-cat">${buildCatOpts('')}</select></div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label class="form-label">場所名 <span class="req">*</span></label>
+      <input class="form-input" id="a-name" placeholder="例: 99 House Studio" value="${esc(draft?.name||'')}" oninput="saveDraft()">
     </div>
+
+    <div class="form-group" style="margin-bottom:10px">
+      <label class="form-label">GoogleマップURL（貼ると座標を自動取得）</label>
+      <input class="form-input" id="a-gmap"
+        placeholder="https://www.google.com/maps/place/.../@13.75,100.50..."
+        value="${esc(draft?.gmap||'')}"
+        oninput="autoCoords(this.value,'a-lat','a-lng','a-cmsg');updateCoordPreview();saveDraft()">
+      <div id="a-cmsg" class="form-hint"></div>
+    </div>
+
+    <div class="form-grid three" style="margin-bottom:8px">
+      <div class="form-group">
+        <label class="form-label">緯度 <span class="req">*</span></label>
+        <input class="form-input" id="a-lat" type="number" step="any" placeholder="13.7563"
+          value="${draft?.lat||''}" oninput="updateCoordPreview();saveDraft()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">経度 <span class="req">*</span></label>
+        <input class="form-input" id="a-lng" type="number" step="any" placeholder="100.5018"
+          value="${draft?.lng||''}" oninput="updateCoordPreview();saveDraft()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">カテゴリー</label>
+        <select class="form-select" id="a-cat" onchange="saveDraft()">${buildCatOpts(draft?.cat||'')}</select>
+      </div>
+    </div>
+
+    <!-- 座標プレビューマップ -->
+    <div id="coord-preview-wrap" style="margin-bottom:10px;display:${draft?.lat&&draft?.lng?'block':'none'}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div style="font-size:11px;font-weight:700;color:var(--sub)">📍 座標プレビュー</div>
+        <a id="coord-gmaps-link" href="#" target="_blank"
+          style="font-size:11px;color:var(--blue);text-decoration:none;font-weight:700">
+          Googleマップで確認 ↗
+        </a>
+      </div>
+      <iframe id="coord-preview-map"
+        style="width:100%;height:200px;border:1.5px solid var(--border);border-radius:10px;display:block"
+        frameborder="0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+        src="${draft?.lat&&draft?.lng?`https://maps.google.com/maps?q=${draft.lat},${draft.lng}&z=15&output=embed`:''}">
+      </iframe>
+    </div>
+
     <div class="form-grid" style="margin-bottom:10px">
-      <div class="form-group"><label class="form-label">住所（任意）</label><input class="form-input" id="a-address" placeholder="例: Soi Ram Intra 117, Bangkok"></div>
-      <div class="form-group"><label class="form-label">GoogleマップURL（保存用・短縮URLも可）</label><input class="form-input" id="a-url" placeholder="https://maps.app.goo.gl/..."></div>
+      <div class="form-group">
+        <label class="form-label">住所（任意）</label>
+        <input class="form-input" id="a-address" placeholder="例: Soi Ram Intra 117, Bangkok"
+          value="${esc(draft?.address||'')}" oninput="saveDraft()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">GoogleマップURL（保存用・短縮URLも可）</label>
+        <input class="form-input" id="a-url" placeholder="https://maps.app.goo.gl/..."
+          value="${esc(draft?.url||'')}" oninput="saveDraft()">
+      </div>
     </div>
-    <div class="form-group" style="margin-bottom:10px"><label class="form-label">訪問メモ（任意）</label><input class="form-input" id="a-memo" placeholder="例: 入場500B、FB予約推奨"></div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label class="form-label">訪問メモ（任意）</label>
+      <input class="form-input" id="a-memo" placeholder="例: 入場500B、FB予約推奨"
+        value="${esc(draft?.memo||'')}" oninput="saveDraft()">
+    </div>
 
     <div class="form-section">作品との紐付け（任意）</div>
     <div class="form-grid" style="margin-bottom:10px">
-      <div class="form-group"><label class="form-label">CP名</label>
-        <input class="form-input" id="a-cp" placeholder="例: FreenBecky" list="a-cplist" oninput="updateSeriesListForCp(this.value)">
-        <datalist id="a-cplist">${allCps.map(c=>`<option value="${c}">`).join('')}</datalist></div>
-      <div class="form-group"><label class="form-label">作品名 / 分類</label>
-        <input class="form-input" id="a-series" placeholder="例: GAP The Series / プライベート" list="a-slist" oninput="updateCpListForSeries(this.value)">
+      <div class="form-group">
+        <label class="form-label">CP名</label>
+        <input class="form-input" id="a-cp" placeholder="例: FreenBecky" list="a-cplist"
+          value="${esc(draft?.cp||'')}"
+          oninput="updateSeriesListForCp(this.value);saveDraft()">
+        <datalist id="a-cplist">${allCps.map(c=>`<option value="${c}">`).join('')}</datalist>
+      </div>
+      <div class="form-group">
+        <label class="form-label">作品名 / 分類</label>
+        <input class="form-input" id="a-series" placeholder="例: GAP The Series / プライベート" list="a-slist"
+          value="${esc(draft?.series||'')}"
+          oninput="updateCpListForSeries(this.value);saveDraft()">
         <datalist id="a-slist">${allSeries.map(s=>`<option value="${s}">`).join('')}</datalist>
-        <div id="a-series-hint" style="font-size:10px;color:var(--sub);margin-top:2px"></div></div>
+        <div id="a-series-hint" style="font-size:10px;color:var(--sub);margin-top:2px"></div>
+      </div>
     </div>
     <div class="form-grid" style="margin-bottom:10px">
-      <div class="form-group"><label class="form-label">分類</label>
-        <select class="form-select" id="a-type"><option value="作品">作品（ロケ地）</option><option value="プライベート">プライベート</option><option value="来日">来日</option></select></div>
-      <div class="form-group"><label class="form-label">シーン説明</label><input class="form-input" id="a-scene" placeholder="例: Monの家として使用されたスタジオ"></div>
+      <div class="form-group">
+        <label class="form-label">分類</label>
+        <select class="form-select" id="a-type" onchange="saveDraft()">
+          <option value="作品"${(draft?.type||'作品')==='作品'?' selected':''}>作品（ロケ地）</option>
+          <option value="プライベート"${draft?.type==='プライベート'?' selected':''}>プライベート</option>
+          <option value="来日"${draft?.type==='来日'?' selected':''}>来日</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">シーン説明</label>
+        <input class="form-input" id="a-scene" placeholder="例: Monの家として使用されたスタジオ"
+          value="${esc(draft?.scene||'')}" oninput="saveDraft()">
+      </div>
     </div>
-    <div class="form-group" style="margin-bottom:14px"><label class="form-label">SNSリンク（任意）</label><input class="form-input" id="a-sns" placeholder="https://x.com/... など"></div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label class="form-label">SNSリンク（任意）</label>
+      <input class="form-input" id="a-sns" placeholder="https://x.com/... など"
+        value="${esc(draft?.sns||'')}" oninput="saveDraft()">
+    </div>
     <div id="add-msg" class="form-msg"></div>
-    <button class="btn btn-primary" onclick="addSpot()">✅ 追加して公開</button>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="btn btn-primary" onclick="addSpot()">✅ 追加して公開</button>
+      <button class="btn" style="background:#F3F4F6;color:var(--sub)" onclick="clearDraft();renderAdd()">🗑 下書きを消す</button>
+    </div>
   </div>`);
+  // 下書きがあれば座標プレビューを更新
+  if(draft?.lat&&draft?.lng)updateCoordPreview();
+  if(draft?.cp)updateSeriesListForCp(draft.cp);
+};
+
+// ── 座標プレビュー ────────────────────────────────────────────
+window.updateCoordPreview=function(){
+  const lat=parseFloat(document.getElementById('a-lat')?.value);
+  const lng=parseFloat(document.getElementById('a-lng')?.value);
+  const wrap=document.getElementById('coord-preview-wrap');
+  const iframe=document.getElementById('coord-preview-map');
+  const link=document.getElementById('coord-gmaps-link');
+  if(!wrap||!iframe)return;
+  if(lat&&lng&&!isNaN(lat)&&!isNaN(lng)){
+    wrap.style.display='block';
+    iframe.src=`https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
+    if(link)link.href=`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+  } else {
+    wrap.style.display='none';
+  }
+};
+
+// ── 下書き保存/読み込み ─────────────────────────────────────────
+const DRAFT_KEY='tsmap_add_draft_v1';
+function saveDraft(){
+  try{
+    const d={
+      name:document.getElementById('a-name')?.value||'',
+      gmap:document.getElementById('a-gmap')?.value||'',
+      lat:document.getElementById('a-lat')?.value||'',
+      lng:document.getElementById('a-lng')?.value||'',
+      cat:document.getElementById('a-cat')?.value||'',
+      address:document.getElementById('a-address')?.value||'',
+      url:document.getElementById('a-url')?.value||'',
+      memo:document.getElementById('a-memo')?.value||'',
+      cp:document.getElementById('a-cp')?.value||'',
+      series:document.getElementById('a-series')?.value||'',
+      type:document.getElementById('a-type')?.value||'作品',
+      scene:document.getElementById('a-scene')?.value||'',
+      sns:document.getElementById('a-sns')?.value||'',
+      savedAt:new Date().toLocaleTimeString('ja-JP'),
+    };
+    localStorage.setItem(DRAFT_KEY,JSON.stringify(d));
+    const el=document.getElementById('draft-status');
+    if(el)el.textContent='💾 自動保存済み '+d.savedAt;
+  }catch(e){}
+}
+function loadDraft(){
+  try{const r=localStorage.getItem(DRAFT_KEY);return r?JSON.parse(r):null;}catch(e){return null;}
+}
+window.clearDraft=function(){
+  localStorage.removeItem(DRAFT_KEY);
 };
 window.addSpot=async function(){
   const name=document.getElementById('a-name').value.trim();
@@ -941,27 +1077,6 @@ function buildCatOpts(sel){
   const defs=Object.keys(DEFAULT_CAT_EMOJI);
   const customs=CAT_M.map(m=>m.name).filter(n=>!defs.includes(n));
   return[...defs,...customs].map(c=>`<option value="${c}"${sel===c?' selected':''}>${getCatEmoji(c)} ${c}</option>`).join('');
-}
-// CP↔作品の連動候補更新（appearancesの実績から）
-window.updateSeriesListForCp=function(cpVal){
-  const cp=cpVal.trim();
-  const dl=document.getElementById('a-slist');
-  if(!dl)return;
-  if(!cp){
-    // CP未入力時は全作品を候補に
-    const all=[...new Set([...APPS.map(a=>a.series),...SERIES_M.map(m=>m.name)].filter(Boolean))].sort();
-    dl.innerHTML=all.map(s=>`<option value="${s}">`).join('');
-    const hint=document.getElementById('a-series-hint');
-    if(hint)hint.textContent='';
-    return;
-  }
-  // CPに紐づく作品を候補に絞る
-  const related=[...new Set(APPS.filter(a=>a.cp===cp).map(a=>a.series).filter(Boolean))].sort();
-  if(related.length){
-    dl.innerHTML=related.map(s=>`<option value="${s}">`).join('');
-    const hint=document.getElementById('a-series-hint');
-    if(hint)hint.textContent=`💡 ${cp} の登録作品: ${related.join(' / ')}`;
-  }
 };
 window.updateInlineSeries=function(cpVal,locId){
   const cp=cpVal.trim();
