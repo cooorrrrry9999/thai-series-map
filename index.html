@@ -602,11 +602,11 @@ function renderMarkers(){
     const apps=locApps(loc.id); if(!apps.length)return;
     if(apps.every(a=>a.type==='来日'))return;
     const cfg=primaryCfg(loc.id), n=apps.length, inF=filteredIds.has(loc.id), isSel=loc.id===selId;
-    const opacity=inF?1:.25;
+    // フィルター対象外は非表示
     const scale=isSel?1.35:1;
     // ピン形SVG + ラベル
     const icon_emoji=catEmoji(loc.category);
-    const pinColor=inF?cfg.color:'#aaaaaa';
+    const pinColor=cfg.color;
     const borderColor=isSel?'#fff':cfg.border;
     const html=`
       <div style="position:relative;transform:scale(${scale});transform-origin:bottom center;transition:transform .15s">
@@ -618,7 +618,8 @@ function renderMarkers(){
         ${n>1?`<div style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:#EC4899;border:2px solid white;font-size:8px;color:white;display:flex;align-items:center;justify-content:center;font-weight:900;line-height:1">${n}</div>`:''}
       </div>`;
     const icon=L.divIcon({html,className:'',iconSize:[36,46],iconAnchor:[18,46],popupAnchor:[0,-46]});
-    const m=L.marker([loc.lat,loc.lng],{icon,opacity:opacity}).addTo(map);
+    if(!inF)return; // フィルター外は表示しない
+    const m=L.marker([loc.lat,loc.lng],{icon}).addTo(map);
     m.on('click',e=>{L.DomEvent.stopPropagation(e);window._sel(loc.id);});
     markers[loc.id]=m;
   });
