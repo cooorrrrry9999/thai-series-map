@@ -93,13 +93,33 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
 
   <!-- 場所一覧 -->
   <div class="tab-content" id="tab-locations">
-    <div class="section-label">登録済み場所</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <select class="form-select" id="filter-loc-series" onchange="renderLocations()" style="font-size:12px;padding:6px 10px">
+        <option value="">作品で絞込み</option>
+      </select>
+      <select class="form-select" id="filter-loc-cp" onchange="renderLocations()" style="font-size:12px;padding:6px 10px">
+        <option value="">CPで絞込み</option>
+      </select>
+    </div>
     <div id="locations-list"><div class="loading-msg">読み込み中...</div></div>
   </div>
 
   <!-- 紐付け -->
   <div class="tab-content" id="tab-appearances">
-    <div class="section-label">作品とロケ地の紐付け</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <select class="form-select" id="filter-app-series" onchange="renderAppearances()" style="font-size:12px;padding:6px 10px">
+        <option value="">作品で絞込み</option>
+      </select>
+      <select class="form-select" id="filter-app-cp" onchange="renderAppearances()" style="font-size:12px;padding:6px 10px">
+        <option value="">CPで絞込み</option>
+      </select>
+      <select class="form-select" id="filter-app-status" onchange="renderAppearances()" style="font-size:12px;padding:6px 10px">
+        <option value="">状態で絞込み</option>
+        <option value="公開">公開</option>
+        <option value="未承認">未承認</option>
+        <option value="却下">却下</option>
+      </select>
+    </div>
     <div id="appearances-list"><div class="loading-msg">読み込み中...</div></div>
   </div>
 
@@ -119,6 +139,11 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
     <div class="section-label">新しい場所を追加</div>
     <div class="card">
       <div class="form-group"><label class="form-label">場所名 <span class="required">*</span></label><input class="form-input" id="a-name" placeholder="例: 99 House Studio"></div>
+      <div class="form-group">
+        <label class="form-label">GoogleマップURL（貼ると座標を自動取得）</label>
+        <input class="form-input" id="a-gmap-url-auto" placeholder="https://www.google.com/maps/place/.../@13.75,100.50..." oninput="window.onUrlInput(this.value,'a-lat','a-lng','a-coords-msg')">
+        <div id="a-coords-msg" style="font-size:11px;min-height:16px;margin-top:4px;color:#888"></div>
+      </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">緯度 <span class="required">*</span></label><input class="form-input" id="a-lat" type="number" step="any" placeholder="13.7563"></div>
         <div class="form-group"><label class="form-label">経度 <span class="required">*</span></label><input class="form-input" id="a-lng" type="number" step="any" placeholder="100.5018"></div>
@@ -142,7 +167,12 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
       <div class="form-group"><label class="form-label">分類 <span class="required">*</span></label>
         <select class="form-select" id="a-type"><option value="作品">作品（ロケ地）</option><option value="プライベート">プライベート</option><option value="来日">来日</option></select>
       </div>
-      <div class="form-group"><label class="form-label">シーン説明 <span class="required">*</span></label><input class="form-input" id="a-scene" placeholder="例: Monの家として使用されたスタジオ"></div>
+      <div class="form-group"><label class="form-label">シーン説明</label><input class="form-input" id="a-scene" placeholder="例: Monの家として使用されたスタジオ"></div>
+      <div class="form-group">
+        <label class="form-label">SNSリンク（任意）</label>
+        <input class="form-input" id="a-sns" placeholder="https://x.com/... または https://www.instagram.com/...">
+        <div style="font-size:11px;color:#999;margin-top:3px">X(Twitter)・Instagram・TikTokなどのURL</div>
+      </div>
     </div>
     <div id="add-msg" style="font-size:13px;text-align:center;min-height:18px;margin:6px 0"></div>
     <button class="btn-primary" onclick="addNewSpot()">✅ 追加して公開</button>
@@ -191,6 +221,7 @@ onAuthStateChanged(auth,async user=>{
     document.getElementById('auth-gate').style.display='none';
     document.getElementById('admin-app').style.display='block';
     await loadAll();
+    updateFilterOptions();
     renderPending(); renderLocations(); renderAppearances(); renderSeriesMaster();
   } else if(user){
     document.getElementById('auth-gate').innerHTML=`<div style="font-size:48px">🚫</div><div style="font-size:18px;font-weight:900">アクセス権限がありません</div><button class="login-btn" onclick="doLogout()" style="margin-top:16px">別のアカウントでログイン</button>`;
@@ -260,10 +291,51 @@ window.rejectSub=async function(subId){
 };
 
 // ── 場所一覧 ─────────────────────────────────────────────────
+function updateFilterOptions(){
+  const series=[...new Set(APPS.map(a=>a.series).filter(Boolean))].sort();
+  const cps=[...new Set(APPS.map(a=>a.cp).filter(Boolean))].sort();
+  ['filter-loc-series','filter-app-series'].forEach(id=>{
+    const el=document.getElementById(id); if(!el)return;
+    const val=el.value;
+    el.innerHTML='<option value="">作品で絞込み</option>'+series.map(s=>`<option value="${s}">${s}</option>`).join('');
+    el.value=val;
+  });
+  ['filter-loc-cp','filter-app-cp'].forEach(id=>{
+    const el=document.getElementById(id); if(!el)return;
+    const val=el.value;
+    el.innerHTML='<option value="">CPで絞込み</option>'+cps.map(c=>`<option value="${c}">${c}</option>`).join('');
+    el.value=val;
+  });
+  // 追加フォームのdatalist更新（コンボボックス）
+  updateAddFormDatalist(series, cps);
+}
+
+function updateAddFormDatalist(series, cps){
+  let sl=document.getElementById('series-datalist');
+  if(!sl){sl=document.createElement('datalist');sl.id='series-datalist';document.body.appendChild(sl);}
+  sl.innerHTML=series.map(s=>`<option value="${s}">`).join('');
+  let cl=document.getElementById('cp-datalist');
+  if(!cl){cl=document.createElement('datalist');cl.id='cp-datalist';document.body.appendChild(cl);}
+  cl.innerHTML=cps.map(c=>`<option value="${c}">`).join('');
+  // フォームに紐付け
+  const as=document.getElementById('a-series'); if(as)as.setAttribute('list','series-datalist');
+  const ac=document.getElementById('a-cp'); if(ac)ac.setAttribute('list','cp-datalist');
+}
+
 function renderLocations(){
+  updateFilterOptions();
+  const filterSeries=document.getElementById('filter-loc-series')?.value||'';
+  const filterCp=document.getElementById('filter-loc-cp')?.value||'';
   const el=document.getElementById('locations-list');
   if(!LOCS.length){el.innerHTML=`<div class="empty-msg">場所データがありません</div>`;return;}
-  el.innerHTML=LOCS.map(loc=>{
+  const filtered=LOCS.filter(loc=>{
+    const apps=APPS.filter(a=>a.location_id===loc.id);
+    if(filterSeries&&!apps.some(a=>a.series===filterSeries))return false;
+    if(filterCp&&!apps.some(a=>a.cp===filterCp))return false;
+    return true;
+  });
+  if(!filtered.length){el.innerHTML=`<div class="empty-msg">該当する場所がありません</div>`;return;}
+  el.innerHTML=filtered.map(loc=>{
     const apps=APPS.filter(a=>a.location_id===loc.id&&a.status==='公開');
     return`<div class="card">
       <div class="card-title">${loc.name}</div>
@@ -332,14 +404,25 @@ window.deleteLocation=async function(locId){
 
 // ── 紐付け ───────────────────────────────────────────────────
 function renderAppearances(){
+  const filterSeries=document.getElementById('filter-app-series')?.value||'';
+  const filterCp=document.getElementById('filter-app-cp')?.value||'';
+  const filterStatus=document.getElementById('filter-app-status')?.value||'';
   const el=document.getElementById('appearances-list');
   if(!APPS.length){el.innerHTML=`<div class="empty-msg">紐付けデータがありません</div>`;return;}
-  el.innerHTML=APPS.map(app=>{
+  const filtered=APPS.filter(app=>{
+    if(filterSeries&&app.series!==filterSeries)return false;
+    if(filterCp&&app.cp!==filterCp)return false;
+    if(filterStatus&&app.status!==filterStatus)return false;
+    return true;
+  });
+  if(!filtered.length){el.innerHTML=`<div class="empty-msg">該当する紐付けがありません</div>`;return;}
+  el.innerHTML=filtered.map(app=>{
     const loc=LOCS.find(l=>l.id===app.location_id);
+    const snsIcon=app.sns_url?'<a href="'+app.sns_url+'" target="_blank" style="font-size:11px;color:#3B82F6">SNS ↗</a>':'';
     return`<div class="card">
       <span class="badge ${app.status==='公開'?'badge-published':'badge-pending'}">${app.status}</span>
       <div class="card-title">${loc?.name||'(削除済み)'}</div>
-      <div class="card-sub">${app.series} / 💗 ${app.cp} / ${app.type}<br>${app.scene_desc}</div>
+      <div class="card-sub">${app.series||'作品未設定'} / 💗 ${app.cp||'CP未設定'} / ${app.type}<br>${app.scene_desc||''} ${snsIcon}</div>
       <div class="btn-row">
         <button class="btn btn-edit" onclick="editAppModal('${app.id}')">✏ 編集</button>
         <button class="btn btn-delete" onclick="deleteApp('${app.id}')">🗑 削除</button>
@@ -476,6 +559,44 @@ window.deleteSeries=async function(sId){
   await loadAll(); renderSeriesMaster();
 };
 
+// ── GoogleマップURL→座標自動抽出 ────────────────────────────
+// フルURL例: https://www.google.com/maps/place/.../@13.7563,100.5018,17z/...
+// または:    https://maps.google.com/?q=13.7563,100.5018
+// または:    https://maps.app.goo.gl/xxx (短縮URL→フルURLに変換できないため手動)
+window.extractCoordsFromUrl=function(urlInput){
+  const url = urlInput.trim();
+  // パターン1: /@lat,lng,zoom or /@lat,lng,
+  let m = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)[,z]/);
+  if(m) return {lat:parseFloat(m[1]),lng:parseFloat(m[2])};
+  // パターン2: ?q=lat,lng or &q=lat,lng
+  m = url.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+  if(m) return {lat:parseFloat(m[1]),lng:parseFloat(m[2])};
+  // パターン3: /place/.../@lat,lng or ll=lat,lng
+  m = url.match(/ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+  if(m) return {lat:parseFloat(m[1]),lng:parseFloat(m[2])};
+  return null;
+};
+
+window.onUrlInput=function(val,latId,lngId,msgId){
+  if(!val.trim())return;
+  const coords=window.extractCoordsFromUrl(val);
+  if(coords){
+    document.getElementById(latId).value=coords.lat;
+    document.getElementById(lngId).value=coords.lng;
+    if(msgId){
+      const el=document.getElementById(msgId);
+      el.style.color='#059669';
+      el.textContent=`✅ 座標を自動取得: ${coords.lat}, ${coords.lng}`;
+    }
+  } else {
+    if(msgId){
+      const el=document.getElementById(msgId);
+      el.style.color='#888';
+      el.textContent='💡 短縮URL(maps.app.goo.gl)は自動取得できません。フルURLを使うか手動入力してください。';
+    }
+  }
+};
+
 // ── 新規追加 ─────────────────────────────────────────────────
 window.addNewSpot=async function(){
   const name=document.getElementById('a-name').value.trim();
@@ -489,14 +610,17 @@ window.addNewSpot=async function(){
   const cp=document.getElementById('a-cp').value.trim();
   const type=document.getElementById('a-type').value;
   const scene=document.getElementById('a-scene').value.trim();
+  const sns=document.getElementById('a-sns')?.value.trim()||'';
   const msgEl=document.getElementById('add-msg');
-  if(!name||!series||!cp||!scene){msgEl.style.color='#DC2626';msgEl.textContent='※ 必須項目を入力してください';return;}
-  if(!lat||!lng){msgEl.style.color='#DC2626';msgEl.textContent='※ 緯度・経度を入力してください';return;}
+  if(!name){msgEl.style.color='#DC2626';msgEl.textContent='※ 場所名は必須です';return;}
+  if(!lat||!lng){msgEl.style.color='#DC2626';msgEl.textContent='※ 緯度・経度を入力してください（GoogleマップのフルURLから自動取得できます）';return;}
   msgEl.style.color='#9333EA';msgEl.textContent='追加中...';
   try{
     const locRef=doc(collection(db,'locations'));
-    await setDoc(locRef,{name,lat,lng,category:cat,address,googleMapsUrl:url,memo});
-    await addDoc(collection(db,'appearances'),{location_id:locRef.id,series,cp,type,scene_desc:scene,status:'公開'});
+    await setDoc(locRef,{name,lat,lng,category:cat,address,googleMapsUrl:url,memo,sns_url:sns});
+    if(series||cp||scene){
+      await addDoc(collection(db,'appearances'),{location_id:locRef.id,series:series||'',cp:cp||'',type,scene_desc:scene||'',sns_url:sns,status:'公開'});
+    }
     msgEl.style.color='#059669';msgEl.textContent='✅ 追加しました！';
     ['a-name','a-lat','a-lng','a-address','a-url','a-memo','a-series','a-cp','a-scene'].forEach(id=>{document.getElementById(id).value='';});
     localStorage.removeItem('tsmap_loc_v1'); localStorage.removeItem('tsmap_app_v1');

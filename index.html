@@ -261,7 +261,24 @@ let SERIES_MAP = {
   "来日":            {color:"#059669",light:"#ECFDF5",border:"#6EE7B7",drama_id:""},
 };
 const FB={color:"#888780",light:"#F1EFE8",border:"#B4B2A9",drama_id:""};
-const scfg=s=>SERIES_MAP[s]||FB;
+
+// 未登録作品への自動カラー割り当て（16色プリセット）
+const AUTO_COLORS=[
+  "#EC4899","#3B82F6","#D97706","#0891B2","#65A30D",
+  "#DC2626","#9333EA","#059669","#EA580C","#0EA5E9",
+  "#84CC16","#F43F5E","#8B5CF6","#14B8A6","#F97316","#6366F1"
+];
+let autoColorIdx=0;
+const autoAssigned={};
+function autoColor(seriesName){
+  if(!autoAssigned[seriesName]){
+    const c=AUTO_COLORS[autoColorIdx%AUTO_COLORS.length];
+    autoColorIdx++;
+    autoAssigned[seriesName]={color:c,light:c+'18',border:c+'66',drama_id:''};
+  }
+  return autoAssigned[seriesName];
+}
+const scfg=s=>SERIES_MAP[s]||(s?autoColor(s):FB);
 
 const ICONS={"スタジオ":"🎬","ショッピング":"🛍️","レストラン":"🍖","ホテル":"🏨","カフェ":"☕","観光地":"📍","邸宅/スタジオ":"🏛️","寺院":"⛩️","大学":"🎓","図書館":"📚","アート":"🎨","病院":"🏥","スポーツ":"⚽","放送局":"📺","国立公園":"🏞️"};
 
@@ -371,16 +388,39 @@ function mergeSeriesMaster(master){
 }
 
 // ── Leaflet ───────────────────────────────────────────────────
+const TILES = {
+  carto:      {url:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',attr:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',label:'標準'},
+  cartoLight: {url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',attr:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',label:'淡色'},
+  osm:        {url:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',attr:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',label:'OSM'},
+};
+let currentTileKey='carto', tileLayer=null;
+
 function initMap(){
   if(map){map.remove();map=null;markers={};}
   map=L.map('map',{center:[13.7,100.5],zoom:6,zoomControl:false,attributionControl:true});
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>',maxZoom:19
-  }).addTo(map);
+  tileLayer=L.tileLayer(TILES.carto.url,{attribution:TILES.carto.attr,maxZoom:19,subdomains:'abcd'}).addTo(map);
   L.control.zoom({position:'bottomright'}).addTo(map);
   map.on('click',()=>{closeDetailDirect();toggleUserMenuClose();});
   renderMarkers();
+  renderTileBtn();
 }
+
+function renderTileBtn(){
+  document.getElementById('tile-btn-wrap')?.remove();
+  const wrap=document.createElement('div');
+  wrap.id='tile-btn-wrap';
+  wrap.style.cssText='position:fixed;bottom:calc(var(--drawer-h) + 58px);right:14px;z-index:45;display:flex;flex-direction:column;gap:5px;';
+  wrap.innerHTML=Object.entries(TILES).map(([key,t])=>`
+    <button onclick="window._switchTile('${key}')" style="padding:5px 11px;border-radius:20px;border:none;cursor:pointer;font-size:11px;font-weight:700;font-family:'Noto Sans JP',sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.15);background:${currentTileKey===key?'#111':'rgba(255,255,255,.95)'};color:${currentTileKey===key?'#fff':'#555'};backdrop-filter:blur(8px);">${t.label}</button>`).join('');
+  document.body.appendChild(wrap);
+}
+window._switchTile=function(key){
+  if(!TILES[key]||!map)return;
+  currentTileKey=key;
+  if(tileLayer)map.removeLayer(tileLayer);
+  tileLayer=L.tileLayer(TILES[key].url,{attribution:TILES[key].attr,maxZoom:19,subdomains:'abcd'}).addTo(map);
+  renderTileBtn();
+};
 
 function renderMarkers(){
   Object.values(markers).forEach(m=>map.removeLayer(m));
@@ -391,16 +431,23 @@ function renderMarkers(){
     const apps=locApps(loc.id); if(!apps.length)return;
     if(apps.every(a=>a.type==='来日'))return;
     const cfg=primaryCfg(loc.id), n=apps.length, inF=filteredIds.has(loc.id), isSel=loc.id===selId;
-    const opacity=inF?1:.2;
-    const html=`<div class="custom-pin" style="opacity:${opacity}">
-      <div class="pin-circle${isSel?' sel':''}" style="background:${cfg.border};border-color:${cfg.color}">
-        <span>${ICONS[loc.category]||'📍'}</span>
-      </div>
-      <div class="pin-tail" style="background:${cfg.color}"></div>
-      ${n>1?`<div class="pin-badge">${n}</div>`:''}
-    </div>`;
-    const icon=L.divIcon({html,className:'',iconSize:[34,44],iconAnchor:[17,44],popupAnchor:[0,-44]});
-    const m=L.marker([loc.lat,loc.lng],{icon}).addTo(map);
+    const opacity=inF?1:.25;
+    const scale=isSel?1.35:1;
+    // ピン形SVG + ラベル
+    const icon_emoji=ICONS[loc.category]||'📍';
+    const pinColor=inF?cfg.color:'#aaaaaa';
+    const borderColor=isSel?'#fff':cfg.border;
+    const html=`
+      <div style="position:relative;transform:scale(${scale});transform-origin:bottom center;transition:transform .15s">
+        <svg width="36" height="46" viewBox="0 0 36 46" xmlns="http://www.w3.org/2000/svg" style="display:block;filter:drop-shadow(0 3px 6px rgba(0,0,0,.30))">
+          <path d="M18 2 C9 2 2 9 2 18 C2 30 18 44 18 44 C18 44 34 30 34 18 C34 9 27 2 18 2Z" fill="${pinColor}" stroke="${borderColor}" stroke-width="${isSel?2.5:1.5}"/>
+          <circle cx="18" cy="18" r="10" fill="rgba(255,255,255,0.92)"/>
+        </svg>
+        <div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:13px;line-height:1;pointer-events:none">${icon_emoji}</div>
+        ${n>1?`<div style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:#EC4899;border:2px solid white;font-size:8px;color:white;display:flex;align-items:center;justify-content:center;font-weight:900;line-height:1">${n}</div>`:''}
+      </div>`;
+    const icon=L.divIcon({html,className:'',iconSize:[36,46],iconAnchor:[18,46],popupAnchor:[0,-46]});
+    const m=L.marker([loc.lat,loc.lng],{icon,opacity:opacity}).addTo(map);
     m.on('click',e=>{L.DomEvent.stopPropagation(e);window._sel(loc.id);});
     markers[loc.id]=m;
   });
@@ -472,14 +519,13 @@ window._sel=function(locId){
     titleEl.style.display='block';
     appsEl.innerHTML=apps.map(a=>{
       const ac=scfg(a.series);
-      const dramaLink=ac.drama_id
-        ?`<a href="${GL_URL}?drama=${ac.drama_id}" target="_blank" class="drama-link-btn" style="background:${ac.light};color:${ac.color};border:1.5px solid ${ac.border}">🌺 Thai GL Worksで作品を見る →</a>`
-        :'';
+      const dramaLink=buildDramaLink(ac,a.series);
       return`<div class="appearance-item" style="background:${ac.light};border-color:${ac.border}">
         <div class="appearance-series" style="color:${ac.color}">${a.series}</div>
         <div class="appearance-cp" style="color:${ac.color};opacity:.8">💗 ${a.cp}</div>
         <div class="appearance-scene">${a.scene_desc}</div>
         ${dramaLink}
+        ${buildSnsLink(a)}
       </div>`;
     }).join('');
   }else{titleEl.style.display='none';appsEl.innerHTML='';}
@@ -549,8 +595,28 @@ window.submitSpot=async()=>{
   }catch(e){msgEl.style.color='#DC2626';msgEl.textContent='送信に失敗しました。';}
 };
 
+// ── SNS リンク生成 ───────────────────────────────────────────
+function buildSnsLink(a){
+  const url=a.sns_url||'';
+  if(!url)return '';
+  let icon='🔗', label='SNS投稿を見る';
+  if(url.includes('x.com')||url.includes('twitter.com')){icon='𝕏'; label='X(Twitter)の投稿を見る';}
+  else if(url.includes('instagram.com')){icon='📸'; label='Instagramの投稿を見る';}
+  else if(url.includes('tiktok.com')){icon='🎵'; label='TikTokの投稿を見る';}
+  return `<a href="${url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:6px 12px;border-radius:10px;background:#F3F4F6;color:#555;text-decoration:none;margin-top:4px">${icon} ${label} →</a>`;
+}
+
+// ── Thai GL Works リンク生成 ──────────────────────────────────
+// drama_id が設定されていれば直リンク（数字IDでも文字列IDでもOK）
+function buildDramaLink(cfg, seriesName){
+  const id = (cfg.drama_id || '').trim();
+  if(!id) return '';
+  const href = GL_URL + '?drama=' + encodeURIComponent(id);
+  return`<a href="${href}" target="_blank" class="drama-link-btn" style="background:${cfg.light};color:${cfg.color};border:1.5px solid ${cfg.border}">🌺 Thai GL Worksで作品を見る →</a>`;
+}
+
 // 管理者用キャッシュクリア
-window.clearMapCache=()=>{[CL,CA,CS].forEach(k=>localStorage.removeItem(k));location.reload();};
+window.clearMapCache=()=>{[CL,CA,CS].forEach(k=>localStorage.removeItem(k));location.reload()};
 </script>
 </body>
 </html>
