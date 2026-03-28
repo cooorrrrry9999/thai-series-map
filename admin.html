@@ -129,6 +129,19 @@ html,body{height:100%;font-family:'Noto Sans JP',sans-serif;background:var(--bg)
 .color-swatch{width:26px;height:26px;border-radius:50%;border:2px solid rgba(0,0,0,.08);flex-shrink:0}
 .emoji-lg{font-size:24px;flex-shrink:0;width:30px;text-align:center}
 
+/* ── Master inline list ── */
+.master-table{width:100%;border-collapse:collapse;background:white;border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+.master-table th{text-align:left;padding:8px 14px;background:#F9FAFB;font-size:10px;font-weight:700;color:var(--sub);letter-spacing:.08em;border-bottom:1px solid var(--border)}
+.master-table td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle;font-size:13px}
+.master-table tr:last-child td{border-bottom:none}
+.master-table tr.editing td{background:#FAF5FF}
+.add-form-row{background:white;border:1.5px dashed var(--pb);border-radius:10px;padding:12px 14px;margin-bottom:12px;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.add-form-row .form-group{margin:0}
+.mini-input{padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;outline:none;background:white}
+.mini-input:focus{border-color:var(--pb)}
+.color-picker-wrap{display:flex;gap:6px;align-items:center}
+.color-picker-wrap input[type=color]{width:36px;height:32px;border:none;border-radius:7px;cursor:pointer;padding:2px}
+
 /* ── Pending card ── */
 .pending-card{background:var(--white);border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:8px}
 
@@ -658,62 +671,207 @@ window.addSpot=async function(){
 
 // ── Master pages ───────────────────────────────────────────────
 window.renderCp=function(){
-  setBody(`<button class="btn btn-primary" onclick="masterModal('cp')" style="margin-bottom:14px">＋ CPを追加</button>
-  <div class="master-grid">${CP_M.map(m=>`
-    <div class="master-card">
-      <div class="color-swatch" style="background:${m.color||'#888'}"></div>
-      <div class="master-card-body">
-        <div class="master-card-name">${m.emoji||'💗'} ${m.name}</div>
-        <div class="master-card-meta">${m.color||''}</div>
-      </div>
-      <div style="display:flex;gap:4px">
-        <button class="btn btn-edit btn-sm" onclick="masterModal('cp','${m.id}')">✏</button>
+  const rows=CP_M.map(m=>`
+    <tr id="cp-row-${m.id}">
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="width:12px;height:12px;border-radius:50%;background:${m.color||'#888'};display:inline-block;flex-shrink:0"></span>
+          <strong>${m.name}</strong>
+        </div>
+      </td>
+      <td style="font-family:monospace;color:var(--sub)">${m.color||'未設定'}</td>
+      <td style="font-size:18px">${m.emoji||'💗'}</td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn btn-edit btn-sm" onclick="inlineEditCp('${m.id}')">✏ 編集</button>
         <button class="btn btn-del btn-sm" onclick="delMaster('cp_master','${m.id}','cp')">🗑</button>
-      </div>
-    </div>`).join('')||'<div style="color:var(--sub);font-size:13px">CPが登録されていません</div>'}</div>`);
+      </div></td>
+    </tr>`).join('');
+  setBody(`
+    <div class="add-form-row">
+      <div class="form-group"><div class="form-label" style="font-size:10px;margin-bottom:3px">CP名 <span class="req">*</span></div>
+        <input class="mini-input" id="new-cp-name" placeholder="例: FreenBecky" style="width:160px"></div>
+      <div class="form-group"><div class="form-label" style="font-size:10px;margin-bottom:3px">カラー</div>
+        <div class="color-picker-wrap">
+          <input type="color" id="new-cp-picker" value="#EC4899" oninput="document.getElementById('new-cp-color').value=this.value">
+          <input class="mini-input" id="new-cp-color" value="#EC4899" style="width:90px;font-family:monospace" oninput="document.getElementById('new-cp-picker').value=this.value">
+        </div></div>
+      <div class="form-group"><div class="form-label" style="font-size:10px;margin-bottom:3px">絵文字</div>
+        <input class="mini-input" id="new-cp-emoji" value="💗" style="width:60px;font-size:18px;text-align:center"></div>
+      <button class="btn btn-primary" style="padding:6px 16px" onclick="addCp()">＋ 追加</button>
+      <div id="new-cp-msg" style="font-size:11px;align-self:center;color:var(--green)"></div>
+    </div>
+    <table class="master-table">
+      <thead><tr><th>CP名</th><th>カラー</th><th>絵文字</th><th>操作</th></tr></thead>
+      <tbody>${rows||'<tr><td colspan="4" style="text-align:center;color:var(--sub);padding:20px">CPが登録されていません</td></tr>'}</tbody>
+    </table>`);
+};
+window.addCp=async function(){
+  const name=document.getElementById('new-cp-name').value.trim();
+  const color=document.getElementById('new-cp-color').value;
+  const emoji=document.getElementById('new-cp-emoji').value;
+  const msg=document.getElementById('new-cp-msg');
+  if(!name){msg.style.color='var(--red)';msg.textContent='CP名を入力してください';return;}
+  msg.style.color='var(--purple)';msg.textContent='追加中...';
+  try{
+    await addDoc(collection(db,'cp_master'),{name,color,emoji,light:color+'22',border:color+'88'});
+    clearC(); await loadAll(); renderCp();
+  }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
+};
+window.inlineEditCp=function(id){
+  const m=CP_M.find(x=>x.id===id);
+  if(!m)return;
+  const row=document.getElementById('cp-row-'+id);
+  row.classList.add('editing');
+  row.innerHTML=`
+    <td><input class="mini-input" id="ecp-name-${id}" value="${esc(m.name)}" style="width:140px"></td>
+    <td><div class="color-picker-wrap">
+      <input type="color" id="ecp-picker-${id}" value="${m.color||'#EC4899'}" oninput="document.getElementById('ecp-color-${id}').value=this.value">
+      <input class="mini-input" id="ecp-color-${id}" value="${m.color||'#EC4899'}" style="width:90px;font-family:monospace" oninput="document.getElementById('ecp-picker-${id}').value=this.value">
+    </div></td>
+    <td><input class="mini-input" id="ecp-emoji-${id}" value="${esc(m.emoji||'💗')}" style="width:55px;font-size:18px;text-align:center"></td>
+    <td><div style="display:flex;gap:5px">
+      <button class="btn btn-primary btn-sm" onclick="saveCp('${id}')">💾 保存</button>
+      <button class="btn btn-sm" style="background:#F3F4F6;color:var(--sub)" onclick="renderCp()">取消</button>
+    </div></td>`;
+};
+window.saveCp=async function(id){
+  const name=document.getElementById('ecp-name-'+id)?.value.trim();
+  const color=document.getElementById('ecp-color-'+id)?.value;
+  const emoji=document.getElementById('ecp-emoji-'+id)?.value;
+  if(!name)return;
+  try{
+    await updateDoc(doc(db,'cp_master',id),{name,color,emoji,light:color+'22',border:color+'88'});
+    clearC(); await loadAll(); renderCp();
+  }catch(e){alert('エラー: '+e.message);}
 };
 window.renderSeries=function(){
   const GL='https://thai-gl-works-2c835.web.app/index.html';
-  setBody(`<div style="margin-bottom:12px;display:flex;align-items:center;gap:10px">
-    <button class="btn btn-primary" onclick="masterModal('series')">＋ 作品を追加</button>
-    <span style="font-size:12px;color:var(--sub)">来日の時期（例：2024年秋来日）もここで追加できます</span>
-  </div>
-  <div class="master-grid">${SERIES_M.map(m=>`
-    <div class="master-card">
-      <div class="master-card-body">
-        <div class="master-card-name">${m.name}</div>
-        <div class="master-card-meta">ID: ${m.drama_id||'未設定'}${m.drama_id?` <a href="${GL}?drama=${m.drama_id}" target="_blank" style="color:var(--purple)">↗</a>`:''}</div>
-      </div>
-      <div style="display:flex;gap:4px">
-        <button class="btn btn-edit btn-sm" onclick="masterModal('series','${m.id}')">✏</button>
+  const rows=SERIES_M.map(m=>`
+    <tr id="sr-row-${m.id}">
+      <td><strong>${m.name}</strong></td>
+      <td style="font-family:monospace;color:var(--sub)">${m.drama_id||'—'}</td>
+      <td>${m.drama_id?`<a href="${GL}?drama=${m.drama_id}" target="_blank" style="color:var(--purple);font-size:12px">確認 ↗</a>`:'—'}</td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn btn-edit btn-sm" onclick="inlineEditSeries('${m.id}')">✏ 編集</button>
         <button class="btn btn-del btn-sm" onclick="delMaster('series_master','${m.id}','series')">🗑</button>
-      </div>
-    </div>`).join('')||'<div style="color:var(--sub);font-size:13px">作品が登録されていません</div>'}</div>`);
+      </div></td>
+    </tr>`).join('');
+  setBody(`
+    <div style="font-size:12px;color:var(--sub);margin-bottom:10px">来日の時期（例：2024年秋来日）も作品と同じ扱いで追加できます</div>
+    <div class="add-form-row">
+      <div class="form-group"><div class="form-label" style="font-size:10px;margin-bottom:3px">作品名 / 時期 <span class="req">*</span></div>
+        <input class="mini-input" id="new-sr-name" placeholder="例: GAP The Series / 2024年秋来日" style="width:260px"></div>
+      <div class="form-group"><div class="form-label" style="font-size:10px;margin-bottom:3px">Thai GL Works ドラマID（任意）</div>
+        <input class="mini-input" id="new-sr-drama" placeholder="例: GAP または 1774088911045" style="width:200px;font-family:monospace"></div>
+      <button class="btn btn-primary" style="padding:6px 16px" onclick="addSeries()">＋ 追加</button>
+      <div id="new-sr-msg" style="font-size:11px;align-self:center;color:var(--green)"></div>
+    </div>
+    <table class="master-table">
+      <thead><tr><th>作品名 / 時期</th><th>ドラマID</th><th>Thai GL Works</th><th>操作</th></tr></thead>
+      <tbody>${rows||'<tr><td colspan="4" style="text-align:center;color:var(--sub);padding:20px">作品が登録されていません</td></tr>'}</tbody>
+    </table>`);
+};
+window.addSeries=async function(){
+  const name=document.getElementById('new-sr-name').value.trim();
+  const drama=document.getElementById('new-sr-drama').value.trim();
+  const msg=document.getElementById('new-sr-msg');
+  if(!name){msg.style.color='var(--red)';msg.textContent='作品名を入力してください';return;}
+  msg.style.color='var(--purple)';msg.textContent='追加中...';
+  try{
+    await addDoc(collection(db,'series_master'),{name,drama_id:drama});
+    clearC(); await loadAll(); renderSeries();
+  }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
+};
+window.inlineEditSeries=function(id){
+  const m=SERIES_M.find(x=>x.id===id);
+  if(!m)return;
+  const row=document.getElementById('sr-row-'+id);
+  row.classList.add('editing');
+  row.innerHTML=`
+    <td><input class="mini-input" id="esr-name-${id}" value="${esc(m.name)}" style="width:220px"></td>
+    <td><input class="mini-input" id="esr-drama-${id}" value="${esc(m.drama_id||'')}" style="width:160px;font-family:monospace" placeholder="例: GAP"></td>
+    <td>—</td>
+    <td><div style="display:flex;gap:5px">
+      <button class="btn btn-primary btn-sm" onclick="saveSeries('${id}')">💾 保存</button>
+      <button class="btn btn-sm" style="background:#F3F4F6;color:var(--sub)" onclick="renderSeries()">取消</button>
+    </div></td>`;
+};
+window.saveSeries=async function(id){
+  const name=document.getElementById('esr-name-'+id)?.value.trim();
+  const drama=document.getElementById('esr-drama-'+id)?.value.trim();
+  if(!name)return;
+  try{
+    await updateDoc(doc(db,'series_master',id),{name,drama_id:drama||''});
+    clearC(); await loadAll(); renderSeries();
+  }catch(e){alert('エラー: '+e.message);}
 };
 window.renderCategory=function(){
-  // デフォルトカテゴリー（コード内蔵）
-  const defaults=['スタジオ','カフェ','レストラン','ホテル','ショッピング','観光地','邸宅/スタジオ','寺院','大学','図書館','アート','病院','スポーツ','放送局','国立公園'];
-  const defaultEmojis={'スタジオ':'🎬','カフェ':'☕','レストラン':'🍖','ホテル':'🏨','ショッピング':'🛍️','観光地':'📍','邸宅/スタジオ':'🏛️','寺院':'⛩️','大学':'🎓','図書館':'📚','アート':'🎨','病院':'🏥','スポーツ':'⚽','放送局':'📺','国立公園':'🏞️'};
-  setBody(`<div style="margin-bottom:12px;display:flex;align-items:center;gap:10px">
-    <button class="btn btn-primary" onclick="masterModal('category')">＋ カテゴリーを追加</button>
-    <span style="font-size:12px;color:var(--sub)">カスタム追加分がFirestoreに保存されます</span>
-  </div>
-  <div style="font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.07em;margin-bottom:8px">デフォルト（変更不可）</div>
-  <div class="master-grid" style="margin-bottom:16px">${defaults.map(c=>`
-    <div class="master-card" style="opacity:.7">
-      <div class="emoji-lg">${defaultEmojis[c]||'📍'}</div>
-      <div class="master-card-body"><div class="master-card-name">${c}</div></div>
-    </div>`).join('')}</div>
-  <div style="font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.07em;margin-bottom:8px">カスタム追加</div>
-  <div class="master-grid">${CAT_M.map(m=>`
-    <div class="master-card">
-      <div class="emoji-lg">${m.emoji||'📍'}</div>
-      <div class="master-card-body"><div class="master-card-name">${m.name}</div></div>
-      <div style="display:flex;gap:4px">
-        <button class="btn btn-edit btn-sm" onclick="masterModal('category','${m.id}')">✏</button>
+  const DEF={'スタジオ':'🎬','カフェ':'☕','レストラン':'🍖','ホテル':'🏨','ショッピング':'🛍️','観光地':'📍','邸宅/スタジオ':'🏛️','寺院':'⛩️','大学':'🎓','図書館':'📚','アート':'🎨','病院':'🏥','スポーツ':'⚽','放送局':'📺','国立公園':'🏞️'};
+  const defRows=Object.entries(DEF).map(([name,emoji])=>`
+    <tr style="opacity:.6">
+      <td><span style="font-size:18px">${emoji}</span></td>
+      <td>${name}</td>
+      <td style="color:var(--sub);font-size:11px">デフォルト</td>
+      <td></td>
+    </tr>`).join('');
+  const customRows=CAT_M.map(m=>`
+    <tr id="cat-row-${m.id}">
+      <td style="font-size:18px">${m.emoji||'📍'}</td>
+      <td><strong>${m.name}</strong></td>
+      <td style="color:var(--green);font-size:11px;font-weight:700">カスタム</td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn btn-edit btn-sm" onclick="inlineEditCat('${m.id}')">✏ 編集</button>
         <button class="btn btn-del btn-sm" onclick="delMaster('category_master','${m.id}','category')">🗑</button>
-      </div>
-    </div>`).join('')||'<div style="color:var(--sub);font-size:13px">カスタムカテゴリーはありません</div>'}</div>`);
+      </div></td>
+    </tr>`).join('');
+  setBody(`
+    <div style="font-size:12px;color:var(--sub);margin-bottom:10px">デフォルト以外のカテゴリーを追加できます。追加したカテゴリーは選択肢に自動で追加されます。</div>
+    <div class="add-form-row">
+      <div class="form-group"><div class="form-label" style="font-size:10px;margin-bottom:3px">カテゴリー名 <span class="req">*</span></div>
+        <input class="mini-input" id="new-cat-name" placeholder="例: 動物園" style="width:160px"></div>
+      <div class="form-group"><div class="form-label" style="font-size:10px;margin-bottom:3px">絵文字</div>
+        <input class="mini-input" id="new-cat-emoji" value="📍" style="width:60px;font-size:18px;text-align:center"></div>
+      <button class="btn btn-primary" style="padding:6px 16px" onclick="addCategory()">＋ 追加</button>
+      <div id="new-cat-msg" style="font-size:11px;align-self:center;color:var(--green)"></div>
+    </div>
+    <table class="master-table">
+      <thead><tr><th>絵文字</th><th>カテゴリー名</th><th>種別</th><th>操作</th></tr></thead>
+      <tbody>${defRows}${customRows||'<tr><td colspan="4" style="text-align:center;color:var(--sub);padding:12px">カスタムカテゴリーなし</td></tr>'}</tbody>
+    </table>`);
+};
+window.addCategory=async function(){
+  const name=document.getElementById('new-cat-name').value.trim();
+  const emoji=document.getElementById('new-cat-emoji').value;
+  const msg=document.getElementById('new-cat-msg');
+  if(!name){msg.style.color='var(--red)';msg.textContent='カテゴリー名を入力してください';return;}
+  msg.style.color='var(--purple)';msg.textContent='追加中...';
+  try{
+    await addDoc(collection(db,'category_master'),{name,emoji});
+    clearC(); await loadAll(); renderCategory();
+  }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
+};
+window.inlineEditCat=function(id){
+  const m=CAT_M.find(x=>x.id===id);
+  if(!m)return;
+  const row=document.getElementById('cat-row-'+id);
+  row.classList.add('editing');
+  row.innerHTML=`
+    <td><input class="mini-input" id="ecat-emoji-${id}" value="${esc(m.emoji||'📍')}" style="width:55px;font-size:18px;text-align:center"></td>
+    <td><input class="mini-input" id="ecat-name-${id}" value="${esc(m.name)}" style="width:160px"></td>
+    <td style="color:var(--green);font-size:11px;font-weight:700">カスタム</td>
+    <td><div style="display:flex;gap:5px">
+      <button class="btn btn-primary btn-sm" onclick="saveCat('${id}')">💾 保存</button>
+      <button class="btn btn-sm" style="background:#F3F4F6;color:var(--sub)" onclick="renderCategory()">取消</button>
+    </div></td>`;
+};
+window.saveCat=async function(id){
+  const name=document.getElementById('ecat-name-'+id)?.value.trim();
+  const emoji=document.getElementById('ecat-emoji-'+id)?.value;
+  if(!name)return;
+  try{
+    await updateDoc(doc(db,'category_master',id),{name,emoji});
+    clearC(); await loadAll(); renderCategory();
+  }catch(e){alert('エラー: '+e.message);}
 };
 
 // ── Master modal ───────────────────────────────────────────────
