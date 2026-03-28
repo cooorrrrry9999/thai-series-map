@@ -275,14 +275,14 @@ window.showPage=function(name){
   const m=PAGE_META[name]||{title:name,sub:''};
   document.getElementById('page-title').textContent=m.title;
   document.getElementById('page-sub').textContent=m.sub;
-  const renders={dashboard:renderDashboard,pending:renderPending,locations:renderLocations,appearances:renderAppearances,add:renderAdd,cp:renderCp,series:renderSeries,category:renderCategory};
+  const renders={dashboard:window.renderDashboard,pending:window.renderPending,locations:window.renderLocations,appearances:window.renderAppearances,add:window.renderAdd,cp:window.renderCp,series:window.renderSeries,category:window.renderCategory};
   (renders[name]||(() => {}))();
 };
 
 function setBody(html){document.getElementById('page-body').innerHTML=html;}
 
 // ── Dashboard ─────────────────────────────────────────────────
-function renderDashboard(){
+window.renderDashboard=function(){
   const pending=SUBS.filter(s=>s.status==='未承認');
   const pubApps=APPS.filter(a=>a.status==='公開');
   const cps=[...new Set(APPS.map(a=>a.cp).filter(Boolean))];
@@ -311,7 +311,7 @@ function renderDashboard(){
 }
 
 // ── Pending ───────────────────────────────────────────────────
-function renderPending(){
+window.renderPending=function(){
   const pending=SUBS.filter(s=>s.status==='未承認');
   if(!pending.length){setBody('<div style="text-align:center;color:var(--sub);padding:60px">承認待ちの投稿はありません 🎉</div>');return;}
   setBody(pending.map(s=>pendingCard(s)).join(''));
@@ -349,7 +349,7 @@ window.rejectSub=async function(subId){
 };
 
 // ── Locations ─────────────────────────────────────────────────
-function renderLocations(){
+window.renderLocations=function(){
   const fSeries=document.getElementById('f-loc-series')?.value||'';
   const fCp=document.getElementById('f-loc-cp')?.value||'';
   const fQ=document.getElementById('f-loc-q')?.value?.toLowerCase()||'';
@@ -451,7 +451,7 @@ window.deleteLoc=async function(locId){
 };
 
 // ── Appearances ───────────────────────────────────────────────
-function renderAppearances(){
+window.renderAppearances=function(){
   const fSeries=document.getElementById('f-app-series')?.value||'';
   const fCp=document.getElementById('f-app-cp')?.value||'';
   const fStatus=document.getElementById('f-app-status')?.value||'';
@@ -553,7 +553,7 @@ window.publishApp=async function(appId){
 };
 
 // ── Add new ───────────────────────────────────────────────────
-function renderAdd(){
+window.renderAdd=function(){
   const allCps=[...new Set([...APPS.map(a=>a.cp),...CP_MASTER.map(m=>m.name)].filter(Boolean))].sort();
   const allSeries=[...new Set([...APPS.map(a=>a.series),...SERIES_MASTER.map(m=>m.name)].filter(Boolean))].sort();
   const catOptions=buildCatOptions('');
@@ -623,7 +623,7 @@ window.addNewSpot=async function(){
 };
 
 // ── CP Master ─────────────────────────────────────────────────
-function renderCp(){
+window.renderCp=function(){
   setBody(`<div style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
     <button class="btn btn-primary" onclick="cpModal()">＋ CPを追加</button>
   </div>
@@ -661,7 +661,7 @@ window.cpModal=function(id){
 };
 
 // ── Series Master ─────────────────────────────────────────────
-function renderSeries(){
+window.renderSeries=function(){
   const GL='https://thai-gl-works-2c835.web.app/index.html';
   setBody(`<div style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
     <button class="btn btn-primary" onclick="seriesModal()">＋ 作品を追加</button>
@@ -697,7 +697,7 @@ window.seriesModal=function(id){
 };
 
 // ── Category Master ───────────────────────────────────────────
-function renderCategory(){
+window.renderCategory=function(){
   setBody(`<div style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
     <button class="btn btn-primary" onclick="catModal()">＋ カテゴリーを追加</button>
   </div>
