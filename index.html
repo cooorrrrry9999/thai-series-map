@@ -320,7 +320,7 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
 import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, collection, getDocs, addDoc, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -405,8 +405,25 @@ function getUniqueCPs(){return[...new Set(APPS.map(a=>a.cp).filter(Boolean))].so
 function getUniqueSeries(){return[...new Set(APPS.map(a=>a.series).filter(Boolean))].sort();}
 
 // ── Auth ──────────────────────────────────────────────────────
-window.doLogin=async()=>{try{await signInWithPopup(auth,prov);}catch(e){console.error(e);}};
+window.doLogin=async()=>{
+  try{
+    await signInWithPopup(auth,prov);
+  }catch(e){
+    // ポップアップブロック時はリダイレクト方式にフォールバック
+    if(e.code==='auth/popup-blocked'||e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request'){
+      await signInWithRedirect(auth,prov);
+    } else {
+      console.error(e);
+      alert('ログインに失敗しました: '+e.message);
+    }
+  }
+};
 window.doLogout=async()=>{await signOut(auth);[CL,CA,CS].forEach(k=>localStorage.removeItem(k));};
+
+// リダイレクト方式のログイン結果を処理
+getRedirectResult(auth).then(result=>{
+  if(result?.user) console.log('redirect login ok:', result.user.email);
+}).catch(e=>console.error('redirect error:',e));
 
 onAuthStateChanged(auth,async user=>{
   currentUser=user;
@@ -725,67 +742,48 @@ window.closeHowto=function(e){
 
 window.exportKML=function(){
   const filtered=getFiltered();
-  if(!filtered.length){
-    alert('表示中のスポットがありません。フィルターを確認してください。');
-    return;
-  }
-  // KMLファイル名をフィルター内容から生成
+  if(!filtered.length){alert('表示中のスポットがありません');return;}
   let fname='thai-series-map';
-  if(activeCp)fname+='-'+activeCp.replace(/\s/g,'_');
+  if(activeCp)fname+='-'+activeCp;
   if(activeType!=='すべて')fname+='-'+activeType;
-  if(searchQ)fname+='-'+searchQ.replace(/\s/g,'_');
   fname+='.kml';
-
-  // KML生成
-  const placemarks=filtered.map(loc=>{
+  const parts=filtered.map(function(loc){
     const apps=locApps(loc.id);
     const a0=apps[0];
-    const desc=[
-      a0?`<b>${a0.series}</b> 💗 ${a0.cp}`:'',
-      apps.length>1?`他${apps.length-1}作品に登場`:'',
-      loc.memo?`💡 ${loc.memo}`:'',
-      loc.googleMapsUrl&&!loc.googleMapsUrl.includes('xxx')?`<a href="${loc.googleMapsUrl}">Googleマップで開く</a>`:''
-    ].filter(Boolean).join('<br>');
-
-    // シリーズ色をKMLスタイルに変換
+    const hasUrl=loc.googleMapsUrl&&loc.googleMapsUrl.indexOf('xxx')===-1;
+    const descParts=[];
+    if(a0)descParts.push('<b>'+escXml(a0.series)+'</b> / '+escXml(a0.cp));
+    if(apps.length>1)descParts.push('他'+(apps.length-1)+'作品に登場');
+    if(loc.memo)descParts.push(escXml(loc.memo));
+    if(hasUrl)descParts.push('<a href="'+loc.googleMapsUrl+'">Googleマップ</a>');
+    const desc=descParts.join('<br>');
     const cfg=a0?scfg(a0.series):{color:'#888780'};
-    const kmlColor=cfg.color.replace('#','ff').toLowerCase()
-      .replace(/^ff(..)(..)(..)$/,'ff$3$2$1'); // AABBGGRR形式
-
-    return `  <Placemark>
-    <name>${escXml(loc.name)}</name>
-    <description><![CDATA[${desc}]]></description>
-    <Point><coordinates>${loc.lng},${loc.lat},0</coordinates></Point>
-    <Style><IconStyle>
-      <color>${kmlColor}</color>
-      <scale>1.1</scale>
-    </IconStyle></Style>
-  </Placemark>`;
-  }).join('
-');
-
-  const kml=`<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-<Document>
-  <name>${escXml(fname.replace('.kml',''))}</name>
-  <description>Thai Series Map からエクスポート（${filtered.length}件）</description>
-${placemarks}
-</Document>
-</kml>`;
-
-  // ダウンロード
+    const c=cfg.color.replace('#','');
+    const kmlColor='ff'+c.slice(4,6)+c.slice(2,4)+c.slice(0,2);
+    return '  <Placemark>'
+      +'<name>'+escXml(loc.name)+'</name>'
+      +'<description><![CDATA['+desc+']]></description>'
+      +'<Point><coordinates>'+loc.lng+','+loc.lat+',0</coordinates></Point>'
+      +'<Style><IconStyle><color>'+kmlColor+'</color><scale>1.1</scale></IconStyle></Style>'
+      +'</Placemark>';
+  });
+  const kml='<?xml version="1.0" encoding="UTF-8"?>'
+    +'<kml xmlns="http://www.opengis.net/kml/2.2"><Document>'
+    +'<name>'+escXml(fname.replace('.kml',''))+'</name>'
+    +'<description>Thai Series Map export ('+filtered.length+')</description>'
+    +parts.join('')
+    +'</Document></kml>';
   const blob=new Blob([kml],{type:'application/vnd.google-earth.kml+xml'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url; a.download=fname; a.click();
+  a.href=url;a.download=fname;a.click();
   URL.revokeObjectURL(url);
-
   const msg=document.getElementById('kml-download-msg');
-  if(msg){msg.textContent=`✅ ${filtered.length}件のスポットをダウンロードしました`;}
+  if(msg)msg.textContent='✅ '+filtered.length+'件をダウンロードしました';
 };
-
-function escXml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-
+function escXml(s){
+  return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 // 管理者用キャッシュクリア
 window.clearMapCache=()=>{[CL,CA,CS].forEach(k=>localStorage.removeItem(k));location.reload()};
 </script>
