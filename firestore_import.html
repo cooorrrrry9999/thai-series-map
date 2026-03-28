@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Firestore インポートツール</title>
+<style>
+  body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+  button { background: #EC4899; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 15px; cursor: pointer; margin: 8px 4px; }
+  button:disabled { background: #ccc; cursor: not-allowed; }
+  #log { background: #f3f4f6; border-radius: 8px; padding: 16px; margin-top: 16px; font-size: 13px; line-height: 1.8; max-height: 400px; overflow-y: auto; white-space: pre-wrap; }
+  .ok  { color: #059669; }
+  .err { color: #DC2626; }
+</style>
+</head>
+<body>
+<h2>🌸 Thai Series Map — Firestore インポートツール</h2>
+<p>既存サイトと同じFirebaseプロジェクトに接続して、locationsとappearancesコレクションを一括登録します。</p>
+
+<button onclick="runImport()">インポート開始</button>
+<button onclick="document.getElementById('log').textContent=''" style="background:#6B7280">ログをクリア</button>
+
+<div id="log">ボタンを押すとインポートを開始します...</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ── 既存サイトと同じ設定をここにコピペ ──────────────────────
+const firebaseConfig = {
+  apiKey:            "AIzaSyARPFANz5DZa6KpEBiw77PCCYPPZghMGeg",
+  authDomain:        "thai-gl-works-2c835.firebaseapp.com",
+  databaseURL:       "https://thai-gl-works-2c835-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:         "thai-gl-works-2c835",
+  storageBucket:     "thai-gl-works-2c835.firebasestorage.app",
+  messagingSenderId: "71290080508",
+  appId:             "1:71290080508:web:47de06018b8617225bdb79"
+};
+// ─────────────────────────────────────────────────────────────
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── locations データ ──────────────────────────────────────────
+const LOCATIONS = [
+  { id:"LOC001", name:"99 House Studio",               lat:13.8200, lng:100.8900, category:"スタジオ",    address:"Soi Ram Intra 117, Min Buri, Bangkok",          googleMapsUrl:"https://maps.app.goo.gl/oecr7KbYiFSKoNB47", memo:"FB予約可・入場500B。現地のおっちゃんは英語不可。" },
+  { id:"LOC002", name:"セントラルビレッジ",                lat:13.6860, lng:100.7470, category:"ショッピング",  address:"98 Suvarnabhumi 3 Rd, Bang Phli, Samut Prakan", googleMapsUrl:"https://maps.app.goo.gl/RGse44eadM7d7ULPA", memo:"空港近く。Central wOrldから無料バスあり。" },
+  { id:"LOC003", name:"エイト・スタジオ",                 lat:13.7480, lng:100.6100, category:"スタジオ",    address:"8 Rama IX Soi 41, Suan Luang, Bangkok",         googleMapsUrl:"https://maps.app.goo.gl/vthf2PSzwC8RSZPZA", memo:"一般公開なし。貸切なら入室可能。" },
+  { id:"LOC004", name:"Pata Plantation",               lat:13.8760, lng:100.5100, category:"レストラン",   address:"70 Moo 1, Pak Kret, Nonthaburi",                googleMapsUrl:"https://maps.app.goo.gl/aErB72xjyR3TdCRW7", memo:"多国籍料理が有名。" },
+  { id:"LOC005", name:"グランド チャオプラヤー",            lat:14.3590, lng:100.5700, category:"レストラン",   address:"Phra Nakhon Si Ayutthaya",                      googleMapsUrl:"https://maps.app.goo.gl/LJGjGWQSxU9PwDop9", memo:"" },
+  { id:"LOC006", name:"ヴェラノ ビーチ ヴィラ",             lat:12.8880, lng:99.9500,  category:"ホテル",      address:"Puek Tian, Cha-am, Phetchaburi",                googleMapsUrl:"https://maps.app.goo.gl/6XCrA6kY6nQdTcUV7", memo:"" },
+  { id:"LOC007", name:"Wawa House",                    lat:13.8420, lng:100.3810, category:"邸宅/スタジオ", address:"63/21 Moo 15, Bang Yai, Nonthaburi",            googleMapsUrl:"https://maps.app.goo.gl/Vk49u8vVE8giRDk56", memo:"カフェで飲物購入で庭園見学可。帰りのGrab注意。" },
+  { id:"LOC008", name:"KOPI KUAPA",                    lat:8.8590,  lng:98.3420,  category:"カフェ",      address:"115 Thanon Sri Takuapa, Takua Pa, Phang Nga",   googleMapsUrl:"https://maps.app.goo.gl/wVnpdDrcAE8H4wjK7", memo:"" },
+  { id:"LOC009", name:"ブンスーン橋",                    lat:8.8700,  lng:98.3300,  category:"観光地",      address:"Takua Pa District, Phang Nga",                  googleMapsUrl:"https://maps.app.goo.gl/1urYpt4wELF2ycrJ6", memo:"" },
+  { id:"LOC010", name:"カオソック国立公園",                lat:8.9160,  lng:98.5270,  category:"国立公園",    address:"Phanom District, Surat Thani",                  googleMapsUrl:"https://maps.app.goo.gl/xTZmYy5SHjYMMUS38", memo:"" },
+  { id:"LOC011", name:"ドーイ・ステープ",                  lat:18.8050, lng:98.9220,  category:"寺院",       address:"Doi Suthep, Mueang Chiang Mai",                 googleMapsUrl:"https://maps.app.goo.gl/xxx",               memo:"チェンマイ随一の名刹。" },
+  { id:"LOC012", name:"メモリー・ギャラリー",               lat:13.7480, lng:100.4920, category:"スタジオ",    address:"Bangkok",                                       googleMapsUrl:"https://maps.app.goo.gl/xxx",               memo:"バンコクの古い街並みを再現したエリア。" },
+  { id:"LOC013", name:"チュラロンコン大学",                lat:13.7300, lng:100.5250, category:"大学",       address:"254 Phayathai Rd, Wang Mai, Pathum Wan, Bangkok",googleMapsUrl:"https://maps.app.goo.gl/xxx",               memo:"" },
+  { id:"LOC014", name:"観覧車スカイ（アジアティーク）",       lat:13.7200, lng:100.4980, category:"観光地",      address:"2194 Charoen Krung Rd, Bang Kho Laem, Bangkok", googleMapsUrl:"https://maps.app.goo.gl/h3UUewCXuyo9RgJ2A", memo:"屋外なので雨・酷暑注意。" },
+  { id:"LOC015", name:"ランシット大学",                   lat:14.0240, lng:100.6170, category:"大学",       address:"52/347 Phahonyothin Rd, Lak Hok, Pathum Thani", googleMapsUrl:"https://maps.app.goo.gl/PRBVyKu3QJguGX846", memo:"一般入場可。レッドライン最寄りからバイタク推奨。" },
+  { id:"LOC016", name:"COK Cream of The Koff",          lat:14.0200, lng:100.6050, category:"カフェ",      address:"Thanon Ek Thaksin, Lak Hok, Pathum Thani",      googleMapsUrl:"https://maps.app.goo.gl/Ywp8ucXi91ZbYNB4A", memo:"ランシット大学近く、まとめて訪問推奨。" },
+  { id:"LOC017", name:"B-Story Garden Café",            lat:13.8100, lng:100.6100, category:"カフェ",      address:"33/25 Pradit Manutham Rd, Lat Phrao, Bangkok",  googleMapsUrl:"https://maps.app.goo.gl/p3hGApz1xLmu8NQS7", memo:"外に雪が降る演出あり。" },
+  { id:"LOC018", name:"アリーヤ・ムーカタ",                lat:13.8100, lng:100.5600, category:"レストラン",   address:"Bangkok",                                       googleMapsUrl:"https://maps.app.goo.gl/xxx",               memo:"屋上のムーカタ屋さん。店員さんが親切。" },
+  { id:"LOC019", name:"ワット・パークナム",                lat:13.7200, lng:100.4750, category:"寺院",       address:"300 Ratchamongkhon Prasat Alley, Bangkok",       googleMapsUrl:"https://maps.app.goo.gl/xxx",               memo:"美しい天井画のある寺院。拝観無料。" },
+  { id:"LOC020", name:"アイコンサイアム",                  lat:13.7230, lng:100.5120, category:"ショッピング",  address:"299 Charoen Nakhon Rd, Khlong San, Bangkok",    googleMapsUrl:"https://maps.app.goo.gl/xxx",               memo:"チャオプラヤー川沿い。" },
+  { id:"LOC021", name:"ニールソン・ヘイズ・ライブラリー",      lat:13.7240, lng:100.5380, category:"図書館",      address:"195 Surawong Rd, Bang Rak, Bangkok",             googleMapsUrl:"https://maps.app.goo.gl/xxx",               memo:"" },
+  { id:"LOC022", name:"Soul Salt Paint Bar",            lat:13.7450, lng:100.5320, category:"アート",      address:"Bangkok",                                       googleMapsUrl:"https://maps.app.goo.gl/xxx",               memo:"" },
+  { id:"LOC023", name:"Kaembum Fresh Coffee",           lat:15.8000, lng:100.9900, category:"カフェ",      address:"Nakhon Sawan",                                  googleMapsUrl:"https://maps.app.goo.gl/xxx",               memo:"バンコクから車で3時間。" },
+  { id:"LOC024", name:"富士山",                         lat:35.3606, lng:138.7274, category:"観光地",      address:"富士山、静岡県・山梨県",                              googleMapsUrl:"https://maps.app.goo.gl/xxx",               memo:"" },
+  { id:"LOC025", name:"プリンス・スワンナプーム病院",          lat:13.6800, lng:100.7400, category:"病院",       address:"35/2 Moo 12, Bang Phli, Samut Prakan",          googleMapsUrl:"https://maps.app.goo.gl/CSoGk76mspeSKxK49", memo:"" },
+  { id:"LOC026", name:"Ternajachob Cozy Cafe",          lat:13.7240, lng:100.6710, category:"カフェ",      address:"24/6 Chaloem Phrakiat Ratchakan Thi 9, Prawet",  googleMapsUrl:"https://maps.app.goo.gl/kmGFyTKWVF9nBWvC9", memo:"" },
+  { id:"LOC027", name:"ルネッサンス バンコク ラッチャプラソーン",lat:13.7440, lng:100.5490, category:"ホテル",      address:"518/8 Phloen Chit Rd, Lumphini, Bangkok",        googleMapsUrl:"https://maps.app.goo.gl/cgFyTYKL89rfAtfPA", memo:"" },
+  { id:"LOC028", name:"トスカナ ヴァレー",                 lat:14.6600, lng:101.5400, category:"ホテル",      address:"Pong Ta Long, Pak Chong, Nakhon Ratchasima",     googleMapsUrl:"https://maps.app.goo.gl/sjFWxdRiX31r98L58", memo:"" },
+  { id:"LOC029", name:"Channel 3",                     lat:13.7220, lng:100.5750, category:"放送局",      address:"Khlong Tan, Khlong Toei, Bangkok",               googleMapsUrl:"https://maps.app.goo.gl/YJhFFHAQxanvpdhJ9", memo:"ロビーで出待ち可。" },
+  { id:"LOC030", name:"Hario Cafe",                    lat:13.7300, lng:100.5740, category:"カフェ",      address:"29 Sukhumvit 33 Alley, Khlong Tan Nuea, Bangkok",googleMapsUrl:"https://maps.app.goo.gl/F95wb2axwPGnZ2xX9", memo:"" },
+  { id:"LOC031", name:"ロフト バンコク ホテル",             lat:13.7550, lng:100.5440, category:"ホテル",      address:"1091/290 Phetchaburi Rd, Makkasan, Bangkok",     googleMapsUrl:"https://maps.app.goo.gl/WJA221DDST3Mv9fQ9", memo:"ホテル内マッサージが安心。" },
+  { id:"LOC032", name:"D-Sports Stadium",              lat:13.7270, lng:100.5870, category:"スポーツ",     address:"107 Soi Sukhumvit 63, Khlong Tan Nuea, Bangkok", googleMapsUrl:"https://maps.app.goo.gl/VHww6dgwvEqZWEyZ8", memo:"" },
+  { id:"LOC033", name:"Hotel Wizpark Ratchada",         lat:13.7630, lng:100.5620, category:"ホテル",      address:"598 Din Daeng Rd, Din Daeng, Bangkok",            googleMapsUrl:"https://maps.app.goo.gl/w4XJwWcx3Nw5sJxY6", memo:"" },
+  { id:"LOC034", name:"J-パーク 日本村 シーラチャ",          lat:13.1500, lng:100.9300, category:"ショッピング",  address:"1 Moo 6, Si Racha, Chon Buri",                  googleMapsUrl:"https://maps.app.goo.gl/wfUDqtm2EsTga6hA8", memo:"日本風ショッピングモール。" }
+];
+
+// ── appearances データ ────────────────────────────────────────
+const APPEARANCES = [
+  { id:"APP001", location_id:"LOC001", series:"GAP The Series",   cp:"FreenBecky", type:"作品",      scene_desc:"Monの家として使用。予約すれば見学可能。",             status:"公開" },
+  { id:"APP002", location_id:"LOC001", series:"Blank The Series", cp:"Blank Cast", type:"作品",      scene_desc:"Sam邸とアヌンちゃんの家。同じ管理人が運営。",           status:"公開" },
+  { id:"APP003", location_id:"LOC002", series:"GAP The Series",   cp:"FreenBecky", type:"作品",      scene_desc:"モールのシーン。",                                  status:"公開" },
+  { id:"APP004", location_id:"LOC003", series:"GAP The Series",   cp:"FreenBecky", type:"作品",      scene_desc:"オフィス内シーンの撮影スタジオ。一般公開なし。",          status:"公開" },
+  { id:"APP005", location_id:"LOC004", series:"GAP The Series",   cp:"FreenBecky", type:"作品",      scene_desc:"お寿司シーン・Samの誕生日会。",                       status:"公開" },
+  { id:"APP006", location_id:"LOC005", series:"GAP The Series",   cp:"FreenBecky", type:"作品",      scene_desc:"エビデートのレストラン。",                            status:"公開" },
+  { id:"APP007", location_id:"LOC006", series:"GAP The Series",   cp:"FreenBecky", type:"作品",      scene_desc:"SamMon新婚旅行（？）シーン。",                        status:"公開" },
+  { id:"APP008", location_id:"LOC007", series:"GAP The Series",   cp:"FreenBecky", type:"作品",      scene_desc:"各ドラマに登場する宮殿。",                           status:"公開" },
+  { id:"APP009", location_id:"LOC008", series:"URANUS2324",       cp:"FreenBecky", type:"作品",      scene_desc:"ソフトクリームを食べるシーン。",                       status:"公開" },
+  { id:"APP010", location_id:"LOC009", series:"URANUS2324",       cp:"FreenBecky", type:"作品",      scene_desc:"劇中の印象的な橋。",                                status:"公開" },
+  { id:"APP011", location_id:"LOC010", series:"URANUS2324",       cp:"FreenBecky", type:"作品",      scene_desc:"ジャングルと湖が美しい国立公園。",                     status:"公開" },
+  { id:"APP012", location_id:"LOC011", series:"The Loyal Pin",    cp:"FreenBecky", type:"作品",      scene_desc:"チェンマイのダンスシーン等。",                         status:"公開" },
+  { id:"APP013", location_id:"LOC012", series:"The Loyal Pin",    cp:"FreenBecky", type:"作品",      scene_desc:"バンコクの古い街並みを再現したエリア。",                status:"公開" },
+  { id:"APP014", location_id:"LOC013", series:"The Loyal Pin",    cp:"FreenBecky", type:"作品",      scene_desc:"Pinが通っていた大学のモデル。",                       status:"公開" },
+  { id:"APP015", location_id:"LOC014", series:"プライベート",        cp:"FreenBecky", type:"プライベート", scene_desc:"伝説のデート場所。",                                status:"公開" },
+  { id:"APP016", location_id:"LOC015", series:"プライベート",        cp:"FreenBecky", type:"プライベート", scene_desc:"Freen・Hengの母校。SCOYのロケ地でもある。",           status:"公開" },
+  { id:"APP017", location_id:"LOC016", series:"プライベート",        cp:"FreenBecky", type:"プライベート", scene_desc:"FreenがBeckyを連れて行ったカフェ。",                  status:"公開" },
+  { id:"APP018", location_id:"LOC017", series:"プライベート",        cp:"FreenBecky", type:"プライベート", scene_desc:"FreenBeckyデートスポット。Dreamのロケ地でもある。",   status:"公開" },
+  { id:"APP019", location_id:"LOC018", series:"プライベート",        cp:"FreenBecky", type:"プライベート", scene_desc:"屋上のムーカタ屋さん。店員さんが親切。",               status:"公開" },
+  { id:"APP020", location_id:"LOC019", series:"プライベート",        cp:"FreenBecky", type:"プライベート", scene_desc:"美しい天井画のある寺院。拝観無料。",                   status:"公開" },
+  { id:"APP021", location_id:"LOC020", series:"プライベート",        cp:"FreenBecky", type:"プライベート", scene_desc:"アフターユー（かき氷）やスタバなど。",                  status:"公開" },
+  { id:"APP022", location_id:"LOC021", series:"プライベート",        cp:"FreenBecky", type:"プライベート", scene_desc:"Beckyが友人のイベントで訪れた場所。",                  status:"公開" },
+  { id:"APP023", location_id:"LOC022", series:"プライベート",        cp:"FreenBecky", type:"プライベート", scene_desc:"お絵描きデートをしていた場所。",                       status:"公開" },
+  { id:"APP024", location_id:"LOC023", series:"プライベート",        cp:"FreenBecky", type:"プライベート", scene_desc:"Freenのお母様のカフェ。バンコクから車で3時間。",        status:"公開" },
+  { id:"APP025", location_id:"LOC024", series:"来日",              cp:"FreenBecky", type:"来日",      scene_desc:"フリべきがはしゃいでたあたり。",                       status:"公開" },
+  { id:"APP026", location_id:"LOC025", series:"The Secret Of Us", cp:"PondPhuwin", type:"作品",      scene_desc:"P'morが働く病院のロケ地。",                          status:"公開" },
+  { id:"APP027", location_id:"LOC026", series:"The Secret Of Us", cp:"PondPhuwin", type:"作品",      scene_desc:"ケンカしてバッチバチだった時のカフェ。",                status:"公開" },
+  { id:"APP028", location_id:"LOC027", series:"The Secret Of Us", cp:"PondPhuwin", type:"作品",      scene_desc:"ジムのシーン・バーのシーン。",                         status:"公開" },
+  { id:"APP029", location_id:"LOC028", series:"The Secret Of Us", cp:"PondPhuwin", type:"作品",      scene_desc:"アメリカシーンのロケ地。",                            status:"公開" },
+  { id:"APP030", location_id:"LOC029", series:"The Secret Of Us", cp:"PondPhuwin", type:"作品",      scene_desc:"PondPhuwinを輩出した放送局。ロビーで出待ち可。",       status:"公開" },
+  { id:"APP031", location_id:"LOC030", series:"Lucky My Love",    cp:"NearMine",   type:"作品",      scene_desc:"デートシーンのカフェ。",                              status:"公開" },
+  { id:"APP032", location_id:"LOC031", series:"Lucky My Love",    cp:"NearMine",   type:"作品",      scene_desc:"Nabdaoの部屋・会社・カフェ・飲み会シーンなど多数。",   status:"公開" },
+  { id:"APP033", location_id:"LOC032", series:"Lucky My Love",    cp:"NearMine",   type:"作品",      scene_desc:"スポーツシーンのロケ地。",                            status:"公開" },
+  { id:"APP034", location_id:"LOC033", series:"Lucky My Love",    cp:"NearMine",   type:"作品",      scene_desc:"Weaさんの家のロケ地。最終話の車から降りるシーンもここ。",status:"公開" },
+  { id:"APP035", location_id:"LOC034", series:"Lucky My Love",    cp:"NearMine",   type:"作品",      scene_desc:"日本風ショッピングモール。",                          status:"公開" }
+];
+
+window.runImport = async function() {
+  const log = document.getElementById('log');
+  const btn = document.querySelector('button');
+  btn.disabled = true;
+  log.textContent = '';
+
+  const add = (msg, cls='') => {
+    const line = document.createElement('div');
+    line.className = cls;
+    line.textContent = msg;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+  };
+
+  try {
+    add('📦 locations をインポート中...');
+    for (const loc of LOCATIONS) {
+      await setDoc(doc(db, 'locations', loc.id), loc);
+      add(`  ✅ ${loc.id}: ${loc.name}`, 'ok');
+    }
+
+    add('');
+    add('📦 appearances をインポート中...');
+    for (const app of APPEARANCES) {
+      await setDoc(doc(db, 'appearances', app.id), app);
+      add(`  ✅ ${app.id}: ${app.series} / ${app.cp}`, 'ok');
+    }
+
+    add('');
+    add('🎉 インポート完了！Firestoreコンソールで確認してください。', 'ok');
+  } catch(e) {
+    add(`❌ エラー: ${e.message}`, 'err');
+    add('Firestoreのセキュリティルールで書き込みが拒否されている可能性があります。', 'err');
+  }
+
+  btn.disabled = false;
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── 管理者メールの共通定義 ──────────────────────────────────
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email == "cory92059@gmail.com";
+    }
+    function isLoggedIn() {
+      return request.auth != null;
+    }
+
+    // ── 既存コレクション（変更なし） ────────────────────────────
+
+    // dramas: 読み取り全員OK・書き込みは管理者のみ・評価はログインユーザーもOK
+    match /dramas/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+      allow update: if isLoggedIn()
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['user_rate_avg', 'user_rate_count']);
+    }
+
+    // talents: 読み取り全員OK・書き込みは管理者のみ
+    match /talents/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // users: 本人のみ読み書きOK・管理者は全件読み取り可
+    match /users/{uid} {
+      allow read, write: if isLoggedIn() && request.auth.uid == uid;
+      allow read: if isAdmin();
+    }
+
+    // settings: 読み取り全員OK・書き込みは管理者のみ
+    match /settings/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── 新規コレクション（地図用） ──────────────────────────────
+
+    // locations: 場所情報
+    //   読み取り → 全員OK（地図を誰でも見られるように）
+    //   書き込み → 管理者のみ
+    match /locations/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // appearances: 作品とロケ地の紐付け
+    //   読み取り → 全員OK
+    //   書き込み → 管理者のみ
+    //   ※ ファン投稿を受け付けるときは status="未承認" で一般ユーザーの create を許可
+    //      その場合は下のコメントアウトを外してください
+    match /appearances/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+
+      // ── ファン投稿を受け付けるとき（将来用） ──
+      // allow create: if isLoggedIn()
+      //   && request.resource.data.status == "未承認"
+      //   && request.resource.data.keys().hasAll([
+      //        'location_id','series','cp','type','scene_desc','status'
+      //      ]);
+    }
+
+    // location_submissions: ファンからの新規場所投稿（将来用）
+    //   ログインユーザーが status="未承認" で投稿できる
+    //   管理者が確認して locations に移す運用
+    match /location_submissions/{id} {
+      allow read: if isAdmin();
+      allow create: if isLoggedIn()
+        && request.resource.data.status == "未承認"
+        && request.resource.data.keys().hasAll([
+             'name','lat','lng','category','googleMapsUrl',
+             'scene_desc','series','cp','type','status','submittedBy'
+           ]);
+      allow update, delete: if isAdmin();
+    }
+
+  }
+}
