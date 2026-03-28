@@ -41,10 +41,34 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 .top-btn:active{transform:scale(.9)}
 
 /* ── フィルターバー ── */
-.filter-bar{position:fixed;top:58px;left:0;right:0;z-index:40;padding:0 10px 8px;display:flex;gap:6px;overflow-x:auto}
-.filter-bar::-webkit-scrollbar{display:none}
-.filter-pill{flex-shrink:0;padding:5px 14px;border-radius:20px;border:1.5px solid rgba(255,255,255,.8);font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);color:#555;box-shadow:0 2px 8px rgba(0,0,0,.10);white-space:nowrap}
-.filter-pill.active{background:#111;color:#fff;border-color:#111}
+/* ── 左サイドフィルタードロワー ── */
+.filter-drawer{position:fixed;top:0;left:0;bottom:0;width:280px;z-index:120;background:rgba(255,255,255,.98);backdrop-filter:blur(20px);box-shadow:4px 0 32px rgba(0,0,0,.18);transform:translateX(-100%);transition:transform .3s cubic-bezier(.22,1,.36,1);display:flex;flex-direction:column;overflow:hidden}
+.filter-drawer.open{transform:translateX(0)}
+.filter-drawer-overlay{position:fixed;inset:0;z-index:110;background:rgba(0,0,0,.3);display:none;animation:fadeIn .2s ease}
+.filter-drawer-overlay.open{display:block}
+.filter-drawer-header{padding:20px 18px 14px;border-bottom:1px solid #F1F5F9;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.filter-drawer-title{font-size:16px;font-weight:900}
+.filter-drawer-close{width:30px;height:30px;border-radius:50%;background:#F3F4F6;border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#666}
+.filter-drawer-body{flex:1;overflow-y:auto;padding:16px 18px}
+.filter-section{margin-bottom:20px}
+.filter-section-title{font-size:11px;font-weight:700;color:#999;letter-spacing:.08em;margin-bottom:8px}
+.filter-pill{display:block;width:100%;text-align:left;padding:9px 13px;border-radius:10px;border:1.5px solid #EEE;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s;background:white;color:#555;margin-bottom:5px}
+.filter-pill:hover{background:#F8FAFC}
+.filter-pill.active{background:#111;color:#fff;border-color:#111;font-weight:700}
+.cp-pill{display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:10px;border:1.5px solid #EEE;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s;background:white;color:#555;margin-bottom:5px;width:100%;text-align:left}
+.cp-pill:hover{background:#F8FAFC}
+.cp-pill.active{border-width:2px;font-weight:700}
+.filter-drawer-footer{padding:14px 18px;border-top:1px solid #F1F5F9;flex-shrink:0}
+.filter-reset-btn{width:100%;padding:10px;border-radius:10px;border:1.5px solid #E5E7EB;background:white;color:#555;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
+/* 上部に常時表示するアクティブフィルター表示 */
+.active-filters{position:fixed;top:58px;left:0;right:0;z-index:40;padding:6px 12px;display:flex;gap:6px;align-items:center;overflow-x:auto;-webkit-overflow-scrolling:touch;pointer-events:none}
+.active-filters::-webkit-scrollbar{display:none}
+.active-filters>*{pointer-events:auto;flex-shrink:0}
+.active-filter-chip{padding:5px 12px;border-radius:20px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;box-shadow:0 2px 8px rgba(0,0,0,.12);backdrop-filter:blur(8px);border:none;white-space:nowrap}
+.filter-open-btn{padding:6px 14px;border-radius:20px;border:none;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);color:#555;box-shadow:0 2px 8px rgba(0,0,0,.10);display:flex;align-items:center;gap:5px;white-space:nowrap;flex-shrink:0}
+/* 地図オーバーレイ情報 */
+.map-overlay-info{position:fixed;bottom:calc(var(--drawer-h) + 14px);left:50%;transform:translateX(-50%);z-index:40;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;color:#555;box-shadow:0 2px 10px rgba(0,0,0,.12);display:flex;align-items:center;gap:8px;transition:bottom .3s;pointer-events:none;white-space:nowrap}
+.cp-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;display:inline-block}
 
 /* ── スポットカウントバッジ ── */
 .spot-count{position:fixed;bottom:calc(var(--drawer-h) + 12px);right:14px;z-index:40;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;color:var(--text-sub);box-shadow:var(--shadow);transition:bottom .3s}
@@ -157,12 +181,31 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 <!-- 上部コントロールバー -->
 <div class="top-bar" id="top-bar" style="display:none">
   <div class="app-logo">🌸</div>
-  <input class="search-box" id="search-box" placeholder="場所・作品・CPを検索..." oninput="onSearch(this.value)">
+  <input class="search-box" id="search-box" placeholder="場所・作品・CPを検索..." oninput="onSearch(this.value)"><button class="top-btn" onclick="openFilterDrawer()" id="filter-btn" title="フィルター" style="display:none">🔍</button>
   <button class="top-btn" id="user-btn" onclick="toggleUserMenu()" title="メニュー">👤</button>
 </div>
 
 <!-- フィルターバー -->
-<div class="filter-bar" id="filter-bar" style="display:none"></div>
+<!-- アクティブフィルター表示バー（常時表示） -->
+<div class="active-filters" id="active-filters" style="display:none"></div>
+
+<!-- 左サイドフィルタードロワーオーバーレイ -->
+<div class="filter-drawer-overlay" id="filter-overlay" onclick="closeFilterDrawer()"></div>
+
+<!-- 左サイドフィルタードロワー -->
+<div class="filter-drawer" id="filter-drawer">
+  <div class="filter-drawer-header">
+    <div class="filter-drawer-title">🔍 絞り込み</div>
+    <button class="filter-drawer-close" onclick="closeFilterDrawer()">×</button>
+  </div>
+  <div class="filter-drawer-body" id="filter-drawer-body"></div>
+  <div class="filter-drawer-footer">
+    <button class="filter-reset-btn" onclick="resetFilters()">✕ フィルターをリセット</button>
+  </div>
+</div>
+
+<!-- 地図オーバーレイ情報 -->
+<div class="map-overlay-info" id="map-overlay-info" style="display:none"></div>
 
 <!-- ユーザーメニュー -->
 <div class="user-menu" id="user-menu">
@@ -462,19 +505,21 @@ onAuthStateChanged(auth,async user=>{
 });
 
 function showUI(){
-  ['top-bar','filter-bar','spot-count','locate-btn','drawer','fab'].forEach(id=>{
+  ['top-bar','active-filters','map-overlay-info','spot-count','locate-btn','drawer','fab'].forEach(id=>{
     document.getElementById(id).style.display='';
   });
   document.getElementById('top-bar').style.display='flex';
-  document.getElementById('filter-bar').style.display='flex';
+  document.getElementById('active-filters').style.display='flex';
+  document.getElementById('map-overlay-info').style.display='flex';
   document.getElementById('drawer').style.display='block';
   document.getElementById('fab').style.display='flex';
+  document.getElementById('filter-btn').style.display='flex';
   document.getElementById('spot-count').style.display='block';
   document.getElementById('locate-btn').style.display='flex';
   updateDrawerVar();
 }
 function hideUI(){
-  ['top-bar','filter-bar','spot-count','locate-btn','drawer','fab'].forEach(id=>{
+  ['top-bar','active-filters','map-overlay-info','spot-count','locate-btn','drawer','fab'].forEach(id=>{
     const el=document.getElementById(id); if(el)el.style.display='none';
   });
 }
@@ -574,41 +619,106 @@ function renderMarkers(){
 }
 
 // ── Filters ───────────────────────────────────────────────────
+// ── フィルタードロワー ────────────────────────────────────────
 function renderFilters(){
-  const allCps=getUniqueCPs();
-  // CP選択時は関連作品のみ表示、作品選択時は関連CPのみ表示
-  const visibleCps=activeSeries?getSeriesCps(activeSeries):allCps;
-  const relatedSeries=activeCp?getCpSeries(activeCp):[...new Set(APPS.map(a=>a.series).filter(Boolean))].sort();
+  renderActiveFilterBar();
+  renderFilterDrawerBody();
+  renderMapOverlayInfo();
+}
 
-  const typePills=[
-    {label:"すべて",onClick:"window._setType('すべて')",active:activeType==='すべて'&&!activeCp&&!activeSeries},
-    {label:"作品",onClick:"window._setType('作品')",active:activeType==='作品'},
-    {label:"プライベート",onClick:"window._setType('プライベート')",active:activeType==='プライベート'},
-    {label:"来日",onClick:"window._setType('来日')",active:activeType==='来日'},
-  ];
+function renderActiveFilterBar(){
+  const activeCount=[activeCp,activeSeries,activeType!=='すべて'?activeType:null].filter(Boolean).length;
+  const chips=[];
+
+  // フィルターを開くボタン（常に表示）
+  const filterIcon=activeCount>0?`<span style="background:#EC4899;color:white;border-radius:50%;width:18px;height:18px;font-size:10px;display:inline-flex;align-items:center;justify-content:center;font-weight:700">${activeCount}</span>`:'🔍';
+  chips.push(`<button class="filter-open-btn" onclick="openFilterDrawer()">${filterIcon} フィルター</button>`);
+
+  // アクティブなフィルターをチップ表示
+  if(activeType!=='すべて'){
+    chips.push(`<button class="active-filter-chip" style="background:#111;color:white" onclick="window._setType('すべて')">${activeType} ✕</button>`);
+  }
+  if(activeCp){
+    const cfg=cpCfg(activeCp);
+    chips.push(`<button class="active-filter-chip" style="background:${cfg.color};color:white;border:none" onclick="window._setCp(null)">${cfg.emoji||'💗'} ${activeCp} ✕</button>`);
+  }
+  if(activeSeries){
+    chips.push(`<button class="active-filter-chip" style="background:rgba(255,255,255,.92);color:#333;border:1.5px solid #ddd" onclick="window._setSeries('${activeSeries.replace(/'/g,"\'")}') ">${activeSeries} ✕</button>`);
+  }
+
+  document.getElementById('active-filters').innerHTML=chips.join('');
+}
+
+function renderFilterDrawerBody(){
+  const allCps=getUniqueCPs();
+  const relatedSeries=activeCp?getCpSeries(activeCp):[...new Set(APPS.map(a=>a.series).filter(Boolean))].sort();
+  const visibleCps=activeSeries?getSeriesCps(activeSeries):allCps;
+
+  const typePills=['すべて','作品','プライベート','来日'].map(t=>`
+    <button class="filter-pill${(activeType===t&&!activeCp&&!activeSeries&&t==='すべて')||(activeType===t&&t!=='すべて')?' active':''}" onclick="window._setType('${t}');${t==='すべて'?'closeFilterDrawer();':''}">${t}</button>`).join('');
+
   const cpPills=visibleCps.map(cp=>{
     const cfg=cpCfg(cp);
-    return {label:`${cfg.emoji||'💗'} ${cp}`,onClick:`window._setCp('${cp}')`,active:activeCp===cp,color:cfg.color};
-  });
-  const seriesPills=relatedSeries.map(s=>({label:s,onClick:`window._setSeries('${s.replace(/'/g,"\'")}')`,active:activeSeries===s}));
+    const isActive=activeCp===cp;
+    return `<button class="cp-pill${isActive?' active':''}" style="${isActive?`background:${cfg.color}18;border-color:${cfg.color};color:${cfg.color}`:''}" onclick="window._setCp('${cp}')">
+      <span class="cp-dot" style="background:${cfg.color||'#888'}"></span>
+      <span>${cfg.emoji||'💗'} ${cp}</span>
+    </button>`;
+  }).join('');
 
-  const typeHTML=typePills.map(p=>`<button class="filter-pill${p.active?' active':''}" onclick="${p.onClick}">${p.label}</button>`).join('');
-  const cpHTML=cpPills.map(p=>`<button class="filter-pill${p.active?' active':''}" onclick="${p.onClick}" style="${p.active?'':''}${p.color&&p.active?`background:${p.color};border-color:${p.color};color:white`:(p.color?`border-color:${p.color}66;color:${p.color}`:'')}">${p.label}</button>`).join('');
-  const seriesHTML=seriesPills.map(p=>`<button class="filter-pill${p.active?' active':''}" onclick="${p.onClick}" style="font-size:11px">${p.label}</button>`).join('');
+  const seriesSection=activeCp?`
+    <div class="filter-section">
+      <div class="filter-section-title">作品を絞り込む</div>
+      ${relatedSeries.map(s=>`<button class="filter-pill${activeSeries===s?' active':''}" onclick="window._setSeries('${s.replace(/'/g,"\'")}') ">${s}</button>`).join('')}
+    </div>`:
+    `<div class="filter-section">
+      <div class="filter-section-title">作品</div>
+      ${relatedSeries.map(s=>`<button class="filter-pill${activeSeries===s?' active':''}" onclick="window._setSeries('${s.replace(/'/g,"\'")}') ;openFilterDrawer()">${s}</button>`).join('')}
+    </div>`;
 
-  // 2段構成：1段目=分類+CP、2段目=作品（CPまたは作品選択時に出現）
-  document.getElementById('filter-bar').innerHTML=`
-    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch">${typeHTML}${cpHTML}</div>
-    ${(activeCp||activeSeries)?`<div style="display:flex;gap:5px;overflow-x:auto;padding-top:2px;-webkit-overflow-scrolling:touch">${seriesHTML}</div>`:''}
-  `;
-  document.getElementById('filter-bar').style.flexDirection='column';
-  document.getElementById('filter-bar').style.gap='0';
+  document.getElementById('filter-drawer-body').innerHTML=`
+    <div class="filter-section">
+      <div class="filter-section-title">分類</div>
+      ${typePills}
+    </div>
+    <div class="filter-section">
+      <div class="filter-section-title">CP</div>
+      ${cpPills||'<div style="color:#bbb;font-size:13px">CPが登録されていません</div>'}
+    </div>
+    ${seriesSection}`;
 }
+
+function renderMapOverlayInfo(){
+  const filtered=getFiltered();
+  const el=document.getElementById('map-overlay-info');
+  if(!el)return;
+  const parts=[];
+  if(activeCp){const cfg=cpCfg(activeCp);parts.push(`<span class="cp-dot" style="background:${cfg.color}"></span><span>${cfg.emoji||'💗'} ${activeCp}</span>`);}
+  if(activeSeries)parts.push(`<span>${activeSeries}</span>`);
+  if(activeType!=='すべて')parts.push(`<span>${activeType}</span>`);
+  parts.push(`<span style="color:#bbb;font-weight:400">📍 ${filtered.length}件</span>`);
+  el.innerHTML=parts.join('<span style="color:#ddd">|</span>');
+}
+
+window.openFilterDrawer=function(){
+  renderFilterDrawerBody();
+  document.getElementById('filter-drawer').classList.add('open');
+  document.getElementById('filter-overlay').classList.add('open');
+};
+window.closeFilterDrawer=function(){
+  document.getElementById('filter-drawer').classList.remove('open');
+  document.getElementById('filter-overlay').classList.remove('open');
+};
+window.resetFilters=function(){
+  activeType='すべて';activeCp=null;activeSeries=null;
+  renderFilters();renderMarkers();renderDrawer();
+};
 
 // ── Drawer ───────────────────────────────────────────────────
 function renderDrawer(){
   const filtered=getFiltered();
   document.getElementById('spot-count').textContent=`📍 ${filtered.length}件`;
+  renderMapOverlayInfo();
   document.getElementById('drawer-title').textContent=`スポット一覧 ${filtered.length}件`;
   const el=document.getElementById('drawer-list');
   if(!filtered.length){
@@ -686,8 +796,7 @@ window.closeDetailDirect=()=>{
 // ── Filter actions ────────────────────────────────────────────
 window._setType=t=>{activeType=t;activeCp=null;activeSeries=null;renderFilters();renderMarkers();renderDrawer();};
 window._setCp=cp=>{
-  activeCp=activeCp===cp?null:cp;
-  // CP変更時に関連しない作品選択をリセット
+  activeCp=(cp===null||activeCp===cp)?null:cp;
   if(activeSeries&&activeCp&&!getCpSeries(activeCp).includes(activeSeries))activeSeries=null;
   renderFilters();renderMarkers();renderDrawer();
 };
