@@ -192,6 +192,17 @@
   </div>
 </header>
 
+<!-- 相互リンクバナー -->
+<a href="https://thai-gl-works-2c835.web.app/index.html" target="_blank" style="display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#FDF2F8,#F5F3FF);border-bottom:1.5px solid #F9A8D4;padding:9px 18px;text-decoration:none;font-family:'Noto Sans JP',sans-serif;">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span style="font-size:16px">🌺</span>
+    <div>
+      <div style="font-size:12px;font-weight:800;color:#9333EA;">Thai GL Works</div>
+      <div style="font-size:10px;color:#a855f7;">詳細情報・最新ニュースはこちら →</div>
+    </div>
+  </div>
+  <span style="font-size:18px;color:#C4B5FD;">›</span>
+</a>
 <div class="legend" id="legend"></div>
 
 <div class="map-wrap">
@@ -233,44 +244,83 @@
 // CONFIG
 // ============================================================
 const SERIES = {
-  "GAP The Series":  { color:"#EC4899", light:"#FDF2F8", border:"#F9A8D4", shadow:"rgba(236,72,153,0.18)" },
-  "URANUS2324":      { color:"#3B82F6", light:"#EFF6FF", border:"#93C5FD", shadow:"rgba(59,130,246,0.18)" },
-  "The Loyal Pin":   { color:"#D97706", light:"#FFFBEB", border:"#FCD34D", shadow:"rgba(217,119,6,0.18)"  },
-  "プライベート":      { color:"#7C3AED", light:"#F5F3FF", border:"#C4B5FD", shadow:"rgba(124,58,237,0.18)"},
-  "来日":            { color:"#059669", light:"#ECFDF5", border:"#6EE7B7", shadow:"rgba(5,150,105,0.18)"  },
+  // FreenBecky
+  "GAP The Series":        { color:"#EC4899", light:"#FDF2F8", border:"#F9A8D4", shadow:"rgba(236,72,153,0.18)" },
+  "URANUS2324":            { color:"#3B82F6", light:"#EFF6FF", border:"#93C5FD", shadow:"rgba(59,130,246,0.18)" },
+  "The Loyal Pin":         { color:"#D97706", light:"#FFFBEB", border:"#FCD34D", shadow:"rgba(217,119,6,0.18)"  },
+  "FreenBecky Private":    { color:"#7C3AED", light:"#F5F3FF", border:"#C4B5FD", shadow:"rgba(124,58,237,0.18)"},
+  // PondPhuwin
+  "The Secret Of Us":      { color:"#0891B2", light:"#ECFEFF", border:"#67E8F9", shadow:"rgba(8,145,178,0.18)"  },
+  // NearMine
+  "Lucky My Love":         { color:"#65A30D", light:"#F7FEE7", border:"#BEF264", shadow:"rgba(101,163,13,0.18)" },
+  // Blank
+  "Blank The Series":      { color:"#DC2626", light:"#FEF2F2", border:"#FCA5A5", shadow:"rgba(220,38,38,0.18)"  },
+  // 共通
+  "プライベート":              { color:"#9333EA", light:"#FAF5FF", border:"#D8B4FE", shadow:"rgba(147,51,234,0.18)"},
+  "来日":                  { color:"#059669", light:"#ECFDF5", border:"#6EE7B7", shadow:"rgba(5,150,105,0.18)"  },
 };
 
 const ICONS = {
   "スタジオ":"🎬","ショッピング":"🛍️","レストラン":"🍖","ホテル":"🏨",
   "カフェ":"☕","観光地":"📍","邸宅/スタジオ":"🏛️","寺院":"⛩️",
-  "大学":"🎓","図書館":"📚","アート":"🎨",
+  "大学":"🎓","図書館":"📚","アート":"🎨","病院":"🏥","スポーツ":"⚽",
+  "放送局":"📺","公園":"🌳","国立公園":"🏞️",
 };
 
 // ============================================================
 // DATA — スポットを追加するときはここに追記してください
 // ============================================================
 const SPOTS = [
-  { id:1,  name:"99 House Studio",          desc:"Monの家として使用。予約すれば見学可能。",          cat:"スタジオ",    type:"作品",      series:"GAP The Series", cp:"FreenBecky", lat:13.7563, lng:100.5018, url:"https://maps.app.goo.gl/xxx" },
-  { id:2,  name:"セントラルビレッジ",              desc:"モールのシーン。空港近く。",                    cat:"ショッピング",  type:"作品",      series:"GAP The Series", cp:"FreenBecky", lat:13.6900, lng:100.7500, url:"https://maps.app.goo.gl/xxx" },
-  { id:3,  name:"Pata Plantation",          desc:"Samの誕生日会や食事シーン。",                  cat:"レストラン",   type:"作品",      series:"GAP The Series", cp:"FreenBecky", lat:13.8500, lng:100.6200, url:"https://maps.app.goo.gl/xxx" },
-  { id:4,  name:"ヴェラノ ビーチ ヴィラ",            desc:"新婚旅行（？）のシーン。",                    cat:"ホテル",      type:"作品",      series:"GAP The Series", cp:"FreenBecky", lat:12.9300, lng:100.8800, url:"https://maps.app.goo.gl/xxx" },
-  { id:5,  name:"KOPI KUAPA",               desc:"ソフトクリームを食べるシーン。",                  cat:"カフェ",      type:"作品",      series:"URANUS2324",     cp:"FreenBecky", lat:13.7650, lng:100.5340, url:"https://maps.app.goo.gl/xxx" },
-  { id:6,  name:"ブンスーン橋",                  desc:"劇中の印象的な橋。",                        cat:"観光地",      type:"作品",      series:"URANUS2324",     cp:"FreenBecky", lat:18.7900, lng:98.9800,  url:"https://maps.app.goo.gl/xxx" },
-  { id:7,  name:"Wawa House",               desc:"アニリン（おばあ様）の屋敷。外観見学可能。",            cat:"邸宅/スタジオ", type:"作品",      series:"The Loyal Pin",  cp:"FreenBecky", lat:13.7430, lng:100.5270, url:"https://maps.app.goo.gl/xxx" },
-  { id:8,  name:"ドーイ・ステープ",                desc:"チェンマイでのダンスシーン等。",                  cat:"寺院",       type:"作品",      series:"The Loyal Pin",  cp:"FreenBecky", lat:18.8050, lng:98.9220,  url:"https://maps.app.goo.gl/xxx" },
-  { id:9,  name:"メモリー・ギャラリー",              desc:"バンコクの古い街並みを再現したエリア。",              cat:"スタジオ",    type:"作品",      series:"The Loyal Pin",  cp:"FreenBecky", lat:13.7480, lng:100.4920, url:"https://maps.app.goo.gl/xxx" },
-  { id:10, name:"チュラロンコン大学",               desc:"Pinが通っていた大学のモデル。",                cat:"大学",       type:"作品",      series:"The Loyal Pin",  cp:"FreenBecky", lat:13.7300, lng:100.5250, url:"https://maps.app.goo.gl/xxx" },
-  { id:11, name:"観覧車スカイ（アジアティーク）",        desc:"伝説のデート場所。アジアティーク内の観覧車。",          cat:"観光地",      type:"プライベート", series:"プライベート",      cp:"FreenBecky", lat:13.7200, lng:100.4980, url:"https://maps.app.goo.gl/xxx" },
-  { id:12, name:"ランシット大学",                 desc:"Freenの母校。SCOYのロケ地でもある。",          cat:"大学",       type:"プライベート", series:"プライベート",      cp:"FreenBecky", lat:14.0200, lng:100.6700, url:"https://maps.app.goo.gl/xxx" },
-  { id:13, name:"COK Cream of The Koff",   desc:"FreenがBeckyを連れて行ったカフェ。",           cat:"カフェ",      type:"プライベート", series:"プライベート",      cp:"FreenBecky", lat:13.7550, lng:100.5150, url:"https://maps.app.goo.gl/xxx" },
-  { id:14, name:"アリーヤ・ムーカタ",               desc:"屋上のムーカタ屋さん。店員さんが親切。",             cat:"レストラン",   type:"プライベート", series:"プライベート",      cp:"FreenBecky", lat:13.8100, lng:100.5600, url:"https://maps.app.goo.gl/xxx" },
-  { id:15, name:"カニット・ムーカタ",               desc:"路面のムーカタ屋さん。ローカルな雰囲気。",            cat:"レストラン",   type:"プライベート", series:"プライベート",      cp:"FreenBecky", lat:13.8050, lng:100.5550, url:"https://maps.app.goo.gl/xxx" },
-  { id:16, name:"ワット・パークナム",               desc:"美しい天井画のある寺院。拝観無料。",               cat:"寺院",       type:"プライベート", series:"プライベート",      cp:"FreenBecky", lat:13.7200, lng:100.4750, url:"https://maps.app.goo.gl/xxx" },
-  { id:17, name:"アイコンサイアム",                desc:"アフターユー（かき氷）やスタバなど。",              cat:"ショッピング",  type:"プライベート", series:"プライベート",      cp:"FreenBecky", lat:13.7230, lng:100.5120, url:"https://maps.app.goo.gl/xxx" },
-  { id:18, name:"ニールソン・ヘイズ・ライブラリー",       desc:"Beckyが友人のイベントで訪れた場所。",            cat:"図書館",      type:"プライベート", series:"プライベート",      cp:"FreenBecky", lat:13.7240, lng:100.5380, url:"https://maps.app.goo.gl/xxx" },
-  { id:19, name:"Kaembum Fresh Coffee",    desc:"Freenのお母様のカフェ。バンコクから車で3時間。",     cat:"カフェ",      type:"プライベート", series:"プライベート",      cp:"FreenBecky", lat:15.8000, lng:100.9900, url:"https://maps.app.goo.gl/xxx" },
-  { id:20, name:"Soul Salt Paint Bar",     desc:"お絵描きデートをしていた場所。",                  cat:"アート",      type:"プライベート", series:"プライベート",      cp:"FreenBecky", lat:13.7450, lng:100.5320, url:"https://maps.app.goo.gl/xxx" },
-  { id:21, name:"富士山",                    desc:"フリべきがはしゃいでたあたり。",                   cat:"観光地",      type:"来日",      series:"来日",           cp:"FreenBecky", lat:35.3606, lng:138.7274, url:"https://maps.app.goo.gl/xxx" },
+  // ── FreenBecky / GAP The Series ──────────────────────────
+  { id:1,  name:"99 House Studio",              desc:"Monの家として使用。FB予約可・入場500B。現地のおっちゃんは英語不可。",  cat:"スタジオ",    type:"作品",      series:"GAP The Series",     cp:"FreenBecky",  lat:13.8200, lng:100.8900, url:"https://maps.app.goo.gl/oecr7KbYiFSKoNB47" },
+  { id:2,  name:"セントラルビレッジ",                desc:"モールのシーン。スワンナプーム空港近く。Central wOrldから無料バスあり。",cat:"ショッピング",  type:"作品",      series:"GAP The Series",     cp:"FreenBecky",  lat:13.6860, lng:100.7470, url:"https://maps.app.goo.gl/RGse44eadM7d7ULPA" },
+  { id:3,  name:"エイト・スタジオ",                 desc:"オフィス内シーンの撮影スタジオ。一般公開なし。貸切なら入室可能。",       cat:"スタジオ",    type:"作品",      series:"GAP The Series",     cp:"FreenBecky",  lat:13.7480, lng:100.6100, url:"https://maps.app.goo.gl/vthf2PSzwC8RSZPZA" },
+  { id:4,  name:"Pata Plantation",              desc:"お寿司シーン・Samの誕生日会。多国籍料理が有名。",               cat:"レストラン",   type:"作品",      series:"GAP The Series",     cp:"FreenBecky",  lat:13.8760, lng:100.5100, url:"https://maps.app.goo.gl/aErB72xjyR3TdCRW7" },
+  { id:5,  name:"グランド チャオプラヤー",             desc:"エビデートのレストラン。",                                cat:"レストラン",   type:"作品",      series:"GAP The Series",     cp:"FreenBecky",  lat:14.3590, lng:100.5700, url:"https://maps.app.goo.gl/LJGjGWQSxU9PwDop9" },
+  { id:6,  name:"ヴェラノ ビーチ ヴィラ",              desc:"SamMon新婚旅行（？）シーン。ペッチャブリー県。",               cat:"ホテル",      type:"作品",      series:"GAP The Series",     cp:"FreenBecky",  lat:12.8880, lng:99.9500,  url:"https://maps.app.goo.gl/6XCrA6kY6nQdTcUV7" },
+  { id:7,  name:"Wawa House",                   desc:"各ドラマに登場する宮殿。カフェで飲物購入で庭園見学可。帰りタクシー注意。", cat:"邸宅/スタジオ", type:"作品",      series:"GAP The Series",     cp:"FreenBecky",  lat:13.8420, lng:100.3810, url:"https://maps.app.goo.gl/Vk49u8vVE8giRDk56" },
+
+  // ── FreenBecky / URANUS2324 ──────────────────────────────
+  { id:8,  name:"KOPI KUAPA",                   desc:"ソフトクリームを食べるシーン。パンガー県タクアパー。",              cat:"カフェ",      type:"作品",      series:"URANUS2324",         cp:"FreenBecky",  lat:8.8590,  lng:98.3420,  url:"https://maps.app.goo.gl/wVnpdDrcAE8H4wjK7" },
+  { id:9,  name:"ブンスーン橋",                    desc:"劇中の印象的な橋。パンガー県タクアパー。",                     cat:"観光地",      type:"作品",      series:"URANUS2324",         cp:"FreenBecky",  lat:8.8700,  lng:98.3300,  url:"https://maps.app.goo.gl/1urYpt4wELF2ycrJ6" },
+  { id:10, name:"カオソック国立公園",                desc:"ジャングルと湖が美しい国立公園。サラートターニー県。",              cat:"国立公園",    type:"作品",      series:"URANUS2324",         cp:"FreenBecky",  lat:8.9160,  lng:98.5270,  url:"https://maps.app.goo.gl/xTZmYy5SHjYMMUS38" },
+
+  // ── FreenBecky / The Loyal Pin ───────────────────────────
+  { id:11, name:"ドーイ・ステープ",                 desc:"チェンマイのダンスシーン等。チェンマイ随一の名刹。",              cat:"寺院",       type:"作品",      series:"The Loyal Pin",      cp:"FreenBecky",  lat:18.8050, lng:98.9220,  url:"https://maps.app.goo.gl/xxx" },
+  { id:12, name:"メモリー・ギャラリー",               desc:"バンコクの古い街並みを再現したエリア。",                      cat:"スタジオ",    type:"作品",      series:"The Loyal Pin",      cp:"FreenBecky",  lat:13.7480, lng:100.4920, url:"https://maps.app.goo.gl/xxx" },
+  { id:13, name:"チュラロンコン大学",                desc:"Pinが通っていた大学のモデル。",                           cat:"大学",       type:"作品",      series:"The Loyal Pin",      cp:"FreenBecky",  lat:13.7300, lng:100.5250, url:"https://maps.app.goo.gl/xxx" },
+
+  // ── FreenBecky / プライベート ─────────────────────────────
+  { id:14, name:"観覧車スカイ（アジアティーク）",          desc:"伝説のデート場所。アジアティーク・ザ・リバーフロント内。屋外なので雨・酷暑注意。",cat:"観光地",   type:"プライベート", series:"プライベート",          cp:"FreenBecky",  lat:13.7200, lng:100.4980, url:"https://maps.app.goo.gl/h3UUewCXuyo9RgJ2A" },
+  { id:15, name:"ランシット大学",                   desc:"Freen・Hengの母校。SCOYのロケ地でもある。一般入場可。レッドライン最寄りからバイタク推奨。",cat:"大学",type:"プライベート", series:"プライベート",          cp:"FreenBecky",  lat:14.0240, lng:100.6170, url:"https://maps.app.goo.gl/PRBVyKu3QJguGX846" },
+  { id:16, name:"COK Cream of The Koff",        desc:"FreenがBeckyを連れて行ったカフェ。ランシット大学近く、まとめて訪問推奨。",cat:"カフェ",  type:"プライベート", series:"プライベート",          cp:"FreenBecky",  lat:14.0200, lng:100.6050, url:"https://maps.app.goo.gl/Ywp8ucXi91ZbYNB4A" },
+  { id:17, name:"B-Story Garden Café",          desc:"Dreamのロケ地。外に雪が降る演出あり。FreenBeckyデートスポット。",   cat:"カフェ",      type:"プライベート", series:"プライベート",          cp:"FreenBecky",  lat:13.8100, lng:100.6100, url:"https://maps.app.goo.gl/p3hGApz1xLmu8NQS7" },
+  { id:18, name:"アリーヤ・ムーカタ",                desc:"屋上のムーカタ屋さん。店員さんが親切。",                      cat:"レストラン",   type:"プライベート", series:"プライベート",          cp:"FreenBecky",  lat:13.8100, lng:100.5600, url:"https://maps.app.goo.gl/xxx" },
+  { id:19, name:"ワット・パークナム",                desc:"美しい天井画のある寺院。拝観無料。",                         cat:"寺院",       type:"プライベート", series:"プライベート",          cp:"FreenBecky",  lat:13.7200, lng:100.4750, url:"https://maps.app.goo.gl/xxx" },
+  { id:20, name:"アイコンサイアム",                  desc:"アフターユー（かき氷）やスタバなど。チャオプラヤー川沿い。",          cat:"ショッピング",  type:"プライベート", series:"プライベート",          cp:"FreenBecky",  lat:13.7230, lng:100.5120, url:"https://maps.app.goo.gl/xxx" },
+  { id:21, name:"ニールソン・ヘイズ・ライブラリー",         desc:"Beckyが友人のイベントで訪れた場所。",                      cat:"図書館",      type:"プライベート", series:"プライベート",          cp:"FreenBecky",  lat:13.7240, lng:100.5380, url:"https://maps.app.goo.gl/xxx" },
+  { id:22, name:"Soul Salt Paint Bar",          desc:"お絵描きデートをしていた場所。",                             cat:"アート",      type:"プライベート", series:"プライベート",          cp:"FreenBecky",  lat:13.7450, lng:100.5320, url:"https://maps.app.goo.gl/xxx" },
+  { id:23, name:"Kaembum Fresh Coffee",         desc:"Freenのお母様のカフェ。バンコクから車で3時間。",               cat:"カフェ",      type:"プライベート", series:"プライベート",          cp:"FreenBecky",  lat:15.8000, lng:100.9900, url:"https://maps.app.goo.gl/xxx" },
+
+  // ── FreenBecky / 来日 ─────────────────────────────────────
+  { id:24, name:"富士山",                        desc:"フリべきがはしゃいでたあたり。",                             cat:"観光地",      type:"来日",      series:"来日",               cp:"FreenBecky",  lat:35.3606, lng:138.7274, url:"https://maps.app.goo.gl/xxx" },
+
+  // ── PondPhuwin / The Secret Of Us ────────────────────────
+  { id:25, name:"プリンス・スワンナプーム病院",           desc:"P'morが働く病院のロケ地。",                             cat:"病院",       type:"作品",      series:"The Secret Of Us",   cp:"PondPhuwin",  lat:13.6800, lng:100.7400, url:"https://maps.app.goo.gl/CSoGk76mspeSKxK49" },
+  { id:26, name:"Ternajachob Cozy Cafe",        desc:"ケンカしてバッチバチだった時のカフェ。",                       cat:"カフェ",      type:"作品",      series:"The Secret Of Us",   cp:"PondPhuwin",  lat:13.7240, lng:100.6710, url:"https://maps.app.goo.gl/kmGFyTKWVF9nBWvC9" },
+  { id:27, name:"ルネッサンス バンコク ラッチャプラソーン", desc:"ジムのシーン・バーのシーン。高級ホテル。",                     cat:"ホテル",      type:"作品",      series:"The Secret Of Us",   cp:"PondPhuwin",  lat:13.7440, lng:100.5490, url:"https://maps.app.goo.gl/cgFyTYKL89rfAtfPA" },
+  { id:28, name:"トスカナ ヴァレー",                  desc:"アメリカシーンのロケ地。ナコーンラーチャシーマー県。",              cat:"ホテル",      type:"作品",      series:"The Secret Of Us",   cp:"PondPhuwin",  lat:14.6600, lng:101.5400, url:"https://maps.app.goo.gl/sjFWxdRiX31r98L58" },
+  { id:29, name:"Channel 3",                    desc:"PondPhuwinを輩出した放送局。ロビーで出待ち可。",               cat:"放送局",      type:"作品",      series:"The Secret Of Us",   cp:"PondPhuwin",  lat:13.7220, lng:100.5750, url:"https://maps.app.goo.gl/YJhFFHAQxanvpdhJ9" },
+
+  // ── NearMine / Lucky My Love ─────────────────────────────
+  { id:30, name:"Hario Cafe",                   desc:"デートシーンのカフェ。スクンビット33。",                       cat:"カフェ",      type:"作品",      series:"Lucky My Love",      cp:"NearMine",    lat:13.7300, lng:100.5740, url:"https://maps.app.goo.gl/F95wb2axwPGnZ2xX9" },
+  { id:31, name:"ロフト バンコク ホテル",              desc:"Nabdaoの部屋・会社・カフェ・飲み会シーンなど多数。周辺は中東系地域。",  cat:"ホテル",      type:"作品",      series:"Lucky My Love",      cp:"NearMine",    lat:13.7550, lng:100.5440, url:"https://maps.app.goo.gl/WJA221DDST3Mv9fQ9" },
+  { id:32, name:"D-Sports Stadium",             desc:"スポーツシーンのロケ地。スクンビット63。",                     cat:"スポーツ",    type:"作品",      series:"Lucky My Love",      cp:"NearMine",    lat:13.7270, lng:100.5870, url:"https://maps.app.goo.gl/VHww6dgwvEqZWEyZ8" },
+  { id:33, name:"Hotel Wizpark Ratchada",        desc:"Weaさんの家のロケ地。最終話の車から降りるシーンもここ。",           cat:"ホテル",      type:"作品",      series:"Lucky My Love",      cp:"NearMine",    lat:13.7630, lng:100.5620, url:"https://maps.app.goo.gl/w4XJwWcx3Nw5sJxY6" },
+  { id:34, name:"J-パーク 日本村 シーラチャ",           desc:"日本風ショッピングモール。シーラチャ。",                       cat:"ショッピング",  type:"作品",      series:"Lucky My Love",      cp:"NearMine",    lat:13.1500, lng:100.9300, url:"https://maps.app.goo.gl/wfUDqtm2EsTga6hA8" },
+
+  // ── Blank The Series（99 House Studio 共通ロケ地）────────────
+  { id:35, name:"99 House Studio（Blank）",      desc:"Sam邸とアヌンちゃんの家が隣同士。同じ管理人。FBで予約・入場500B。",  cat:"スタジオ",    type:"作品",      series:"Blank The Series",   cp:"Blank Cast",  lat:13.8200, lng:100.8900, url:"https://maps.app.goo.gl/oecr7KbYiFSKoNB47" },
 ];
 
 // ============================================================
