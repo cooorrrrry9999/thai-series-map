@@ -1185,9 +1185,14 @@ window.updateCpListForSeries=function(seriesVal){
 window.autoCoords=function(url,latId,lngId,msgId){
   const u=url.trim();
   if(!u){const el=document.getElementById(msgId);if(el)el.innerHTML='';return;}
-  let m=u.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)[,z]/);
+  // 優先度1: !3d!4d → 実際のピンの座標（最も正確）
+  let m=u.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+  // 優先度2: ?q=lat,lng
   if(!m)m=u.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+  // 優先度3: ll=lat,lng
   if(!m)m=u.match(/ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+  // 優先度4: /@lat,lng,zoom（マップ中心なので最後の手段）
+  if(!m)m=u.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)[,z]/);
   const el=document.getElementById(msgId);
   if(m){
     document.getElementById(latId).value=m[1];
