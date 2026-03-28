@@ -389,7 +389,7 @@ const ADMIN  = "cory92059@gmail.com";
 const GL_URL = "https://thai-gl-works-2c835.web.app/index.html";
 
 // キャッシュ（開発中30分）
-const TTL=30*60*1000, CL='tsmap_loc_v2', CA='tsmap_app_v2', CS='tsmap_series_v2', CC='tsmap_cp_v1', CK='tsmap_cat_v1';
+const TTL=7*24*60*60*1000, CL='tsmap_loc_v2', CA='tsmap_app_v2', CS='tsmap_series_v2', CC='tsmap_cp_v1', CK='tsmap_cat_v1'; // 7日キャッシュ（公開用）
 const sc=(k,d)=>{try{localStorage.setItem(k,JSON.stringify({ts:Date.now(),data:d}))}catch(e){}};
 const lc=k=>{try{const r=localStorage.getItem(k);if(!r)return null;const{ts,data}=JSON.parse(r);if(Date.now()-ts>TTL){localStorage.removeItem(k);return null;}return data;}catch(e){return null;}};
 

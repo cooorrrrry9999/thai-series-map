@@ -242,25 +242,76 @@ onAuthStateChanged(auth,async user=>{
 });
 
 // ── Data ──────────────────────────────────────────────────────
-async function loadAll(){
-  const[ls,as,ss,cm,sm,ca]=await Promise.all([
-    getDocs(collection(db,'locations')),
-    getDocs(collection(db,'appearances')),
-    getDocs(collection(db,'location_submissions')),
-    getDocs(collection(db,'cp_master')).catch(()=>({docs:[]})),
-    getDocs(collection(db,'series_master')).catch(()=>({docs:[]})),
-    getDocs(collection(db,'category_master')).catch(()=>({docs:[]})),
-  ]);
-  LOCS=ls.docs.map(d=>({id:d.id,...d.data()}));
-  APPS=as.docs.map(d=>({id:d.id,...d.data()}));
-  SUBS=ss.docs.map(d=>({id:d.id,...d.data()}));
-  CP_M=cm.docs.map(d=>({id:d.id,...d.data()}));
-  SERIES_M=sm.docs.map(d=>({id:d.id,...d.data()}));
-  CAT_M=ca.docs.map(d=>({id:d.id,...d.data()}));
+// ── キャッシュ設定（admin用・短め）──────────────────────────
+const ADMIN_CACHE_TTL = 5*60*1000; // 5分
+const CACHE_KEYS={locs:'adm_loc',apps:'adm_app',subs:'adm_sub',cp:'adm_cp',series:'adm_series',cat:'adm_cat'};
+const saveAC=(k,d)=>{try{sessionStorage.setItem(k,JSON.stringify({ts:Date.now(),data:d}));}catch(e){}};
+const loadAC=(k)=>{try{const r=sessionStorage.getItem(k);if(!r)return null;const{ts,data}=JSON.parse(r);if(Date.now()-ts>ADMIN_CACHE_TTL){sessionStorage.removeItem(k);return null;}return data;}catch(e){return null;}};
+function clearAdminCache(){Object.values(CACHE_KEYS).forEach(k=>sessionStorage.removeItem(k));}
+
+async function loadAll(forceRefresh=false){
+  const cl=!forceRefresh&&loadAC(CACHE_KEYS.locs);
+  const ca_=!forceRefresh&&loadAC(CACHE_KEYS.apps);
+  const cs=!forceRefresh&&loadAC(CACHE_KEYS.subs);
+  const cc=!forceRefresh&&loadAC(CACHE_KEYS.cp);
+  const csm=!forceRefresh&&loadAC(CACHE_KEYS.series);
+  const ccat=!forceRefresh&&loadAC(CACHE_KEYS.cat);
+
+  const fetches=[];
+  if(!cl)fetches.push(getDocs(collection(db,'locations')));
+  else fetches.push(null);
+  if(!ca_)fetches.push(getDocs(collection(db,'appearances')));
+  else fetches.push(null);
+  if(!cs)fetches.push(getDocs(collection(db,'location_submissions')));
+  else fetches.push(null);
+  if(!cc)fetches.push(getDocs(collection(db,'cp_master')).catch(()=>({docs:[]})));
+  else fetches.push(null);
+  if(!csm)fetches.push(getDocs(collection(db,'series_master')).catch(()=>({docs:[]})));
+  else fetches.push(null);
+  if(!ccat)fetches.push(getDocs(collection(db,'category_master')).catch(()=>({docs:[]})));
+  else fetches.push(null);
+
+  const results=await Promise.all(fetches.map(f=>f||Promise.resolve(null)));
+  LOCS=results[0]?results[0].docs.map(d=>({id:d.id,...d.data()})):cl;
+  APPS=results[1]?results[1].docs.map(d=>({id:d.id,...d.data()})):ca_;
+  SUBS=results[2]?results[2].docs.map(d=>({id:d.id,...d.data()})):cs;
+  CP_M=results[3]?results[3].docs.map(d=>({id:d.id,...d.data()})):cc;
+  SERIES_M=results[4]?results[4].docs.map(d=>({id:d.id,...d.data()})):csm;
+  CAT_M=results[5]?results[5].docs.map(d=>({id:d.id,...d.data()})):ccat;
+
+  if(results[0])saveAC(CACHE_KEYS.locs,LOCS);
+  if(results[1])saveAC(CACHE_KEYS.apps,APPS);
+  if(results[2])saveAC(CACHE_KEYS.subs,SUBS);
+  if(results[3])saveAC(CACHE_KEYS.cp,CP_M);
+  if(results[4])saveAC(CACHE_KEYS.series,SERIES_M);
+  if(results[5])saveAC(CACHE_KEYS.cat,CAT_M);
+
   const n=SUBS.filter(s=>s.status==='未承認').length;
   const badge=document.getElementById('pending-badge');
-  badge.style.display=n?'inline':'none'; badge.textContent=n;
+  if(badge){badge.style.display=n?'inline':'none';badge.textContent=n;}
 }
+
+// ── ローカルデータ更新（Firestore再取得なし）───────────────────
+function localUpdateLoc(id,data){
+  const idx=LOCS.findIndex(l=>l.id===id);
+  if(idx>=0)LOCS[idx]={...LOCS[idx],...data};
+  saveAC(CACHE_KEYS.locs,LOCS);
+}
+function localAddLoc(id,data){LOCS.push({id,...data});saveAC(CACHE_KEYS.locs,LOCS);}
+function localDeleteLoc(id){LOCS=LOCS.filter(l=>l.id!==id);saveAC(CACHE_KEYS.locs,LOCS);}
+function localUpdateApp(id,data){const idx=APPS.findIndex(a=>a.id===id);if(idx>=0)APPS[idx]={...APPS[idx],...data};saveAC(CACHE_KEYS.apps,APPS);}
+function localAddApp(id,data){APPS.push({id,...data});saveAC(CACHE_KEYS.apps,APPS);}
+function localDeleteApp(id){APPS=APPS.filter(a=>a.id!==id);saveAC(CACHE_KEYS.apps,APPS);}
+function localUpdateSub(id,data){const idx=SUBS.findIndex(s=>s.id===id);if(idx>=0)SUBS[idx]={...SUBS[idx],...data};saveAC(CACHE_KEYS.subs,SUBS);}
+function localUpdateCp(id,data){const idx=CP_M.findIndex(m=>m.id===id);if(idx>=0)CP_M[idx]={...CP_M[idx],...data};saveAC(CACHE_KEYS.cp,CP_M);}
+function localAddCp(id,data){CP_M.push({id,...data});saveAC(CACHE_KEYS.cp,CP_M);}
+function localDeleteCp(id){CP_M=CP_M.filter(m=>m.id!==id);saveAC(CACHE_KEYS.cp,CP_M);}
+function localUpdateSeries(id,data){const idx=SERIES_M.findIndex(m=>m.id===id);if(idx>=0)SERIES_M[idx]={...SERIES_M[idx],...data};saveAC(CACHE_KEYS.series,SERIES_M);}
+function localAddSeries(id,data){SERIES_M.push({id,...data});saveAC(CACHE_KEYS.series,SERIES_M);}
+function localDeleteSeries(id){SERIES_M=SERIES_M.filter(m=>m.id!==id);saveAC(CACHE_KEYS.series,SERIES_M);}
+function localUpdateCat(id,data){const idx=CAT_M.findIndex(m=>m.id===id);if(idx>=0)CAT_M[idx]={...CAT_M[idx],...data};saveAC(CACHE_KEYS.cat,CAT_M);}
+function localAddCat(id,data){CAT_M.push({id,...data});saveAC(CACHE_KEYS.cat,CAT_M);}
+function localDeleteCat(id){CAT_M=CAT_M.filter(m=>m.id!==id);saveAC(CACHE_KEYS.cat,CAT_M);}
 
 // ── Navigation ─────────────────────────────────────────────────
 const PAGE_TITLES={dashboard:'📊 ダッシュボード',pending:'📬 承認待ち',spots:'📍 スポット一覧',add:'➕ 新規追加',cp:'💗 CP管理',series:'🎬 作品設定',category:'📂 カテゴリー'};
@@ -491,8 +542,10 @@ window.addApp=async function(locId){
   try{
     await addDoc(collection(db,'appearances'),{location_id:locId,cp,series,type,scene_desc:scene,sns_url:sns,status:'公開'});
     msg.style.color='var(--green)';msg.textContent='✅ 追加しました';
-    clearC(); await loadAll();
-    setTimeout(()=>renderSpotDetail(locId),400);
+    clearC();
+    const newAppId='local_'+Date.now();
+    localAddApp(newAppId,{location_id:locId,cp,series,type,scene_desc:scene,sns_url:sns,status:'公開'});
+    setTimeout(()=>renderSpotDetail(locId),200);
   }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
 };
 
@@ -596,7 +649,8 @@ window.saveLoc=async function(locId){
       memo:document.getElementById('el-memo').value.trim(),
     });
     msg.style.color='var(--green)';msg.textContent='✅ 保存しました';
-    clearC(); await loadAll(); setTimeout(closeModal,1000); renderSpots();
+    localUpdateLoc(locId,{name:document.getElementById('el-name').value.trim(),lat:parseFloat(document.getElementById('el-lat').value)||0,lng:parseFloat(document.getElementById('el-lng').value)||0,category:document.getElementById('el-cat').value,address:document.getElementById('el-address').value.trim(),googleMapsUrl:document.getElementById('el-url').value.trim()||document.getElementById('el-gmap').value.trim(),memo:document.getElementById('el-memo').value.trim()});
+    clearC(); setTimeout(closeModal,1000); renderSpots();
   }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
 };
 window.deleteLoc=async function(locId){
@@ -605,7 +659,9 @@ window.deleteLoc=async function(locId){
   const batch=writeBatch(db);
   batch.delete(doc(db,'locations',locId));
   APPS.filter(a=>a.location_id===locId).forEach(a=>batch.delete(doc(db,'appearances',a.id)));
-  await batch.commit(); clearC(); await loadAll(); renderSpots();
+  await batch.commit();
+  APPS.filter(a=>a.location_id===locId).forEach(a=>localDeleteApp(a.id));
+  localDeleteLoc(locId); clearC(); renderSpots();
 };
 
 window.editAppModal=function(appId,locId){
@@ -646,19 +702,20 @@ window.saveApp=async function(appId,locId){
       status:document.getElementById('ea-status').value,
     });
     msg.style.color='var(--green)';msg.textContent='✅ 保存しました';
-    clearC(); await loadAll(); setTimeout(closeModal,800);
+    localUpdateApp(appId,{cp:document.getElementById('ea-cp').value.trim(),series:document.getElementById('ea-series').value.trim(),type:document.getElementById('ea-type').value,scene_desc:document.getElementById('ea-scene').value.trim(),sns_url:document.getElementById('ea-sns').value.trim(),status:document.getElementById('ea-status').value});
+    clearC(); setTimeout(closeModal,800);
     if(locId)setTimeout(()=>renderSpotDetail(locId),900);
   }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
 };
 window.deleteApp=async function(appId,locId){
   if(!confirm('この紐付けを削除しますか？'))return;
   await deleteDoc(doc(db,'appearances',appId));
-  clearC(); await loadAll();
+  localDeleteApp(appId); clearC();
   if(locId)renderSpotDetail(locId);
 };
 window.pubApp=async function(appId,locId){
   await updateDoc(doc(db,'appearances',appId),{status:'公開'});
-  clearC(); await loadAll();
+  localUpdateApp(appId,{status:'公開'}); clearC();
   if(locId)renderSpotDetail(locId);
 };
 
@@ -864,7 +921,7 @@ window.addSpot=async function(){
       await addDoc(collection(db,'appearances'),{location_id:ref.id,cp,series,type:document.getElementById('a-type').value,scene_desc:scene,sns_url:sns,status:'公開'});
     }
     msg.style.color='var(--green)';msg.textContent='✅ 追加しました！';
-    clearC(); await loadAll();
+    clearC();
     ['a-name','a-lat','a-lng','a-gmap','a-address','a-url','a-memo','a-cp','a-series','a-scene','a-sns'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
     document.getElementById('a-cmsg').textContent='';
   }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
@@ -915,7 +972,7 @@ window.addCp=async function(){
   msg.style.color='var(--purple)';msg.textContent='追加中...';
   try{
     await addDoc(collection(db,'cp_master'),{name,color,emoji,light:color+'22',border:color+'88'});
-    clearC(); await loadAll(); renderCp();
+    clearC(); renderCp();
   }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
 };
 window.inlineEditCp=function(id){
@@ -942,7 +999,7 @@ window.saveCp=async function(id){
   if(!name)return;
   try{
     await updateDoc(doc(db,'cp_master',id),{name,color,emoji,light:color+'22',border:color+'88'});
-    clearC(); await loadAll(); renderCp();
+    clearC(); renderCp();
   }catch(e){alert('エラー: '+e.message);}
 };
 window.renderSeries=function(){
@@ -980,7 +1037,7 @@ window.addSeries=async function(){
   msg.style.color='var(--purple)';msg.textContent='追加中...';
   try{
     await addDoc(collection(db,'series_master'),{name,drama_id:drama});
-    clearC(); await loadAll(); renderSeries();
+    clearC(); renderSeries();
   }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
 };
 window.inlineEditSeries=function(id){
@@ -1003,7 +1060,7 @@ window.saveSeries=async function(id){
   if(!name)return;
   try{
     await updateDoc(doc(db,'series_master',id),{name,drama_id:drama||''});
-    clearC(); await loadAll(); renderSeries();
+    clearC(); renderSeries();
   }catch(e){alert('エラー: '+e.message);}
 };
 window.renderCategory=function(){
@@ -1048,7 +1105,7 @@ window.addCategory=async function(){
   msg.style.color='var(--purple)';msg.textContent='追加中...';
   try{
     await addDoc(collection(db,'category_master'),{name,emoji});
-    clearC(); await loadAll(); renderCategory();
+    clearC(); renderCategory();
   }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
 };
 window.inlineEditCat=function(id){
@@ -1071,7 +1128,7 @@ window.saveCat=async function(id){
   if(!name)return;
   try{
     await updateDoc(doc(db,'category_master',id),{name,emoji});
-    clearC(); await loadAll(); renderCategory();
+    clearC(); renderCategory();
   }catch(e){alert('エラー: '+e.message);}
 };
 
@@ -1121,14 +1178,20 @@ window.saveMaster=async function(type,id){
   try{
     if(id){await updateDoc(doc(db,colName,id),data);}else{await addDoc(collection(db,colName),data);}
     msg.style.color='var(--green)';msg.textContent='✅ 保存しました';
-    clearC(); await loadAll();
-    setTimeout(()=>{closeModal();({cp:renderCp,series:renderSeries,category:renderCategory}[type])();},800);
+    clearC();
+    setTimeout(()=>{
+      closeModal();
+      ({cp:renderCp,series:renderSeries,category:renderCategory}[type])();
+    },800);
   }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
 };
 window.delMaster=async function(col,id,type){
   if(!confirm('削除しますか？'))return;
   await deleteDoc(doc(db,col,id));
-  clearC(); await loadAll();
+  if(type==='cp')localDeleteCp(id);
+  else if(type==='series')localDeleteSeries(id);
+  else localDeleteCat(id);
+  clearC();
   ({cp:renderCp,series:renderSeries,category:renderCategory}[type])();
 };
 
@@ -1219,7 +1282,7 @@ window.autoCoords=function(url,latId,lngId,msgId){
   }
 };
 function esc(s){return(s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
-function clearC(){['tsmap_loc_v2','tsmap_app_v2','tsmap_series_v2','tsmap_cp_v1','tsmap_cat_v1'].forEach(k=>localStorage.removeItem(k));}
+function clearC(){['tsmap_loc_v2','tsmap_app_v2','tsmap_series_v2','tsmap_cp_v1','tsmap_cat_v1'].forEach(k=>localStorage.removeItem(k));clearAdminCache();}
 window.closeModal=function(){document.getElementById('modal').style.display='none';};
 </script>
 </body>
