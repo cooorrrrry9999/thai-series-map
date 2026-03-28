@@ -549,7 +549,7 @@ function renderMarkers(){
     const opacity=inF?1:.25;
     const scale=isSel?1.35:1;
     // ピン形SVG + ラベル
-    const icon_emoji=ICONS[loc.category]||'📍';
+    const icon_emoji=catEmoji(loc.category);
     const pinColor=inF?cfg.color:'#aaaaaa';
     const borderColor=isSel?'#fff':cfg.border;
     const html=`
