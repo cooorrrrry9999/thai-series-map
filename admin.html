@@ -500,23 +500,85 @@ window.editLocModal=function(locId){
   const loc=LOCS.find(l=>l.id===locId);
   if(!loc)return;
   const catOpts=buildCatOpts(loc.category);
+  // 座標の現在の状態を判定
+  const hasCoords=loc.lat&&loc.lng;
+  const coordStatus=hasCoords
+    ?`<div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--green);background:#D1FAE5;border-radius:7px;padding:5px 10px;margin-top:4px">
+        <span>✅ 現在の座標: ${loc.lat}, ${loc.lng}</span>
+        <a href="https://www.google.com/maps/search/?api=1&query=${loc.lat},${loc.lng}" target="_blank"
+          style="color:var(--blue);font-weight:700;text-decoration:none;margin-left:auto">地図で確認 ↗</a>
+      </div>`
+    :`<div style="font-size:11px;color:var(--amber);background:#FEF3C7;border-radius:7px;padding:5px 10px;margin-top:4px">⚠ 座標が未設定です。GoogleマップのフルURLを貼ってください。</div>`;
+
   document.getElementById('modal-title').textContent='✏ '+loc.name;
   document.getElementById('modal-body').innerHTML=`
-    <div class="form-group" style="margin-bottom:10px"><label class="form-label">場所名</label><input class="form-input" id="el-name" value="${esc(loc.name)}"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-      <div class="form-group"><label class="form-label">緯度</label><input class="form-input" id="el-lat" type="number" step="any" value="${loc.lat||''}"></div>
-      <div class="form-group"><label class="form-label">経度</label><input class="form-input" id="el-lng" type="number" step="any" value="${loc.lng||''}"></div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label class="form-label">場所名</label>
+      <input class="form-input" id="el-name" value="${esc(loc.name)}">
     </div>
-    <div class="form-group" style="margin-bottom:10px"><label class="form-label">GoogleマップURL（貼ると座標自動取得）</label>
-      <input class="form-input" id="el-gmap" placeholder="https://www.google.com/maps/place/.../@lat,lng..." oninput="autoCoords(this.value,'el-lat','el-lng','el-cmsg')">
-      <div id="el-cmsg" style="font-size:10px;min-height:12px;color:var(--sub)"></div></div>
-    <div class="form-group" style="margin-bottom:10px"><label class="form-label">カテゴリー</label><select class="form-select" id="el-cat">${catOpts}</select></div>
-    <div class="form-group" style="margin-bottom:10px"><label class="form-label">住所（任意）</label><input class="form-input" id="el-address" value="${esc(loc.address||'')}"></div>
-    <div class="form-group" style="margin-bottom:10px"><label class="form-label">GoogleマップURL（保存用）</label><input class="form-input" id="el-url" value="${esc(loc.googleMapsUrl||'')}"></div>
-    <div class="form-group" style="margin-bottom:12px"><label class="form-label">訪問メモ（任意）</label><input class="form-input" id="el-memo" value="${esc(loc.memo||'')}"></div>
+
+    <div class="form-group" style="margin-bottom:6px">
+      <label class="form-label">GoogleマップURL（フルURLを貼ると座標を自動取得）</label>
+      <input class="form-input" id="el-gmap"
+        placeholder="https://www.google.com/maps/place/.../@13.75,100.62,17z..."
+        oninput="autoCoords(this.value,'el-lat','el-lng','el-cmsg')">
+      <div id="el-cmsg" style="font-size:11px;min-height:14px;margin-top:3px"></div>
+      <div style="font-size:10px;color:#bbb;margin-top:2px">
+        ※ maps.app.goo.gl の短縮URLは自動取得できません。Googleマップで場所を開き「共有→地図を埋め込む」または「共有→リンクをコピー」の長いURLを使ってください。
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
+      <div class="form-group">
+        <label class="form-label">緯度</label>
+        <input class="form-input" id="el-lat" type="number" step="any" value="${loc.lat||''}"
+          oninput="updateEditCoordStatus()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">経度</label>
+        <input class="form-input" id="el-lng" type="number" step="any" value="${loc.lng||''}"
+          oninput="updateEditCoordStatus()">
+      </div>
+    </div>
+    <div id="el-coord-status" style="margin-bottom:10px">${coordStatus}</div>
+
+    <div class="form-group" style="margin-bottom:10px">
+      <label class="form-label">カテゴリー</label>
+      <select class="form-select" id="el-cat">${catOpts}</select>
+    </div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label class="form-label">住所（任意）</label>
+      <input class="form-input" id="el-address" value="${esc(loc.address||'')}">
+    </div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label class="form-label">GoogleマップURL（保存用・短縮URLも可）</label>
+      <input class="form-input" id="el-url" value="${esc(loc.googleMapsUrl||'')}">
+      <div style="font-size:10px;color:#bbb;margin-top:2px">スポットの詳細カードに表示されるリンクです</div>
+    </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label class="form-label">訪問メモ（任意）</label>
+      <input class="form-input" id="el-memo" value="${esc(loc.memo||'')}">
+    </div>
     <div id="el-msg" class="form-msg"></div>
     <button class="btn btn-primary" style="width:100%" onclick="saveLoc('${locId}')">💾 保存</button>`;
   document.getElementById('modal').style.display='flex';
+};
+
+// 編集モーダルの座標ステータスをリアルタイム更新
+window.updateEditCoordStatus=function(){
+  const lat=parseFloat(document.getElementById('el-lat')?.value);
+  const lng=parseFloat(document.getElementById('el-lng')?.value);
+  const el=document.getElementById('el-coord-status');
+  if(!el)return;
+  if(lat&&lng&&!isNaN(lat)&&!isNaN(lng)){
+    el.innerHTML=`<div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--green);background:#D1FAE5;border-radius:7px;padding:5px 10px">
+      <span>✅ 座標: ${lat}, ${lng}</span>
+      <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lng}" target="_blank"
+        style="color:var(--blue);font-weight:700;text-decoration:none;margin-left:auto">地図で確認 ↗</a>
+    </div>`;
+  } else {
+    el.innerHTML=`<div style="font-size:11px;color:var(--amber);background:#FEF3C7;border-radius:7px;padding:5px 10px">⚠ 座標が未設定です</div>`;
+  }
 };
 window.saveLoc=async function(locId){
   const msg=document.getElementById('el-msg');
@@ -1122,6 +1184,7 @@ window.updateCpListForSeries=function(seriesVal){
 };
 window.autoCoords=function(url,latId,lngId,msgId){
   const u=url.trim();
+  if(!u){const el=document.getElementById(msgId);if(el)el.innerHTML='';return;}
   let m=u.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)[,z]/);
   if(!m)m=u.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
   if(!m)m=u.match(/ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
@@ -1129,8 +1192,26 @@ window.autoCoords=function(url,latId,lngId,msgId){
   if(m){
     document.getElementById(latId).value=m[1];
     document.getElementById(lngId).value=m[2];
-    if(el){el.style.color='var(--green)';el.textContent='✅ 座標を取得: '+m[1]+', '+m[2];}
-  }else if(el){el.style.color='var(--sub)';el.textContent='💡 フルURL（google.com/maps/.../@lat,lng）を使うと自動取得できます';}
+    if(el){
+      el.innerHTML=`<div style="display:flex;align-items:center;gap:6px;color:var(--green);background:#D1FAE5;border-radius:7px;padding:4px 10px">
+        <span>✅ 座標を取得: ${m[1]}, ${m[2]}</span>
+        <a href="https://www.google.com/maps/search/?api=1&query=${m[1]},${m[2]}" target="_blank"
+          style="color:var(--blue);font-weight:700;text-decoration:none;margin-left:auto">地図で確認 ↗</a>
+      </div>`;
+    }
+    // 編集モーダルの場合はステータスも更新
+    if(typeof updateEditCoordStatus==='function')updateEditCoordStatus();
+    // 新規追加の場合はプレビューも更新
+    if(typeof updateCoordPreview==='function')updateCoordPreview();
+  } else if(u.includes('maps.app.goo.gl')||u.includes('goo.gl')){
+    // 短縮URLの場合は明確にメッセージを表示
+    if(el){el.innerHTML=`<div style="color:var(--amber);background:#FEF3C7;border-radius:7px;padding:4px 10px;font-size:11px">
+      ⚠ 短縮URL（maps.app.goo.gl）は自動取得できません。<br>
+      Googleマップで場所を開き、PCブラウザのアドレスバーのURL（google.com/maps/place/...）をコピーしてください。
+    </div>`;}
+  } else if(el){
+    el.innerHTML=`<div style="color:var(--sub);font-size:11px;padding:2px 0">💡 URLに座標が見つかりません。google.com/maps/place/.../@lat,lng... 形式のURLを使ってください。</div>`;
+  }
 };
 function esc(s){return(s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function clearC(){['tsmap_loc_v2','tsmap_app_v2','tsmap_series_v2','tsmap_cp_v1','tsmap_cat_v1'].forEach(k=>localStorage.removeItem(k));}
