@@ -394,12 +394,16 @@ function seriesDramaId(s){return(SERIES_MAP[s]||{}).drama_id||'';}
 // ICONSはCAT_MAPから動的生成するが後方互換のためフォールバックも保持
 
 let LOCS=[], APPS=[], map=null, markers={};
-let activeType="すべて", activeCp=null, searchQ="", selId=null, currentUser=null;
+let activeType="すべて", activeCp=null, activeSeries=null, searchQ="", selId=null, currentUser=null;
 let drawerOpen=true;
 
 const locApps=id=>APPS.filter(a=>a.location_id===id&&a.status==='公開');
 // マーカー色はCPで決まる
 const primaryCfg=id=>{const a=locApps(id)[0];return a&&a.cp?cpCfg(a.cp):FB;};
+
+// appearancesの実績からCP↔作品の対応を動的に取得
+function getCpSeries(cp){return[...new Set(APPS.filter(a=>a.cp===cp).map(a=>a.series).filter(Boolean))];}
+function getSeriesCps(series){return[...new Set(APPS.filter(a=>a.series===series).map(a=>a.cp).filter(Boolean))];}
 
 function getFiltered(){
   return LOCS.filter(loc=>{
@@ -407,10 +411,11 @@ function getFiltered(){
     if(!apps.length)return false;
     if(activeType!=='すべて'&&!apps.some(a=>a.type===activeType))return false;
     if(activeCp&&!apps.some(a=>a.cp===activeCp))return false;
+    if(activeSeries&&!apps.some(a=>a.series===activeSeries))return false;
     if(searchQ){
       const q=searchQ.toLowerCase();
       const hit=loc.name.toLowerCase().includes(q)||
-        apps.some(a=>a.series.toLowerCase().includes(q)||a.cp.toLowerCase().includes(q)||a.scene_desc.toLowerCase().includes(q));
+        apps.some(a=>(a.series||'').toLowerCase().includes(q)||(a.cp||'').toLowerCase().includes(q)||(a.scene_desc||'').toLowerCase().includes(q));
       if(!hit)return false;
     }
     return true;
@@ -570,17 +575,34 @@ function renderMarkers(){
 
 // ── Filters ───────────────────────────────────────────────────
 function renderFilters(){
-  const cps=getUniqueCPs();
-  const pills=[
-    {label:"すべて",onClick:`window._setType('すべて')`,active:activeType==='すべて'&&!activeCp},
-    {label:"作品",onClick:`window._setType('作品')`,active:activeType==='作品'},
-    {label:"プライベート",onClick:`window._setType('プライベート')`,active:activeType==='プライベート'},
-    {label:"来日",onClick:`window._setType('来日')`,active:activeType==='来日'},
-    ...cps.map(cp=>({label:`💗 ${cp}`,onClick:`window._setCp('${cp}')`,active:activeCp===cp}))
+  const allCps=getUniqueCPs();
+  // CP選択時は関連作品のみ表示、作品選択時は関連CPのみ表示
+  const visibleCps=activeSeries?getSeriesCps(activeSeries):allCps;
+  const relatedSeries=activeCp?getCpSeries(activeCp):[...new Set(APPS.map(a=>a.series).filter(Boolean))].sort();
+
+  const typePills=[
+    {label:"すべて",onClick:"window._setType('すべて')",active:activeType==='すべて'&&!activeCp&&!activeSeries},
+    {label:"作品",onClick:"window._setType('作品')",active:activeType==='作品'},
+    {label:"プライベート",onClick:"window._setType('プライベート')",active:activeType==='プライベート'},
+    {label:"来日",onClick:"window._setType('来日')",active:activeType==='来日'},
   ];
-  document.getElementById('filter-bar').innerHTML=pills.map(p=>
-    `<button class="filter-pill${p.active?' active':''}" onclick="${p.onClick}">${p.label}</button>`
-  ).join('');
+  const cpPills=visibleCps.map(cp=>{
+    const cfg=cpCfg(cp);
+    return {label:`${cfg.emoji||'💗'} ${cp}`,onClick:`window._setCp('${cp}')`,active:activeCp===cp,color:cfg.color};
+  });
+  const seriesPills=relatedSeries.map(s=>({label:s,onClick:`window._setSeries('${s.replace(/'/g,"\'")}')`,active:activeSeries===s}));
+
+  const typeHTML=typePills.map(p=>`<button class="filter-pill${p.active?' active':''}" onclick="${p.onClick}">${p.label}</button>`).join('');
+  const cpHTML=cpPills.map(p=>`<button class="filter-pill${p.active?' active':''}" onclick="${p.onClick}" style="${p.active?'':''}${p.color&&p.active?`background:${p.color};border-color:${p.color};color:white`:(p.color?`border-color:${p.color}66;color:${p.color}`:'')}">${p.label}</button>`).join('');
+  const seriesHTML=seriesPills.map(p=>`<button class="filter-pill${p.active?' active':''}" onclick="${p.onClick}" style="font-size:11px">${p.label}</button>`).join('');
+
+  // 2段構成：1段目=分類+CP、2段目=作品（CPまたは作品選択時に出現）
+  document.getElementById('filter-bar').innerHTML=`
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch">${typeHTML}${cpHTML}</div>
+    ${(activeCp||activeSeries)?`<div style="display:flex;gap:5px;overflow-x:auto;padding-top:2px;-webkit-overflow-scrolling:touch">${seriesHTML}</div>`:''}
+  `;
+  document.getElementById('filter-bar').style.flexDirection='column';
+  document.getElementById('filter-bar').style.gap='0';
 }
 
 // ── Drawer ───────────────────────────────────────────────────
@@ -662,8 +684,19 @@ window.closeDetailDirect=()=>{
 };
 
 // ── Filter actions ────────────────────────────────────────────
-window._setType=t=>{activeType=t;activeCp=null;renderFilters();renderMarkers();renderDrawer();};
-window._setCp=cp=>{activeCp=activeCp===cp?null:cp;renderFilters();renderMarkers();renderDrawer();};
+window._setType=t=>{activeType=t;activeCp=null;activeSeries=null;renderFilters();renderMarkers();renderDrawer();};
+window._setCp=cp=>{
+  activeCp=activeCp===cp?null:cp;
+  // CP変更時に関連しない作品選択をリセット
+  if(activeSeries&&activeCp&&!getCpSeries(activeCp).includes(activeSeries))activeSeries=null;
+  renderFilters();renderMarkers();renderDrawer();
+};
+window._setSeries=s=>{
+  activeSeries=activeSeries===s?null:s;
+  // 作品変更時に関連しないCP選択をリセット
+  if(activeCp&&activeSeries&&!getSeriesCps(activeSeries).includes(activeCp))activeCp=null;
+  renderFilters();renderMarkers();renderDrawer();
+};
 window.onSearch=q=>{searchQ=q;renderMarkers();renderDrawer();};
 
 // ── User menu ─────────────────────────────────────────────────
@@ -749,6 +782,7 @@ window.exportKML=function(){
   let fname='thai-series-map';
   if(activeCp)fname+='-'+activeCp;
   if(activeType!=='すべて')fname+='-'+activeType;
+  if(activeSeries)fname+='-'+activeSeries.replace(/[^a-zA-Z0-9゠-ヿ぀-ゟ一-鿿]/g,'_');
   fname+='.kml';
   const parts=filtered.map(function(loc){
     const apps=locApps(loc.id);

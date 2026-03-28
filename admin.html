@@ -459,11 +459,13 @@ function renderSpotDetail(locId){
         <div class="inline-form-title">＋ 紐付けを追加</div>
         <div class="inline-grid">
           <div><div class="form-label" style="font-size:10px;margin-bottom:3px">CP名</div>
-            <input class="inline-input" id="na-cp-${locId}" placeholder="FreenBecky" list="na-cp-list-${locId}">
+            <input class="inline-input" id="na-cp-${locId}" placeholder="FreenBecky" list="na-cp-list-${locId}"
+              oninput="updateInlineSeries(this.value,'${locId}')">
             <datalist id="na-cp-list-${locId}">${allCps.map(c=>`<option value="${c}">`).join('')}</datalist></div>
           <div><div class="form-label" style="font-size:10px;margin-bottom:3px">作品名 / 分類</div>
             <input class="inline-input" id="na-series-${locId}" placeholder="GAP / プライベート" list="na-series-list-${locId}">
-            <datalist id="na-series-list-${locId}">${allSeries.map(s=>`<option value="${s}">`).join('')}</datalist></div>
+            <datalist id="na-series-list-${locId}">${allSeries.map(s=>`<option value="${s}">`).join('')}</datalist>
+            <div id="na-series-hint-${locId}" style="font-size:10px;color:var(--sub);margin-top:1px"></div></div>
           <div><div class="form-label" style="font-size:10px;margin-bottom:3px">分類</div>
             <select class="inline-select" id="na-type-${locId}">
               <option value="作品">作品</option><option value="プライベート">プライベート</option><option value="来日">来日</option>
@@ -622,11 +624,12 @@ window.renderAdd=function(){
     <div class="form-section">作品との紐付け（任意）</div>
     <div class="form-grid" style="margin-bottom:10px">
       <div class="form-group"><label class="form-label">CP名</label>
-        <input class="form-input" id="a-cp" placeholder="例: FreenBecky" list="a-cplist">
+        <input class="form-input" id="a-cp" placeholder="例: FreenBecky" list="a-cplist" oninput="updateSeriesListForCp(this.value)">
         <datalist id="a-cplist">${allCps.map(c=>`<option value="${c}">`).join('')}</datalist></div>
       <div class="form-group"><label class="form-label">作品名 / 分類</label>
-        <input class="form-input" id="a-series" placeholder="例: GAP The Series / プライベート" list="a-slist">
-        <datalist id="a-slist">${allSeries.map(s=>`<option value="${s}">`).join('')}</datalist></div>
+        <input class="form-input" id="a-series" placeholder="例: GAP The Series / プライベート" list="a-slist" oninput="updateCpListForSeries(this.value)">
+        <datalist id="a-slist">${allSeries.map(s=>`<option value="${s}">`).join('')}</datalist>
+        <div id="a-series-hint" style="font-size:10px;color:var(--sub);margin-top:2px"></div></div>
     </div>
     <div class="form-grid" style="margin-bottom:10px">
       <div class="form-group"><label class="form-label">分類</label>
@@ -939,6 +942,69 @@ function buildCatOpts(sel){
   const customs=CAT_M.map(m=>m.name).filter(n=>!defs.includes(n));
   return[...defs,...customs].map(c=>`<option value="${c}"${sel===c?' selected':''}>${getCatEmoji(c)} ${c}</option>`).join('');
 }
+// CP↔作品の連動候補更新（appearancesの実績から）
+window.updateSeriesListForCp=function(cpVal){
+  const cp=cpVal.trim();
+  const dl=document.getElementById('a-slist');
+  if(!dl)return;
+  if(!cp){
+    // CP未入力時は全作品を候補に
+    const all=[...new Set([...APPS.map(a=>a.series),...SERIES_M.map(m=>m.name)].filter(Boolean))].sort();
+    dl.innerHTML=all.map(s=>`<option value="${s}">`).join('');
+    const hint=document.getElementById('a-series-hint');
+    if(hint)hint.textContent='';
+    return;
+  }
+  // CPに紐づく作品を候補に絞る
+  const related=[...new Set(APPS.filter(a=>a.cp===cp).map(a=>a.series).filter(Boolean))].sort();
+  if(related.length){
+    dl.innerHTML=related.map(s=>`<option value="${s}">`).join('');
+    const hint=document.getElementById('a-series-hint');
+    if(hint)hint.textContent=`💡 ${cp} の登録作品: ${related.join(' / ')}`;
+  }
+};
+window.updateInlineSeries=function(cpVal,locId){
+  const cp=cpVal.trim();
+  const dl=document.getElementById('na-series-list-'+locId);
+  const hint=document.getElementById('na-series-hint-'+locId);
+  if(!dl)return;
+  if(!cp){dl.innerHTML=[...new Set([...APPS.map(a=>a.series),...SERIES_M.map(m=>m.name)].filter(Boolean))].sort().map(s=>`<option value="${s}">`).join('');return;}
+  const related=[...new Set(APPS.filter(a=>a.cp===cp).map(a=>a.series).filter(Boolean))].sort();
+  if(related.length){
+    dl.innerHTML=related.map(s=>`<option value="${s}">`).join('');
+    if(hint)hint.textContent='💡 '+related.join(' / ');
+  }
+};
+window.updateCpListForSeries=function(seriesVal){
+  const series=seriesVal.trim();
+  const dl=document.getElementById('a-cplist');
+  if(!dl||!series)return;
+  const related=[...new Set(APPS.filter(a=>a.series===series).map(a=>a.cp).filter(Boolean))].sort();
+  if(related.length)dl.innerHTML=related.map(c=>`<option value="${c}">`).join('');
+};
+
+// CP↔作品の連動候補更新
+window.updateSeriesListForCp=function(cpVal){
+  const cp=cpVal.trim();
+  const dl=document.getElementById('a-slist');
+  if(!dl)return;
+  if(!cp){
+    const all=[...new Set([...APPS.map(a=>a.series),...SERIES_M.map(m=>m.name)].filter(Boolean))].sort();
+    dl.innerHTML=all.map(s=>`<option value="${s}">`).join('');
+    const h=document.getElementById('a-series-hint');if(h)h.textContent='';return;
+  }
+  const related=[...new Set(APPS.filter(a=>a.cp===cp).map(a=>a.series).filter(Boolean))].sort();
+  dl.innerHTML=related.length?related.map(s=>`<option value="${s}">`).join(''):'';
+  const h=document.getElementById('a-series-hint');
+  if(h)h.textContent=related.length?`💡 ${cp} の登録作品: ${related.join(' / ')}`:'';
+};
+window.updateCpListForSeries=function(seriesVal){
+  const s=seriesVal.trim();
+  const dl=document.getElementById('a-cplist');
+  if(!dl||!s)return;
+  const related=[...new Set(APPS.filter(a=>a.series===s).map(a=>a.cp).filter(Boolean))].sort();
+  if(related.length)dl.innerHTML=related.map(c=>`<option value="${c}">`).join('');
+};
 window.autoCoords=function(url,latId,lngId,msgId){
   const u=url.trim();
   let m=u.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)[,z]/);
