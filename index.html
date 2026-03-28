@@ -91,6 +91,22 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 /* ── 投稿FAB ── */
 .fab{position:fixed;bottom:calc(var(--drawer-h) + 16px);right:14px;z-index:45;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#F9A8D4,#9333EA);border:none;cursor:pointer;font-size:26px;box-shadow:0 4px 16px rgba(147,51,234,.4);display:flex;align-items:center;justify-content:center;transition:transform .15s,bottom .3s}
 .fab:active{transform:scale(.92)}
+/* ── ハウツーモーダル ── */
+.howto-overlay{position:fixed;inset:0;z-index:250;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;animation:fadeIn .2s ease}
+.howto-card{background:var(--white);width:100%;max-width:430px;margin:0 auto;border-radius:24px 24px 0 0;padding:0 0 40px;animation:slideUp .3s cubic-bezier(.22,1,.36,1);max-height:90vh;overflow-y:auto}
+.howto-header{padding:20px 20px 0;position:relative}
+.howto-title{font-size:18px;font-weight:900;margin-bottom:4px}
+.howto-sub{font-size:12px;color:var(--text-sub);line-height:1.6}
+.howto-close{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:50%;background:#F3F4F6;border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#666}
+.howto-step{display:flex;gap:14px;padding:14px 20px;border-bottom:1px solid #F1F5F9;align-items:flex-start}
+.howto-step:last-child{border-bottom:none}
+.howto-num{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6EE7B7,#059669);color:white;font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.howto-step-title{font-size:14px;font-weight:700;margin-bottom:3px}
+.howto-step-desc{font-size:12px;color:var(--text-sub);line-height:1.7}
+.howto-step-tip{font-size:11px;background:#F0FDF4;color:#059669;border-radius:8px;padding:5px 10px;margin-top:6px;border-left:3px solid #6EE7B7}
+.howto-link{color:#059669;font-weight:700;text-decoration:none}
+.howto-divider{height:8px;background:#F8FAFC;border-top:1px solid #F1F5F9;border-bottom:1px solid #F1F5F9;margin:4px 0}
+.howto-section{padding:12px 20px 4px;font-size:12px;font-weight:700;color:#999;letter-spacing:.07em}
 
 /* ── 投稿モーダル ── */
 .modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;animation:fadeIn .2s ease}
@@ -161,6 +177,7 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
   <a href="admin.html" class="user-menu-item" id="admin-menu-item" style="display:none">⚙ 管理者画面</a>
   <a href="https://thai-gl-works-2c835.web.app/" target="_blank" class="user-menu-item">🌺 Thai GL Works</a>
   <button class="user-menu-item" onclick="openSubmitModal()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit">📍 スポットを投稿</button>
+  <button class="user-menu-item" onclick="toggleUserMenuClose();openKmlModal()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit;color:#059669">🗾 マイマップ出力（KML）</button>
   <div class="user-menu-divider"></div>
   <button class="user-menu-item" onclick="doLogout()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit;color:#DC2626">ログアウト</button>
 </div>
@@ -214,6 +231,86 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
     <div id="submit-msg" style="font-size:13px;text-align:center;min-height:20px;margin:6px 0"></div>
     <button class="btn-primary" onclick="submitSpot()">投稿する（管理者確認後に公開）</button>
     <button class="btn-cancel" onclick="closeSubmitModal()">キャンセル</button>
+  </div>
+</div>
+
+<!-- ハウツーモーダル -->
+<div class="howto-overlay" id="howto-overlay" style="display:none" onclick="closeHowto(event)">
+  <div class="howto-card" onclick="event.stopPropagation()">
+    <div class="howto-header">
+      <button class="howto-close" onclick="document.getElementById('howto-overlay').style.display='none'">×</button>
+      <div class="howto-title">🗾 Googleマイマップへの取り込み方</div>
+      <div class="howto-sub">フィルターで絞ったスポットをスマホのGoogleマップで見られるようにします</div>
+    </div>
+
+    <div class="howto-divider"></div>
+    <div class="howto-section">STEP 1 — KMLファイルをダウンロード</div>
+    <div class="howto-step">
+      <div class="howto-num">1</div>
+      <div>
+        <div class="howto-step-title">見たい作品・CPをフィルターする</div>
+        <div class="howto-step-desc">画面上部のフィルターボタンで「GAP The Series」や「FreenBecky」など絞り込みます。件数が表示されます。</div>
+      </div>
+    </div>
+    <div class="howto-step">
+      <div class="howto-num">2</div>
+      <div>
+        <div class="howto-step-title">「マイマップ出力」ボタンをタップ</div>
+        <div class="howto-step-desc">KMLファイル（地図データの標準形式）がダウンロードされます。ファイル名はフィルター内容が入ります。</div>
+        <div class="howto-step-tip">💡 KMLとはGoogleマップが読み込める地図データのファイル形式です</div>
+      </div>
+    </div>
+
+    <div class="howto-divider"></div>
+    <div class="howto-section">STEP 2 — Googleマイマップに取り込む（PC推奨）</div>
+    <div class="howto-step">
+      <div class="howto-num">3</div>
+      <div>
+        <div class="howto-step-title">mymaps.google.com を開く</div>
+        <div class="howto-step-desc">PCのブラウザで <a href="https://mymaps.google.com" target="_blank" class="howto-link">mymaps.google.com</a> にアクセスし、「新しい地図を作成」をクリックします。</div>
+      </div>
+    </div>
+    <div class="howto-step">
+      <div class="howto-num">4</div>
+      <div>
+        <div class="howto-step-title">KMLファイルをインポート</div>
+        <div class="howto-step-desc">「インポート」ボタンをクリック → 先ほどダウンロードしたKMLファイルを選択します。</div>
+        <div class="howto-step-tip">📁 ファイルは「ダウンロード」フォルダにあります</div>
+      </div>
+    </div>
+    <div class="howto-step">
+      <div class="howto-num">5</div>
+      <div>
+        <div class="howto-step-title">地図に名前をつけて保存</div>
+        <div class="howto-step-desc">「無題の地図」をクリックして「GAP ロケ地マップ」などわかりやすい名前をつけます。自動で保存されます。</div>
+      </div>
+    </div>
+
+    <div class="howto-divider"></div>
+    <div class="howto-section">STEP 3 — スマホのGoogleマップで見る</div>
+    <div class="howto-step">
+      <div class="howto-num">6</div>
+      <div>
+        <div class="howto-step-title">スマホのGoogleマップを開く</div>
+        <div class="howto-step-desc">下部メニューの「保存済み」→「マップ」タブをタップすると、作成したマイマップが表示されます。</div>
+        <div class="howto-step-tip">💡 同じGoogleアカウントでログインしていれば自動で同期されます</div>
+      </div>
+    </div>
+    <div class="howto-step">
+      <div class="howto-num">7</div>
+      <div>
+        <div class="howto-step-title">現地でナビにも使える！</div>
+        <div class="howto-step-desc">各ピンをタップすると場所の詳細が見られます。「経路」ボタンで現地へのナビも起動できます。タイ旅行の前に準備しておくと便利です。</div>
+        <div class="howto-step-tip">🌸 オフライン地図と組み合わせると通信なしでも使えます</div>
+      </div>
+    </div>
+
+    <div style="padding:16px 20px 0">
+      <button onclick="document.getElementById('howto-overlay').style.display='none';exportKML()" style="width:100%;padding:13px;border-radius:12px;font-weight:800;font-size:15px;border:none;cursor:pointer;font-family:inherit;color:white;background:linear-gradient(135deg,#6EE7B7,#059669);display:flex;align-items:center;justify-content:center;gap:8px">
+        ⬇ KMLファイルをダウンロードする
+      </button>
+      <div id="kml-download-msg" style="font-size:12px;text-align:center;color:#059669;min-height:16px;margin-top:8px"></div>
+    </div>
   </div>
 </div>
 
@@ -614,6 +711,80 @@ function buildDramaLink(cfg, seriesName){
   const href = GL_URL + '?drama=' + encodeURIComponent(id);
   return`<a href="${href}" target="_blank" class="drama-link-btn" style="background:${cfg.light};color:${cfg.color};border:1.5px solid ${cfg.border}">🌺 Thai GL Worksで作品を見る →</a>`;
 }
+
+// ── KML出力 ──────────────────────────────────────────────────
+window.openKmlModal=function(){
+  document.getElementById('kml-download-msg').textContent='';
+  document.getElementById('howto-overlay').style.display='flex';
+  toggleUserMenuClose();
+};
+window.closeHowto=function(e){
+  if(e.target===document.getElementById('howto-overlay'))
+    document.getElementById('howto-overlay').style.display='none';
+};
+
+window.exportKML=function(){
+  const filtered=getFiltered();
+  if(!filtered.length){
+    alert('表示中のスポットがありません。フィルターを確認してください。');
+    return;
+  }
+  // KMLファイル名をフィルター内容から生成
+  let fname='thai-series-map';
+  if(activeCp)fname+='-'+activeCp.replace(/\s/g,'_');
+  if(activeType!=='すべて')fname+='-'+activeType;
+  if(searchQ)fname+='-'+searchQ.replace(/\s/g,'_');
+  fname+='.kml';
+
+  // KML生成
+  const placemarks=filtered.map(loc=>{
+    const apps=locApps(loc.id);
+    const a0=apps[0];
+    const desc=[
+      a0?`<b>${a0.series}</b> 💗 ${a0.cp}`:'',
+      apps.length>1?`他${apps.length-1}作品に登場`:'',
+      loc.memo?`💡 ${loc.memo}`:'',
+      loc.googleMapsUrl&&!loc.googleMapsUrl.includes('xxx')?`<a href="${loc.googleMapsUrl}">Googleマップで開く</a>`:''
+    ].filter(Boolean).join('<br>');
+
+    // シリーズ色をKMLスタイルに変換
+    const cfg=a0?scfg(a0.series):{color:'#888780'};
+    const kmlColor=cfg.color.replace('#','ff').toLowerCase()
+      .replace(/^ff(..)(..)(..)$/,'ff$3$2$1'); // AABBGGRR形式
+
+    return `  <Placemark>
+    <name>${escXml(loc.name)}</name>
+    <description><![CDATA[${desc}]]></description>
+    <Point><coordinates>${loc.lng},${loc.lat},0</coordinates></Point>
+    <Style><IconStyle>
+      <color>${kmlColor}</color>
+      <scale>1.1</scale>
+    </IconStyle></Style>
+  </Placemark>`;
+  }).join('
+');
+
+  const kml=`<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+  <name>${escXml(fname.replace('.kml',''))}</name>
+  <description>Thai Series Map からエクスポート（${filtered.length}件）</description>
+${placemarks}
+</Document>
+</kml>`;
+
+  // ダウンロード
+  const blob=new Blob([kml],{type:'application/vnd.google-earth.kml+xml'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=fname; a.click();
+  URL.revokeObjectURL(url);
+
+  const msg=document.getElementById('kml-download-msg');
+  if(msg){msg.textContent=`✅ ${filtered.length}件のスポットをダウンロードしました`;}
+};
+
+function escXml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 // 管理者用キャッシュクリア
 window.clearMapCache=()=>{[CL,CA,CS].forEach(k=>localStorage.removeItem(k));location.reload()};

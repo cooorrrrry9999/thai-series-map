@@ -296,15 +296,15 @@ function updateFilterOptions(){
   const cps=[...new Set(APPS.map(a=>a.cp).filter(Boolean))].sort();
   ['filter-loc-series','filter-app-series'].forEach(id=>{
     const el=document.getElementById(id); if(!el)return;
-    const val=el.value;
+    const prev=el.value;
     el.innerHTML='<option value="">作品で絞込み</option>'+series.map(s=>`<option value="${s}">${s}</option>`).join('');
-    el.value=val;
+    if(prev)el.value=prev;
   });
   ['filter-loc-cp','filter-app-cp'].forEach(id=>{
     const el=document.getElementById(id); if(!el)return;
-    const val=el.value;
+    const prev=el.value;
     el.innerHTML='<option value="">CPで絞込み</option>'+cps.map(c=>`<option value="${c}">${c}</option>`).join('');
-    el.value=val;
+    if(prev)el.value=prev;
   });
   // 追加フォームのdatalist更新（コンボボックス）
   updateAddFormDatalist(series, cps);
@@ -323,7 +323,6 @@ function updateAddFormDatalist(series, cps){
 }
 
 function renderLocations(){
-  updateFilterOptions();
   const filterSeries=document.getElementById('filter-loc-series')?.value||'';
   const filterCp=document.getElementById('filter-loc-cp')?.value||'';
   const el=document.getElementById('locations-list');
