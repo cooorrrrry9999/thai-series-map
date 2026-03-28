@@ -594,7 +594,7 @@ function renderDrawer(){
     return;
   }
   el.innerHTML=filtered.map(loc=>{
-    const apps=locApps(loc.id),a0=apps[0],cfg=a0?scfg(a0.series):FB,isSel=loc.id===selId;
+    const apps=locApps(loc.id),a0=apps[0],cfg=a0&&a0.cp?cpCfg(a0.cp):FB,isSel=loc.id===selId;
     return`<div class="drawer-card${isSel?' selected':''}" style="${isSel?`border-color:${cfg.color};box-shadow:0 2px 12px ${cfg.border};`:''}" onclick="window._sel('${loc.id}')">
       <div class="drawer-card-icon">${catEmoji(loc.category)}</div>
       <span class="drawer-card-series" style="background:${cfg.light};color:${cfg.color};border-color:${cfg.border}">${a0?.series||''}</span>
@@ -635,7 +635,7 @@ window._sel=function(locId){
   if(apps.length){
     titleEl.style.display='block';
     appsEl.innerHTML=apps.map(a=>{
-      const ac=scfg(a.series);
+      const ac=a.cp?cpCfg(a.cp):FB;
       const dramaLink=buildDramaLink(ac,a.series);
       return`<div class="appearance-item" style="background:${ac.light};border-color:${ac.border}">
         <div class="appearance-series" style="color:${ac.color}">${a.series}</div>
@@ -760,7 +760,7 @@ window.exportKML=function(){
     if(loc.memo)descParts.push(escXml(loc.memo));
     if(hasUrl)descParts.push('<a href="'+loc.googleMapsUrl+'">Googleマップ</a>');
     const desc=descParts.join('<br>');
-    const cfg=a0?scfg(a0.series):{color:'#888780'};
+    const cfg=a0&&a0.cp?cpCfg(a0.cp):{color:'#888780'};
     const c=cfg.color.replace('#','');
     const kmlColor='ff'+c.slice(4,6)+c.slice(2,4)+c.slice(0,2);
     return '  <Placemark>'
