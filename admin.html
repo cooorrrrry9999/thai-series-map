@@ -8,29 +8,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#F8FAFC;--white:#fff;--text:#111827;--text-sub:#6B7280;--pink:#EC4899;--purple:#9333EA}
+:root{--bg:#F8FAFC;--white:#fff;--text:#111827;--text-sub:#6B7280}
 body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);max-width:480px;margin:0 auto;min-height:100vh}
-.header{background:var(--white);border-bottom:1px solid #F1F5F9;padding:14px 18px;position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px}
-.header h1{font-size:16px;font-weight:900;flex:1}
-.back-btn{font-size:12px;color:#9333EA;background:#FAF5FF;border:1px solid #D8B4FE;border-radius:8px;padding:5px 10px;text-decoration:none;font-weight:700}
+.header{background:var(--white);border-bottom:1px solid #F1F5F9;padding:13px 16px;position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px}
+.header h1{font-size:15px;font-weight:900;flex:1}
+.back-btn{font-size:12px;color:#9333EA;background:#FAF5FF;border:1px solid #D8B4FE;border-radius:8px;padding:5px 10px;text-decoration:none;font-weight:700;flex-shrink:0}
 .logout-btn{font-size:11px;color:#6B7280;background:#F3F4F6;border:none;border-radius:8px;padding:5px 10px;cursor:pointer;font-family:inherit}
-
-/* Auth gate */
 #auth-gate{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px;padding:40px 24px;text-align:center}
 .login-btn{display:flex;align-items:center;gap:10px;background:var(--white);border:2px solid #E5E7EB;border-radius:12px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
 .login-btn img{width:20px;height:20px}
-
-/* Tabs */
 .tabs{display:flex;background:var(--white);border-bottom:1px solid #F1F5F9;overflow-x:auto}
 .tabs::-webkit-scrollbar{display:none}
-.tab-btn{flex:1;padding:12px 8px;border:none;background:none;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;color:#888;border-bottom:2px solid transparent;white-space:nowrap}
-.tab-btn.active{color:var(--purple);border-bottom-color:var(--purple)}
-
-/* Content */
-.tab-content{display:none;padding:16px}
+.tab-btn{flex:1;padding:11px 6px;border:none;background:none;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;color:#888;border-bottom:2px solid transparent;white-space:nowrap;min-width:72px}
+.tab-btn.active{color:#9333EA;border-bottom-color:#9333EA}
+.tab-content{display:none;padding:14px}
 .tab-content.active{display:block}
-
-/* Cards */
 .card{background:var(--white);border-radius:14px;padding:14px 16px;margin-bottom:10px;border:1.5px solid #EEE}
 .card-title{font-size:14px;font-weight:700;margin-bottom:4px}
 .card-sub{font-size:12px;color:var(--text-sub);margin-bottom:8px;line-height:1.5}
@@ -38,36 +30,30 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
 .badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-right:4px;margin-bottom:4px}
 .badge-pending{background:#FEF3C7;color:#D97706;border:1px solid #FCD34D}
 .badge-published{background:#D1FAE5;color:#059669;border:1px solid #6EE7B7}
-.badge-rejected{background:#FEE2E2;color:#DC2626;border:1px solid #FCA5A5}
-
-/* Buttons */
-.btn{padding:7px 14px;border-radius:8px;border:none;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;transition:opacity .15s}
-.btn:active{opacity:.8}
+.btn{padding:7px 14px;border-radius:8px;border:none;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit}
 .btn-approve{background:#D1FAE5;color:#059669}
 .btn-reject{background:#FEE2E2;color:#DC2626}
 .btn-edit{background:#EFF6FF;color:#3B82F6}
 .btn-delete{background:#FEE2E2;color:#DC2626}
-.btn-primary{background:linear-gradient(135deg,#C4B5FD,#9333EA);color:white;padding:10px 20px;font-size:13px;border-radius:10px;width:100%}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-
-/* Form */
 .form-group{margin-bottom:12px}
 .form-label{font-size:12px;font-weight:700;color:#555;margin-bottom:4px;display:block}
 .required{color:#DC2626}
 .form-input,.form-select{width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:13px;font-family:inherit;outline:none;transition:border .15s;background:var(--white)}
 .form-input:focus,.form-select:focus{border-color:#C4B5FD}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-
-/* Edit modal */
-.modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;animation:fadeIn .2s ease}
-.modal-card{background:var(--white);width:100%;max-width:480px;margin:0 auto;border-radius:20px 20px 0 0;padding:20px 18px 40px;animation:slideUp .3s cubic-bezier(.22,1,.36,1);max-height:90vh;overflow-y:auto}
-.modal-title{font-size:16px;font-weight:900;margin-bottom:14px}
-.modal-close{position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:50%;background:#F3F4F6;border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#666}
-
-/* Section labels */
+.btn-primary{width:100%;padding:11px;border-radius:10px;font-weight:800;font-size:14px;border:none;cursor:pointer;font-family:inherit;color:white;background:linear-gradient(135deg,#C4B5FD,#9333EA);margin-top:6px}
 .section-label{font-size:12px;font-weight:700;color:#999;letter-spacing:.07em;margin-bottom:8px;margin-top:4px}
 .empty-msg{text-align:center;color:#bbb;padding:32px 0;font-size:14px}
 .loading-msg{text-align:center;color:#bbb;padding:20px 0;font-size:13px}
+.color-preview{width:24px;height:24px;border-radius:50%;border:2px solid #EEE;display:inline-block;vertical-align:middle;margin-right:6px}
+.series-card{background:var(--white);border-radius:14px;padding:14px 16px;margin-bottom:10px;border-left:4px solid #EEE}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;animation:fadeIn .2s ease}
+.modal-card{background:var(--white);width:100%;max-width:480px;margin:0 auto;border-radius:20px 20px 0 0;padding:20px 18px 40px;animation:slideUp .3s cubic-bezier(.22,1,.36,1);max-height:90vh;overflow-y:auto;position:relative}
+.modal-title{font-size:16px;font-weight:900;margin-bottom:14px}
+.modal-close{position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:50%;background:#F3F4F6;border:none;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#666}
 
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -75,30 +61,28 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
 </head>
 <body>
 
-<!-- 認証ゲート -->
 <div id="auth-gate">
   <div style="font-size:48px">🔒</div>
   <div style="font-size:18px;font-weight:900">管理者専用ページ</div>
   <div style="font-size:13px;color:#888">管理者アカウントでログインしてください</div>
   <button class="login-btn" onclick="doLogin()">
-    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">
-    Googleでログイン
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">Googleでログイン
   </button>
 </div>
 
-<!-- 管理者画面 -->
 <div id="admin-app" style="display:none">
   <header class="header">
-    <a href="index.html" class="back-btn">← 地図に戻る</a>
+    <a href="index.html" class="back-btn">← 地図</a>
     <h1>⚙ 管理者画面</h1>
     <button class="logout-btn" onclick="doLogout()">ログアウト</button>
   </header>
 
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('pending')">📬 承認待ち<span id="pending-count"></span></button>
-    <button class="tab-btn" onclick="switchTab('locations')">📍 場所一覧</button>
+    <button class="tab-btn" onclick="switchTab('locations')">📍 場所</button>
     <button class="tab-btn" onclick="switchTab('appearances')">🎬 紐付け</button>
-    <button class="tab-btn" onclick="switchTab('add')">➕ 新規追加</button>
+    <button class="tab-btn" onclick="switchTab('series')">🎨 作品設定</button>
+    <button class="tab-btn" onclick="switchTab('add')">➕ 追加</button>
   </div>
 
   <!-- 承認待ち -->
@@ -109,14 +93,25 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
 
   <!-- 場所一覧 -->
   <div class="tab-content" id="tab-locations">
-    <div class="section-label">登録済み場所 — タップして編集</div>
+    <div class="section-label">登録済み場所</div>
     <div id="locations-list"><div class="loading-msg">読み込み中...</div></div>
   </div>
 
-  <!-- 紐付け一覧 -->
+  <!-- 紐付け -->
   <div class="tab-content" id="tab-appearances">
     <div class="section-label">作品とロケ地の紐付け</div>
     <div id="appearances-list"><div class="loading-msg">読み込み中...</div></div>
+  </div>
+
+  <!-- 作品・シリーズ設定 -->
+  <div class="tab-content" id="tab-series">
+    <div class="section-label">作品カラー・Thai GL Worksリンク設定</div>
+    <div style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.7">
+      各作品のテーマカラーとThai GL WorksのドラマIDを設定します。<br>
+      ドラマIDはThai GL Worksの作品URLの <code style="background:#F3F4F6;padding:1px 6px;border-radius:4px">?drama=</code> の後の数字です。
+    </div>
+    <button class="btn-primary" onclick="addSeriesModal()" style="margin-bottom:14px">＋ 新しい作品を追加</button>
+    <div id="series-list-el"><div class="loading-msg">読み込み中...</div></div>
   </div>
 
   <!-- 新規追加 -->
@@ -136,11 +131,10 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
           <option>スポーツ</option><option>放送局</option><option>国立公園</option>
         </select>
       </div>
-      <div class="form-group"><label class="form-label">住所</label><input class="form-input" id="a-address" placeholder="例: 117 Soi Ram Intra, Min Buri, Bangkok"></div>
+      <div class="form-group"><label class="form-label">住所</label><input class="form-input" id="a-address" placeholder="例: 117 Soi Ram Intra, Bangkok"></div>
       <div class="form-group"><label class="form-label">GoogleマップURL</label><input class="form-input" id="a-url" placeholder="https://maps.app.goo.gl/..."></div>
-      <div class="form-group"><label class="form-label">訪問メモ</label><input class="form-input" id="a-memo" placeholder="例: 入場500B。FB予約推奨。"></div>
+      <div class="form-group"><label class="form-label">訪問メモ</label><input class="form-input" id="a-memo" placeholder="例: 入場500B、FB予約推奨"></div>
     </div>
-
     <div class="section-label">作品との紐付け</div>
     <div class="card">
       <div class="form-group"><label class="form-label">作品名 <span class="required">*</span></label><input class="form-input" id="a-series" placeholder="例: GAP The Series"></div>
@@ -150,16 +144,16 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
       </div>
       <div class="form-group"><label class="form-label">シーン説明 <span class="required">*</span></label><input class="form-input" id="a-scene" placeholder="例: Monの家として使用されたスタジオ"></div>
     </div>
-    <div id="add-msg" style="font-size:13px;text-align:center;min-height:20px;margin:8px 0"></div>
-    <button class="btn btn-primary" onclick="addNewSpot()">✅ 追加して公開</button>
+    <div id="add-msg" style="font-size:13px;text-align:center;min-height:18px;margin:6px 0"></div>
+    <button class="btn-primary" onclick="addNewSpot()">✅ 追加して公開</button>
   </div>
 </div>
 
 <!-- 編集モーダル -->
 <div class="modal-overlay" id="edit-modal" style="display:none" onclick="closeEditModal(event)">
-  <div class="modal-card" onclick="event.stopPropagation()" style="position:relative">
+  <div class="modal-card" onclick="event.stopPropagation()">
     <button class="modal-close" onclick="closeEditModal()">×</button>
-    <div class="modal-title" id="edit-modal-title">場所を編集</div>
+    <div class="modal-title" id="edit-modal-title">編集</div>
     <div id="edit-modal-body"></div>
   </div>
 </div>
@@ -172,7 +166,7 @@ import { getFirestore, collection, getDocs, getDoc, doc,
          addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig = {
+const FB_CFG={
   apiKey:"AIzaSyARPFANz5DZa6KpEBiw77PCCYPPZghMGeg",
   authDomain:"thai-gl-works-2c835.firebaseapp.com",
   databaseURL:"https://thai-gl-works-2c835-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -181,25 +175,25 @@ const firebaseConfig = {
   messagingSenderId:"71290080508",
   appId:"1:71290080508:web:47de06018b8617225bdb79"
 };
-const fbApp=initializeApp(firebaseConfig);
+const fbApp=initializeApp(FB_CFG);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);
-const provider=new GoogleAuthProvider();
-const ADMIN_EMAIL="cory92059@gmail.com";
+const prov=new GoogleAuthProvider();
+const ADMIN="cory92059@gmail.com";
 
-let LOCS=[], APPS=[], SUBS=[];
+let LOCS=[], APPS=[], SUBS=[], SERIES_MASTER=[];
 
-window.doLogin=async()=>{try{await signInWithPopup(auth,provider);}catch(e){console.error(e);}};
+window.doLogin=async()=>{try{await signInWithPopup(auth,prov);}catch(e){console.error(e);}};
 window.doLogout=async()=>signOut(auth);
 
 onAuthStateChanged(auth,async user=>{
-  if(user&&user.email===ADMIN_EMAIL){
+  if(user&&user.email===ADMIN){
     document.getElementById('auth-gate').style.display='none';
     document.getElementById('admin-app').style.display='block';
     await loadAll();
-    renderPending(); renderLocations(); renderAppearances();
-  } else if(user) {
-    document.getElementById('auth-gate').innerHTML=`<div style="font-size:48px">🚫</div><div style="font-size:18px;font-weight:900">アクセス権限がありません</div><div style="font-size:13px;color:#888">管理者アカウントでのみアクセスできます</div><button class="login-btn" onclick="doLogout()" style="margin-top:16px">別のアカウントでログイン</button>`;
+    renderPending(); renderLocations(); renderAppearances(); renderSeriesMaster();
+  } else if(user){
+    document.getElementById('auth-gate').innerHTML=`<div style="font-size:48px">🚫</div><div style="font-size:18px;font-weight:900">アクセス権限がありません</div><button class="login-btn" onclick="doLogout()" style="margin-top:16px">別のアカウントでログイン</button>`;
   } else {
     document.getElementById('auth-gate').style.display='flex';
     document.getElementById('admin-app').style.display='none';
@@ -207,40 +201,37 @@ onAuthStateChanged(auth,async user=>{
 });
 
 async function loadAll(){
-  const[ls,as,ss]=await Promise.all([
+  const[ls,as,ss,sm]=await Promise.all([
     getDocs(collection(db,'locations')),
     getDocs(collection(db,'appearances')),
     getDocs(collection(db,'location_submissions')),
+    getDocs(collection(db,'series_master')).catch(()=>({docs:[]})),
   ]);
   LOCS=ls.docs.map(d=>({id:d.id,...d.data()}));
   APPS=as.docs.map(d=>({id:d.id,...d.data()}));
   SUBS=ss.docs.map(d=>({id:d.id,...d.data()}));
+  SERIES_MASTER=sm.docs.map(d=>({id:d.id,...d.data()}));
   const pending=SUBS.filter(s=>s.status==='未承認').length;
   document.getElementById('pending-count').textContent=pending>0?` (${pending})`:'';
 }
 
-// ── タブ切り替え ───────────────────────────────────────────────
 window.switchTab=function(name){
-  document.querySelectorAll('.tab-btn').forEach((b,i)=>{b.classList.toggle('active',['pending','locations','appearances','add'][i]===name);});
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{b.classList.toggle('active',['pending','locations','appearances','series','add'][i]===name);});
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   document.getElementById(`tab-${name}`).classList.add('active');
 };
 
-// ── 承認待ちリスト ─────────────────────────────────────────────
+// ── 承認待ち ──────────────────────────────────────────────────
 function renderPending(){
   const pending=SUBS.filter(s=>s.status==='未承認');
   const el=document.getElementById('pending-list');
   if(!pending.length){el.innerHTML=`<div class="empty-msg">承認待ちの投稿はありません 🎉</div>`;return;}
   el.innerHTML=pending.map(s=>`
     <div class="card" id="sub-${s.id}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-        <div>
-          <span class="badge badge-pending">未承認</span>
-          <div class="card-title">${s.name}</div>
-          <div class="card-sub">${s.series} / ${s.cp} / ${s.type}<br>${s.scene_desc}${s.memo?`<br>💡 ${s.memo}`:''}</div>
-          <div class="card-meta">投稿: ${s.submittedBy||'不明'}</div>
-        </div>
-      </div>
+      <span class="badge badge-pending">未承認</span>
+      <div class="card-title">${s.name}</div>
+      <div class="card-sub">${s.series} / ${s.cp} / ${s.type}<br>${s.scene_desc}${s.memo?`<br>💡 ${s.memo}`:''}</div>
+      <div class="card-meta">投稿者: ${s.submittedBy||'不明'}</div>
       <div class="btn-row">
         <button class="btn btn-approve" onclick="approveSub('${s.id}')">✅ 承認して公開</button>
         <button class="btn btn-reject"  onclick="rejectSub('${s.id}')">✕ 却下</button>
@@ -250,30 +241,17 @@ function renderPending(){
 
 window.approveSub=async function(subId){
   const sub=SUBS.find(s=>s.id===subId);
-  if(!sub)return;
-  if(!confirm(`「${sub.name}」を承認して公開しますか？`))return;
+  if(!sub||!confirm(`「${sub.name}」を承認して公開しますか？`))return;
   try{
-    // locationsに追加
     const locRef=doc(collection(db,'locations'));
-    await setDoc(locRef,{
-      name:sub.name,lat:sub.lat||0,lng:sub.lng||0,
-      category:sub.category||'観光地',
-      address:sub.address||'',
-      googleMapsUrl:sub.googleMapsUrl||'',
-      memo:sub.memo||''
-    });
-    // appearancesに追加
-    await addDoc(collection(db,'appearances'),{
-      location_id:locRef.id,series:sub.series,cp:sub.cp,
-      type:sub.type,scene_desc:sub.scene_desc,status:'公開'
-    });
-    // submissionを承認済みに
+    await setDoc(locRef,{name:sub.name,lat:sub.lat||0,lng:sub.lng||0,category:sub.category||'観光地',address:sub.address||'',googleMapsUrl:sub.googleMapsUrl||'',memo:sub.memo||''});
+    await addDoc(collection(db,'appearances'),{location_id:locRef.id,series:sub.series,cp:sub.cp,type:sub.type,scene_desc:sub.scene_desc,status:'公開'});
     await updateDoc(doc(db,'location_submissions',subId),{status:'承認済み'});
     alert('✅ 承認しました！');
     await loadAll(); renderPending(); renderLocations(); renderAppearances();
+    localStorage.removeItem('tsmap_loc_v1'); localStorage.removeItem('tsmap_app_v1');
   }catch(e){alert('エラー: '+e.message);}
 };
-
 window.rejectSub=async function(subId){
   const sub=SUBS.find(s=>s.id===subId);
   if(!confirm(`「${sub.name}」を却下しますか？`))return;
@@ -288,26 +266,21 @@ function renderLocations(){
   el.innerHTML=LOCS.map(loc=>{
     const apps=APPS.filter(a=>a.location_id===loc.id&&a.status==='公開');
     return`<div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div style="flex:1;min-width:0">
-          <div class="card-title">${loc.name}</div>
-          <div class="card-meta">${loc.category} / lat:${loc.lat} lng:${loc.lng}</div>
-          <div class="card-meta" style="margin-top:2px">${apps.map(a=>`${a.series}`).join(' · ')}</div>
-        </div>
-      </div>
+      <div class="card-title">${loc.name}</div>
+      <div class="card-meta">${loc.category} / lat:${loc.lat} lng:${loc.lng}</div>
+      <div class="card-meta" style="margin-top:2px">${apps.map(a=>a.series).join(' · ')||'紐付けなし'}</div>
       <div class="btn-row">
-        <button class="btn btn-edit" onclick="editLocation('${loc.id}')">✏ 編集</button>
+        <button class="btn btn-edit" onclick="editLocationModal('${loc.id}')">✏ 編集</button>
         <button class="btn btn-delete" onclick="deleteLocation('${loc.id}')">🗑 削除</button>
       </div>
     </div>`;
   }).join('');
 }
 
-// ── 場所編集 ─────────────────────────────────────────────────
-window.editLocation=function(locId){
+window.editLocationModal=function(locId){
   const loc=LOCS.find(l=>l.id===locId);
   if(!loc)return;
-  document.getElementById('edit-modal-title').textContent=`✏ ${loc.name} を編集`;
+  document.getElementById('edit-modal-title').textContent=`✏ ${loc.name}`;
   document.getElementById('edit-modal-body').innerHTML=`
     <div class="form-group"><label class="form-label">場所名</label><input class="form-input" id="el-name" value="${loc.name||''}"></div>
     <div class="form-row">
@@ -324,15 +297,12 @@ window.editLocation=function(locId){
     <div class="form-group"><label class="form-label">GoogleマップURL</label><input class="form-input" id="el-url" value="${loc.googleMapsUrl||''}"></div>
     <div class="form-group"><label class="form-label">訪問メモ</label><input class="form-input" id="el-memo" value="${loc.memo||''}"></div>
     <div id="el-msg" style="font-size:13px;text-align:center;min-height:18px"></div>
-    <div class="btn-row" style="margin-top:12px">
-      <button class="btn btn-primary" style="flex:1" onclick="saveLocation('${locId}')">💾 保存</button>
-    </div>`;
+    <button class="btn-primary" onclick="saveLocation('${locId}')">💾 保存</button>`;
   document.getElementById('edit-modal').style.display='flex';
 };
-
 window.saveLocation=async function(locId){
   const msgEl=document.getElementById('el-msg');
-  msgEl.style.color='#9333EA'; msgEl.textContent='保存中...';
+  msgEl.style.color='#9333EA';msgEl.textContent='保存中...';
   try{
     await updateDoc(doc(db,'locations',locId),{
       name:document.getElementById('el-name').value.trim(),
@@ -343,25 +313,24 @@ window.saveLocation=async function(locId){
       googleMapsUrl:document.getElementById('el-url').value.trim(),
       memo:document.getElementById('el-memo').value.trim(),
     });
-    msgEl.style.color='#059669'; msgEl.textContent='✅ 保存しました';
+    msgEl.style.color='#059669';msgEl.textContent='✅ 保存しました';
+    localStorage.removeItem('tsmap_loc_v1');
     await loadAll(); renderLocations();
     setTimeout(()=>closeEditModal(),1200);
   }catch(e){msgEl.style.color='#DC2626';msgEl.textContent='エラー: '+e.message;}
 };
-
 window.deleteLocation=async function(locId){
   const loc=LOCS.find(l=>l.id===locId);
-  if(!confirm(`「${loc.name}」を削除しますか？\n紐付けデータも一緒に削除されます。`))return;
-  try{
-    const batch=writeBatch(db);
-    batch.delete(doc(db,'locations',locId));
-    APPS.filter(a=>a.location_id===locId).forEach(a=>batch.delete(doc(db,'appearances',a.id)));
-    await batch.commit();
-    await loadAll(); renderLocations(); renderAppearances();
-  }catch(e){alert('エラー: '+e.message);}
+  if(!confirm(`「${loc.name}」を削除しますか？紐付けも削除されます。`))return;
+  const batch=writeBatch(db);
+  batch.delete(doc(db,'locations',locId));
+  APPS.filter(a=>a.location_id===locId).forEach(a=>batch.delete(doc(db,'appearances',a.id)));
+  await batch.commit();
+  localStorage.removeItem('tsmap_loc_v1'); localStorage.removeItem('tsmap_app_v1');
+  await loadAll(); renderLocations(); renderAppearances();
 };
 
-// ── 紐付け一覧 ────────────────────────────────────────────────
+// ── 紐付け ───────────────────────────────────────────────────
 function renderAppearances(){
   const el=document.getElementById('appearances-list');
   if(!APPS.length){el.innerHTML=`<div class="empty-msg">紐付けデータがありません</div>`;return;}
@@ -372,15 +341,14 @@ function renderAppearances(){
       <div class="card-title">${loc?.name||'(削除済み)'}</div>
       <div class="card-sub">${app.series} / 💗 ${app.cp} / ${app.type}<br>${app.scene_desc}</div>
       <div class="btn-row">
-        <button class="btn btn-edit" onclick="editAppearance('${app.id}')">✏ 編集</button>
-        <button class="btn btn-delete" onclick="deleteAppearance('${app.id}')">🗑 削除</button>
-        ${app.status!=='公開'?`<button class="btn btn-approve" onclick="publishAppearance('${app.id}')">▶ 公開</button>`:''}
+        <button class="btn btn-edit" onclick="editAppModal('${app.id}')">✏ 編集</button>
+        <button class="btn btn-delete" onclick="deleteApp('${app.id}')">🗑 削除</button>
+        ${app.status!=='公開'?`<button class="btn btn-approve" onclick="publishApp('${app.id}')">▶ 公開</button>`:''}
       </div>
     </div>`;
   }).join('');
 }
-
-window.editAppearance=function(appId){
+window.editAppModal=function(appId){
   const app=APPS.find(a=>a.id===appId);
   if(!app)return;
   document.getElementById('edit-modal-title').textContent='🎬 紐付けを編集';
@@ -388,26 +356,19 @@ window.editAppearance=function(appId){
     <div class="form-group"><label class="form-label">作品名</label><input class="form-input" id="ea-series" value="${app.series||''}"></div>
     <div class="form-group"><label class="form-label">CP名</label><input class="form-input" id="ea-cp" value="${app.cp||''}"></div>
     <div class="form-group"><label class="form-label">分類</label>
-      <select class="form-select" id="ea-type">
-        ${['作品','プライベート','来日'].map(o=>`<option${app.type===o?' selected':''}>${o}</option>`).join('')}
-      </select>
+      <select class="form-select" id="ea-type">${['作品','プライベート','来日'].map(o=>`<option${app.type===o?' selected':''}>${o}</option>`).join('')}</select>
     </div>
     <div class="form-group"><label class="form-label">シーン説明</label><input class="form-input" id="ea-scene" value="${app.scene_desc||''}"></div>
     <div class="form-group"><label class="form-label">公開状態</label>
-      <select class="form-select" id="ea-status">
-        ${['公開','未承認','却下'].map(o=>`<option${app.status===o?' selected':''}>${o}</option>`).join('')}
-      </select>
+      <select class="form-select" id="ea-status">${['公開','未承認','却下'].map(o=>`<option${app.status===o?' selected':''}>${o}</option>`).join('')}</select>
     </div>
     <div id="ea-msg" style="font-size:13px;text-align:center;min-height:18px"></div>
-    <div class="btn-row" style="margin-top:12px">
-      <button class="btn btn-primary" style="flex:1" onclick="saveAppearance('${appId}')">💾 保存</button>
-    </div>`;
+    <button class="btn-primary" onclick="saveApp('${appId}')">💾 保存</button>`;
   document.getElementById('edit-modal').style.display='flex';
 };
-
-window.saveAppearance=async function(appId){
+window.saveApp=async function(appId){
   const msgEl=document.getElementById('ea-msg');
-  msgEl.style.color='#9333EA'; msgEl.textContent='保存中...';
+  msgEl.style.color='#9333EA';msgEl.textContent='保存中...';
   try{
     await updateDoc(doc(db,'appearances',appId),{
       series:document.getElementById('ea-series').value.trim(),
@@ -416,20 +377,103 @@ window.saveAppearance=async function(appId){
       scene_desc:document.getElementById('ea-scene').value.trim(),
       status:document.getElementById('ea-status').value,
     });
-    msgEl.style.color='#059669'; msgEl.textContent='✅ 保存しました';
+    msgEl.style.color='#059669';msgEl.textContent='✅ 保存しました';
+    localStorage.removeItem('tsmap_app_v1');
     await loadAll(); renderAppearances();
     setTimeout(()=>closeEditModal(),1200);
   }catch(e){msgEl.style.color='#DC2626';msgEl.textContent='エラー: '+e.message;}
 };
-
-window.deleteAppearance=async function(appId){
+window.deleteApp=async function(appId){
   if(!confirm('この紐付けを削除しますか？'))return;
   await deleteDoc(doc(db,'appearances',appId));
+  localStorage.removeItem('tsmap_app_v1');
   await loadAll(); renderAppearances();
 };
-window.publishAppearance=async function(appId){
+window.publishApp=async function(appId){
   await updateDoc(doc(db,'appearances',appId),{status:'公開'});
+  localStorage.removeItem('tsmap_app_v1');
   await loadAll(); renderAppearances();
+};
+
+// ── 作品設定（series_master）────────────────────────────────
+function renderSeriesMaster(){
+  const el=document.getElementById('series-list-el');
+  if(!SERIES_MASTER.length){
+    el.innerHTML=`<div class="empty-msg">作品設定がありません<br><small>「新しい作品を追加」から登録してください</small></div>`;
+    return;
+  }
+  el.innerHTML=SERIES_MASTER.map(s=>`
+    <div class="series-card" style="border-left-color:${s.color||'#EEE'}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span class="color-preview" style="background:${s.color||'#EEE'};border-color:${s.color||'#EEE'}"></span>
+        <div class="card-title" style="margin:0">${s.name}</div>
+      </div>
+      <div class="card-meta">テーマカラー: ${s.color||'未設定'}</div>
+      <div class="card-meta">Thai GL Works ドラマID: ${s.drama_id||'未設定'}</div>
+      ${s.drama_id?`<div class="card-meta"><a href="https://thai-gl-works-2c835.web.app/index.html?drama=${s.drama_id}" target="_blank" style="color:#9333EA;font-size:11px">作品ページを確認 →</a></div>`:''}
+      <div class="btn-row">
+        <button class="btn btn-edit" onclick="editSeriesModal('${s.id}')">✏ 編集</button>
+        <button class="btn btn-delete" onclick="deleteSeries('${s.id}')">🗑 削除</button>
+      </div>
+    </div>`).join('');
+}
+
+window.addSeriesModal=function(){
+  document.getElementById('edit-modal-title').textContent='🎨 作品を追加';
+  document.getElementById('edit-modal-body').innerHTML=buildSeriesForm({});
+  document.getElementById('edit-modal').style.display='flex';
+};
+window.editSeriesModal=function(sId){
+  const s=SERIES_MASTER.find(x=>x.id===sId);
+  if(!s)return;
+  document.getElementById('edit-modal-title').textContent=`🎨 ${s.name} を編集`;
+  document.getElementById('edit-modal-body').innerHTML=buildSeriesForm(s,sId);
+  document.getElementById('edit-modal').style.display='flex';
+};
+
+function buildSeriesForm(s,sId){
+  return`
+    <div class="form-group"><label class="form-label">作品名 <span class="required">*</span></label>
+      <input class="form-input" id="sm-name" value="${s.name||''}" placeholder="例: GAP The Series"></div>
+    <div class="form-group"><label class="form-label">テーマカラー（16進数）</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="color" id="sm-color-picker" value="${s.color||'#EC4899'}" oninput="document.getElementById('sm-color').value=this.value" style="width:44px;height:36px;border:none;cursor:pointer;border-radius:8px;padding:2px">
+        <input class="form-input" id="sm-color" value="${s.color||'#EC4899'}" placeholder="#EC4899" oninput="document.getElementById('sm-color-picker').value=this.value" style="font-family:monospace">
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Thai GL Works ドラマID</label>
+      <input class="form-input" id="sm-drama-id" value="${s.drama_id||''}" placeholder="例: 1774088911045" style="font-family:monospace">
+      <div style="font-size:11px;color:#999;margin-top:4px">Thai GL Worksの作品URLの ?drama= の後の数字</div>
+    </div>
+    <div id="sm-msg" style="font-size:13px;text-align:center;min-height:18px"></div>
+    <button class="btn-primary" onclick="saveSeries('${sId||''}')">💾 保存</button>`;
+}
+
+window.saveSeries=async function(sId){
+  const msgEl=document.getElementById('sm-msg');
+  const name=document.getElementById('sm-name').value.trim();
+  const color=document.getElementById('sm-color').value.trim();
+  const dramaId=document.getElementById('sm-drama-id').value.trim();
+  if(!name){msgEl.style.color='#DC2626';msgEl.textContent='作品名を入力してください';return;}
+  msgEl.style.color='#9333EA';msgEl.textContent='保存中...';
+  // light/borderを自動生成（colorから）
+  const light=color+'22', border=color+'88';
+  const data={name,color,light,border,drama_id:dramaId};
+  try{
+    if(sId){await updateDoc(doc(db,'series_master',sId),data);}
+    else{await addDoc(collection(db,'series_master'),data);}
+    msgEl.style.color='#059669';msgEl.textContent='✅ 保存しました';
+    localStorage.removeItem('tsmap_series_v1');
+    await loadAll(); renderSeriesMaster();
+    setTimeout(()=>closeEditModal(),1200);
+  }catch(e){msgEl.style.color='#DC2626';msgEl.textContent='エラー: '+e.message;}
+};
+window.deleteSeries=async function(sId){
+  const s=SERIES_MASTER.find(x=>x.id===sId);
+  if(!confirm(`「${s.name}」の設定を削除しますか？`))return;
+  await deleteDoc(doc(db,'series_master',sId));
+  localStorage.removeItem('tsmap_series_v1');
+  await loadAll(); renderSeriesMaster();
 };
 
 // ── 新規追加 ─────────────────────────────────────────────────
@@ -447,17 +491,16 @@ window.addNewSpot=async function(){
   const scene=document.getElementById('a-scene').value.trim();
   const msgEl=document.getElementById('add-msg');
   if(!name||!series||!cp||!scene){msgEl.style.color='#DC2626';msgEl.textContent='※ 必須項目を入力してください';return;}
-  if(!lat||!lng){msgEl.style.color='#DC2626';msgEl.textContent='※ 緯度・経度を入力してください（GoogleマップでURLから取得できます）';return;}
-  msgEl.style.color='#9333EA'; msgEl.textContent='追加中...';
+  if(!lat||!lng){msgEl.style.color='#DC2626';msgEl.textContent='※ 緯度・経度を入力してください';return;}
+  msgEl.style.color='#9333EA';msgEl.textContent='追加中...';
   try{
     const locRef=doc(collection(db,'locations'));
     await setDoc(locRef,{name,lat,lng,category:cat,address,googleMapsUrl:url,memo});
     await addDoc(collection(db,'appearances'),{location_id:locRef.id,series,cp,type,scene_desc:scene,status:'公開'});
-    msgEl.style.color='#059669'; msgEl.textContent='✅ 追加しました！';
+    msgEl.style.color='#059669';msgEl.textContent='✅ 追加しました！';
     ['a-name','a-lat','a-lng','a-address','a-url','a-memo','a-series','a-cp','a-scene'].forEach(id=>{document.getElementById(id).value='';});
-    await loadAll(); renderLocations(); renderAppearances();
-    // キャッシュクリア
     localStorage.removeItem('tsmap_loc_v1'); localStorage.removeItem('tsmap_app_v1');
+    await loadAll(); renderLocations(); renderAppearances();
   }catch(e){msgEl.style.color='#DC2626';msgEl.textContent='エラー: '+e.message;}
 };
 
