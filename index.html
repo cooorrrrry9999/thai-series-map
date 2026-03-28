@@ -342,49 +342,64 @@ const ADMIN  = "cory92059@gmail.com";
 const GL_URL = "https://thai-gl-works-2c835.web.app/index.html";
 
 // キャッシュ（開発中30分）
-const TTL=30*60*1000, CL='tsmap_loc_v1', CA='tsmap_app_v1', CS='tsmap_series_v1';
+const TTL=30*60*1000, CL='tsmap_loc_v2', CA='tsmap_app_v2', CS='tsmap_series_v2', CC='tsmap_cp_v1', CK='tsmap_cat_v1';
 const sc=(k,d)=>{try{localStorage.setItem(k,JSON.stringify({ts:Date.now(),data:d}))}catch(e){}};
 const lc=k=>{try{const r=localStorage.getItem(k);if(!r)return null;const{ts,data}=JSON.parse(r);if(Date.now()-ts>TTL){localStorage.removeItem(k);return null;}return data;}catch(e){return null;}};
 
-// デフォルトシリーズ設定（Firestoreのseries_masterで上書き可能）
-let SERIES_MAP = {
-  "GAP The Series":  {color:"#EC4899",light:"#FDF2F8",border:"#F9A8D4",drama_id:""},
-  "URANUS2324":      {color:"#3B82F6",light:"#EFF6FF",border:"#93C5FD",drama_id:""},
-  "The Loyal Pin":   {color:"#D97706",light:"#FFFBEB",border:"#FCD34D",drama_id:""},
-  "The Secret Of Us":{color:"#0891B2",light:"#ECFEFF",border:"#67E8F9",drama_id:""},
-  "Lucky My Love":   {color:"#65A30D",light:"#F7FEE7",border:"#BEF264",drama_id:""},
-  "Blank The Series":{color:"#DC2626",light:"#FEF2F2",border:"#FCA5A5",drama_id:""},
-  "プライベート":     {color:"#9333EA",light:"#FAF5FF",border:"#D8B4FE",drama_id:""},
-  "来日":            {color:"#059669",light:"#ECFDF5",border:"#6EE7B7",drama_id:""},
+// ── マスタデータ（Firestoreから動的取得） ──────────────────────
+// CP → 色（マーカー色の基準）
+let CP_MAP = {
+  "FreenBecky": {color:"#EC4899",light:"#FDF2F8",border:"#F9A8D4",emoji:"💗"},
+  "PondPhuwin": {color:"#0891B2",light:"#ECFEFF",border:"#67E8F9",emoji:"💙"},
+  "NearMine":   {color:"#65A30D",light:"#F7FEE7",border:"#BEF264",emoji:"💚"},
+  "Blank Cast": {color:"#DC2626",light:"#FEF2F2",border:"#FCA5A5",emoji:"❤"},
 };
-const FB={color:"#888780",light:"#F1EFE8",border:"#B4B2A9",drama_id:""};
+// 作品名 → drama_id（Thai GL Worksリンク用）
+let SERIES_MAP = {
+  "GAP The Series":  {drama_id:"GAP"},
+  "URANUS2324":      {drama_id:""},
+  "The Loyal Pin":   {drama_id:""},
+  "The Secret Of Us":{drama_id:""},
+  "Lucky My Love":   {drama_id:""},
+  "Blank The Series":{drama_id:""},
+  "プライベート":     {drama_id:""},
+  "来日":            {drama_id:""},
+};
+// カテゴリー → 絵文字
+let CAT_MAP = {
+  "カフェ":"☕","レストラン":"🍖","ホテル":"🏨","スタジオ":"🎬",
+  "ショッピング":"🛍️","観光地":"📍","邸宅/スタジオ":"🏛️","寺院":"⛩️",
+  "大学":"🎓","図書館":"📚","アート":"🎨","病院":"🏥",
+  "スポーツ":"⚽","放送局":"📺","国立公園":"🏞️",
+};
 
-// 未登録作品への自動カラー割り当て（16色プリセット）
-const AUTO_COLORS=[
-  "#EC4899","#3B82F6","#D97706","#0891B2","#65A30D",
-  "#DC2626","#9333EA","#059669","#EA580C","#0EA5E9",
-  "#84CC16","#F43F5E","#8B5CF6","#14B8A6","#F97316","#6366F1"
-];
-let autoColorIdx=0;
-const autoAssigned={};
-function autoColor(seriesName){
-  if(!autoAssigned[seriesName]){
-    const c=AUTO_COLORS[autoColorIdx%AUTO_COLORS.length];
-    autoColorIdx++;
-    autoAssigned[seriesName]={color:c,light:c+'18',border:c+'66',drama_id:''};
-  }
-  return autoAssigned[seriesName];
+// 自動CP色割り当て
+const AUTO_CP_COLORS=["#EC4899","#3B82F6","#D97706","#0891B2","#65A30D","#DC2626","#9333EA","#059669","#EA580C","#8B5CF6","#F97316","#14B8A6"];
+let autoCpIdx=0, autoCpMap={};
+function autoCpColor(cp){
+  if(!autoCpMap[cp]){const c=AUTO_CP_COLORS[autoCpIdx++%AUTO_CP_COLORS.length];autoCpMap[cp]={color:c,light:c+'18',border:c+'66',emoji:'💗'};}
+  return autoCpMap[cp];
 }
-const scfg=s=>SERIES_MAP[s]||(s?autoColor(s):FB);
+const FB={color:"#888780",light:"#F1EFE8",border:"#B4B2A9",emoji:"📍"};
 
-const ICONS={"スタジオ":"🎬","ショッピング":"🛍️","レストラン":"🍖","ホテル":"🏨","カフェ":"☕","観光地":"📍","邸宅/スタジオ":"🏛️","寺院":"⛩️","大学":"🎓","図書館":"📚","アート":"🎨","病院":"🏥","スポーツ":"⚽","放送局":"📺","国立公園":"🏞️"};
+// CPの設定を取得（未登録は自動割り当て）
+function cpCfg(cpName){return CP_MAP[cpName]||(cpName?autoCpColor(cpName):FB);}
+// 場所の代表CPを取得してその色を返す
+function primaryCpCfg(locId){const a=locApps(locId)[0];return a&&a.cp?cpCfg(a.cp):FB;}
+// カテゴリーの絵文字を取得
+function catEmoji(cat){return CAT_MAP[cat]||'📍';}
+// 作品のdrama_idを取得
+function seriesDramaId(s){return(SERIES_MAP[s]||{}).drama_id||'';}
+
+// ICONSはCAT_MAPから動的生成するが後方互換のためフォールバックも保持
 
 let LOCS=[], APPS=[], map=null, markers={};
 let activeType="すべて", activeCp=null, searchQ="", selId=null, currentUser=null;
 let drawerOpen=true;
 
 const locApps=id=>APPS.filter(a=>a.location_id===id&&a.status==='公開');
-const primaryCfg=id=>{const a=locApps(id)[0];return a?scfg(a.series):FB;};
+// マーカー色はCPで決まる
+const primaryCfg=id=>{const a=locApps(id)[0];return a&&a.cp?cpCfg(a.cp):FB;};
 
 function getFiltered(){
   return LOCS.filter(loc=>{
@@ -465,7 +480,7 @@ function updateDrawerVar(){
 
 // ── Data ──────────────────────────────────────────────────────
 async function loadAll(){
-  const cl=lc(CL), ca=lc(CA), cs=lc(CS);
+  const cl=lc(CL), ca=lc(CA), cs=lc(CS), cc=lc(CC), ck=lc(CK);
   if(cl&&ca){LOCS=cl;APPS=ca;}
   else{
     const[ls,as]=await Promise.all([getDocs(collection(db,'locations')),getDocs(collection(db,'appearances'))]);
@@ -473,32 +488,18 @@ async function loadAll(){
     APPS=as.docs.map(d=>({id:d.id,...d.data()}));
     sc(CL,LOCS); sc(CA,APPS);
   }
-  // series_masterからカラー・drama_idを上書き
-  if(cs){mergeSeriesMaster(cs);}
-  else{
-    try{
-      const ss=await getDocs(collection(db,'series_master'));
-      const master=ss.docs.map(d=>({id:d.id,...d.data()}));
-      sc(CS,master); mergeSeriesMaster(master);
-    }catch(e){console.log('series_master未作成、デフォルト使用');}
-  }
+  // series_master（drama_id）
+  const sMaster=cs||await getDocs(collection(db,'series_master')).then(s=>{const d=s.docs.map(x=>({id:x.id,...x.data()}));sc(CS,d);return d;}).catch(()=>[]);
+  sMaster.forEach(m=>{if(m.name){SERIES_MAP[m.name]={drama_id:m.drama_id||''}}});
+  // cp_master（CP色）
+  const cpMaster=cc||await getDocs(collection(db,'cp_master')).then(s=>{const d=s.docs.map(x=>({id:x.id,...x.data()}));sc(CC,d);return d;}).catch(()=>[]);
+  cpMaster.forEach(m=>{if(m.name){CP_MAP[m.name]={color:m.color||'#888',light:(m.color||'#888')+'22',border:(m.color||'#888')+'88',emoji:m.emoji||'💗'}}});
+  // category_master（カテゴリー絵文字）
+  const catMaster=ck||await getDocs(collection(db,'category_master')).then(s=>{const d=s.docs.map(x=>({id:x.id,...x.data()}));sc(CK,d);return d;}).catch(()=>[]);
+  catMaster.forEach(m=>{if(m.name&&m.emoji)CAT_MAP[m.name]=m.emoji;});
   initMap(); renderFilters(); renderDrawer();
-  // 投稿フォームのdatalist更新
   document.getElementById('series-list').innerHTML=getUniqueSeries().map(s=>`<option value="${s}">`).join('');
-  document.getElementById('cp-list').innerHTML=getUniqueCPs().map(c=>`<option value="${c}">`).join('');
-}
-
-function mergeSeriesMaster(master){
-  master.forEach(m=>{
-    if(m.name){
-      SERIES_MAP[m.name]={
-        color:m.color||SERIES_MAP[m.name]?.color||FB.color,
-        light:m.light||SERIES_MAP[m.name]?.light||FB.light,
-        border:m.border||SERIES_MAP[m.name]?.border||FB.border,
-        drama_id:m.drama_id||''
-      };
-    }
-  });
+  document.getElementById('cp-list').innerHTML=Object.keys(CP_MAP).map(c=>`<option value="${c}">`).join('');
 }
 
 // ── Leaflet ───────────────────────────────────────────────────
@@ -595,7 +596,7 @@ function renderDrawer(){
   el.innerHTML=filtered.map(loc=>{
     const apps=locApps(loc.id),a0=apps[0],cfg=a0?scfg(a0.series):FB,isSel=loc.id===selId;
     return`<div class="drawer-card${isSel?' selected':''}" style="${isSel?`border-color:${cfg.color};box-shadow:0 2px 12px ${cfg.border};`:''}" onclick="window._sel('${loc.id}')">
-      <div class="drawer-card-icon">${ICONS[loc.category]||'📍'}</div>
+      <div class="drawer-card-icon">${catEmoji(loc.category)}</div>
       <span class="drawer-card-series" style="background:${cfg.light};color:${cfg.color};border-color:${cfg.border}">${a0?.series||''}</span>
       <div class="drawer-card-name">${loc.name}</div>
       <div class="drawer-card-desc">${a0?.scene_desc||''}</div>
@@ -612,7 +613,9 @@ window._sel=function(locId){
   if(!selId){closeDetailDirect();return;}
   const loc=LOCS.find(l=>l.id===locId);
   const apps=locApps(locId);
-  const cfg=apps[0]?scfg(apps[0].series):FB;
+  // 色はCPで決まる
+  const primaryCp=apps[0]?.cp||'';
+  const cfg=primaryCp?cpCfg(primaryCp):FB;
   if(loc.lat&&loc.lng&&map){
     const offsetLat=loc.lat-0.003;
     map.setView([offsetLat,loc.lng],15,{animate:true});
@@ -620,7 +623,7 @@ window._sel=function(locId){
   document.getElementById('detail-accent').style.background=`linear-gradient(90deg,${cfg.border},${cfg.color})`;
   document.getElementById('detail-tags').innerHTML=
     [...new Set(apps.map(a=>a.type))].map(t=>`<span class="detail-tag" style="background:#F3F4F6;color:#555;border-color:#E5E7EB">${t}</span>`).join('')+
-    `<span class="detail-tag" style="background:${cfg.light};color:${cfg.color};border-color:${cfg.border}">${loc.category}</span>`;
+    `<span class="detail-tag" style="background:${cfg.light};color:${cfg.color};border-color:${cfg.border}">${catEmoji(loc.category)} ${loc.category}</span>`;
   document.getElementById('detail-name').textContent=loc.name;
   document.getElementById('detail-address').innerHTML=loc.address?`<span>📌</span> ${loc.address}`:'';
   const memoEl=document.getElementById('detail-memo');
@@ -723,10 +726,10 @@ function buildSnsLink(a){
 // ── Thai GL Works リンク生成 ──────────────────────────────────
 // drama_id が設定されていれば直リンク（数字IDでも文字列IDでもOK）
 function buildDramaLink(cfg, seriesName){
-  const id = (cfg.drama_id || '').trim();
+  const id = seriesDramaId(seriesName).trim();
   if(!id) return '';
   const href = GL_URL + '?drama=' + encodeURIComponent(id);
-  return`<a href="${href}" target="_blank" class="drama-link-btn" style="background:${cfg.light};color:${cfg.color};border:1.5px solid ${cfg.border}">🌺 Thai GL Worksで作品を見る →</a>`;
+  return`<a href="${href}" target="_blank" class="drama-link-btn" style="background:${cfg.light};color:${cfg.color};border:1.5px solid ${cfg.border}">🌺 Thai GL Worksで ${seriesName} を見る →</a>`;
 }
 
 // ── KML出力 ──────────────────────────────────────────────────
@@ -785,7 +788,7 @@ function escXml(s){
   return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 // 管理者用キャッシュクリア
-window.clearMapCache=()=>{[CL,CA,CS].forEach(k=>localStorage.removeItem(k));location.reload()};
+window.clearMapCache=()=>{[CL,CA,CS,CC,CK].forEach(k=>localStorage.removeItem(k));location.reload()};
 </script>
 </body>
 </html>

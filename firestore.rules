@@ -42,6 +42,18 @@ service cloud.firestore {
 
     // ── 新規コレクション（地図用） ──────────────────────────────
 
+    // cp_master: CP名・カラー管理
+    match /cp_master/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // category_master: カテゴリー管理
+    match /category_master/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // locations: 場所情報
     //   読み取り → 全員OK（地図を誰でも見られるように）
     //   書き込み → 管理者のみ

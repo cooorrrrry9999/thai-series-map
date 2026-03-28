@@ -5,631 +5,783 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Thai Series Map — 管理者画面</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#F8FAFC;--white:#fff;--text:#111827;--text-sub:#6B7280}
-body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);max-width:480px;margin:0 auto;min-height:100vh}
-.header{background:var(--white);border-bottom:1px solid #F1F5F9;padding:13px 16px;position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px}
-.header h1{font-size:15px;font-weight:900;flex:1}
-.back-btn{font-size:12px;color:#9333EA;background:#FAF5FF;border:1px solid #D8B4FE;border-radius:8px;padding:5px 10px;text-decoration:none;font-weight:700;flex-shrink:0}
-.logout-btn{font-size:11px;color:#6B7280;background:#F3F4F6;border:none;border-radius:8px;padding:5px 10px;cursor:pointer;font-family:inherit}
-#auth-gate{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px;padding:40px 24px;text-align:center}
-.login-btn{display:flex;align-items:center;gap:10px;background:var(--white);border:2px solid #E5E7EB;border-radius:12px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
-.login-btn img{width:20px;height:20px}
-.tabs{display:flex;background:var(--white);border-bottom:1px solid #F1F5F9;overflow-x:auto}
-.tabs::-webkit-scrollbar{display:none}
-.tab-btn{flex:1;padding:11px 6px;border:none;background:none;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;color:#888;border-bottom:2px solid transparent;white-space:nowrap;min-width:72px}
-.tab-btn.active{color:#9333EA;border-bottom-color:#9333EA}
-.tab-content{display:none;padding:14px}
-.tab-content.active{display:block}
-.card{background:var(--white);border-radius:14px;padding:14px 16px;margin-bottom:10px;border:1.5px solid #EEE}
-.card-title{font-size:14px;font-weight:700;margin-bottom:4px}
-.card-sub{font-size:12px;color:var(--text-sub);margin-bottom:8px;line-height:1.5}
-.card-meta{font-size:11px;color:#bbb}
-.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-right:4px;margin-bottom:4px}
-.badge-pending{background:#FEF3C7;color:#D97706;border:1px solid #FCD34D}
-.badge-published{background:#D1FAE5;color:#059669;border:1px solid #6EE7B7}
-.btn{padding:7px 14px;border-radius:8px;border:none;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit}
-.btn-approve{background:#D1FAE5;color:#059669}
-.btn-reject{background:#FEE2E2;color:#DC2626}
-.btn-edit{background:#EFF6FF;color:#3B82F6}
-.btn-delete{background:#FEE2E2;color:#DC2626}
-.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.form-group{margin-bottom:12px}
-.form-label{font-size:12px;font-weight:700;color:#555;margin-bottom:4px;display:block}
-.required{color:#DC2626}
-.form-input,.form-select{width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:13px;font-family:inherit;outline:none;transition:border .15s;background:var(--white)}
-.form-input:focus,.form-select:focus{border-color:#C4B5FD}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.btn-primary{width:100%;padding:11px;border-radius:10px;font-weight:800;font-size:14px;border:none;cursor:pointer;font-family:inherit;color:white;background:linear-gradient(135deg,#C4B5FD,#9333EA);margin-top:6px}
-.section-label{font-size:12px;font-weight:700;color:#999;letter-spacing:.07em;margin-bottom:8px;margin-top:4px}
-.empty-msg{text-align:center;color:#bbb;padding:32px 0;font-size:14px}
-.loading-msg{text-align:center;color:#bbb;padding:20px 0;font-size:13px}
-.color-preview{width:24px;height:24px;border-radius:50%;border:2px solid #EEE;display:inline-block;vertical-align:middle;margin-right:6px}
-.series-card{background:var(--white);border-radius:14px;padding:14px 16px;margin-bottom:10px;border-left:4px solid #EEE}
+:root{
+  --sw:220px;--white:#fff;--bg:#F8FAFC;--text:#111827;--sub:#6B7280;
+  --border:#E5E7EB;--hover:#F3F4F6;
+  --purple:#9333EA;--pl:#FAF5FF;--pb:#D8B4FE;
+  --green:#059669;--red:#DC2626;--blue:#3B82F6;--amber:#D97706;
+}
+html,body{height:100%;font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text)}
+
+/* Auth gate */
+#auth-gate{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.g-btn{display:flex;align-items:center;gap:10px;background:var(--white);border:2px solid var(--border);border-radius:12px;padding:12px 28px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:border-color .15s}
+.g-btn:hover{border-color:var(--pb)}
+.g-btn img{width:20px;height:20px}
+
+/* Layout */
+#admin-wrap{display:none;height:100%;flex-direction:row}
+.sidebar{width:var(--sw);flex-shrink:0;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
+.sb-logo{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+.sb-logo-title{font-size:14px;font-weight:900;color:var(--purple)}
+.sb-logo-sub{font-size:11px;color:var(--sub);margin-top:2px}
+.sb-nav{flex:1;overflow-y:auto;padding:8px 0}
+.sb-section{font-size:10px;font-weight:700;color:#bbb;letter-spacing:.1em;padding:12px 16px 4px}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;font-size:13px;font-weight:500;color:var(--sub);border:none;background:none;width:100%;text-align:left;font-family:inherit;border-radius:0;transition:background .1s;text-decoration:none}
+.sb-item:hover{background:var(--hover);color:var(--text)}
+.sb-item.active{background:var(--pl);color:var(--purple);font-weight:700}
+.sb-item .icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.sb-badge{margin-left:auto;background:#EC4899;color:white;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px}
+.sb-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.sb-avatar{width:28px;height:28px;border-radius:50%;object-fit:cover}
+.sb-user-name{font-size:12px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-logout{font-size:11px;color:var(--sub);background:none;border:none;cursor:pointer;font-family:inherit;flex-shrink:0}
+
+/* Main content */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.page-header{padding:20px 28px 16px;border-bottom:1px solid var(--border);background:var(--white);position:sticky;top:0;z-index:10}
+.page-title{font-size:20px;font-weight:900}
+.page-sub{font-size:12px;color:var(--sub);margin-top:3px}
+.page-body{padding:24px 28px;flex:1}
+
+/* Dashboard cards */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--white);border-radius:14px;padding:18px 20px;border:1px solid var(--border)}
+.stat-num{font-size:28px;font-weight:900;line-height:1}
+.stat-label{font-size:12px;color:var(--sub);margin-top:4px}
+.stat-card.pending .stat-num{color:#EC4899}
+
+/* Table */
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.search-input{padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;min-width:200px}
+.search-input:focus{border-color:var(--pb)}
+select.filter-sel{padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);cursor:pointer}
+select.filter-sel:focus{border-color:var(--pb)}
+
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table th{text-align:left;padding:8px 12px;border-bottom:2px solid var(--border);font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.05em;white-space:nowrap}
+.data-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.data-table tr:hover td{background:var(--hover)}
+.data-table tr:last-child td{border-bottom:none}
+
+/* Badges */
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px}
+.badge-pub{background:#D1FAE5;color:#059669}
+.badge-pend{background:#FEF3C7;color:#D97706}
+.badge-rej{background:#FEE2E2;color:#DC2626}
+.cp-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0}
+
+/* Action buttons */
+.btn{padding:5px 12px;border-radius:7px;border:none;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;transition:opacity .1s}
+.btn:active{opacity:.8}
+.btn-edit{background:#EFF6FF;color:var(--blue)}
+.btn-del{background:#FEE2E2;color:var(--red)}
+.btn-approve{background:#D1FAE5;color:var(--green)}
+.btn-reject{background:#FEE2E2;color:var(--red)}
+.btn-pub{background:#D1FAE5;color:var(--green)}
+.btn-primary{background:linear-gradient(135deg,var(--pb),var(--purple));color:white;padding:8px 20px;font-size:13px;border-radius:10px}
+.btn-row{display:flex;gap:6px;align-items:center}
+
+/* Form panel */
+.form-panel{background:var(--white);border-radius:14px;border:1px solid var(--border);padding:20px 24px;max-width:720px}
+.form-section{font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.07em;margin-bottom:10px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+.form-section:first-child{margin-top:0;padding-top:0;border-top:none}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid.three{grid-template-columns:1fr 1fr 1fr}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-label{font-size:12px;font-weight:700;color:#555}
+.req{color:var(--red)}
+.form-input,.form-select{padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);transition:border .15s}
+.form-input:focus,.form-select:focus{border-color:var(--pb)}
+.form-hint{font-size:11px;color:var(--sub);margin-top:2px}
+.form-msg{font-size:12px;text-align:center;min-height:18px;margin:8px 0}
+textarea.form-input{resize:vertical;min-height:72px}
+
+/* Master cards */
+.master-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:4px}
+.master-card{background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px}
+.master-card-left{flex:1;min-width:0}
+.master-card-name{font-size:14px;font-weight:700}
+.master-card-meta{font-size:11px;color:var(--sub);margin-top:2px}
+.color-swatch{width:28px;height:28px;border-radius:50%;border:2px solid rgba(0,0,0,.1);flex-shrink:0}
+.emoji-badge{font-size:22px;flex-shrink:0}
 
 /* Modal */
-.modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;animation:fadeIn .2s ease}
-.modal-card{background:var(--white);width:100%;max-width:480px;margin:0 auto;border-radius:20px 20px 0 0;padding:20px 18px 40px;animation:slideUp .3s cubic-bezier(.22,1,.36,1);max-height:90vh;overflow-y:auto;position:relative}
-.modal-title{font-size:16px;font-weight:900;margin-bottom:14px}
-.modal-close{position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:50%;background:#F3F4F6;border:none;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#666}
-
-@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-bg{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;animation:fadeIn .15s ease}
+.modal-box{background:var(--white);border-radius:16px;padding:24px 28px;width:480px;max-height:85vh;overflow-y:auto;animation:scaleIn .2s cubic-bezier(.22,1,.36,1)}
+.modal-title{font-size:16px;font-weight:900;margin-bottom:16px}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes scaleIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+.empty-row td{text-align:center;color:#bbb;padding:32px}
 </style>
 </head>
 <body>
 
+<!-- Auth gate -->
 <div id="auth-gate">
-  <div style="font-size:48px">🔒</div>
-  <div style="font-size:18px;font-weight:900">管理者専用ページ</div>
-  <div style="font-size:13px;color:#888">管理者アカウントでログインしてください</div>
-  <button class="login-btn" onclick="doLogin()">
-    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">Googleでログイン
+  <div style="font-size:48px">🌸</div>
+  <div style="font-size:22px;font-weight:900">Thai Series Map 管理者画面</div>
+  <div style="font-size:13px;color:var(--sub)">管理者アカウントでログインしてください</div>
+  <button class="g-btn" onclick="doLogin()">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">
+    Googleでログイン
   </button>
 </div>
 
-<div id="admin-app" style="display:none">
-  <header class="header">
-    <a href="index.html" class="back-btn">← 地図</a>
-    <h1>⚙ 管理者画面</h1>
-    <button class="logout-btn" onclick="doLogout()">ログアウト</button>
-  </header>
-
-  <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('pending')">📬 承認待ち<span id="pending-count"></span></button>
-    <button class="tab-btn" onclick="switchTab('locations')">📍 場所</button>
-    <button class="tab-btn" onclick="switchTab('appearances')">🎬 紐付け</button>
-    <button class="tab-btn" onclick="switchTab('series')">🎨 作品設定</button>
-    <button class="tab-btn" onclick="switchTab('add')">➕ 追加</button>
-  </div>
-
-  <!-- 承認待ち -->
-  <div class="tab-content active" id="tab-pending">
-    <div class="section-label">ファンからの投稿</div>
-    <div id="pending-list"><div class="loading-msg">読み込み中...</div></div>
-  </div>
-
-  <!-- 場所一覧 -->
-  <div class="tab-content" id="tab-locations">
-    <div style="display:flex;gap:8px;margin-bottom:10px">
-      <select class="form-select" id="filter-loc-series" onchange="renderLocations()" style="font-size:12px;padding:6px 10px">
-        <option value="">作品で絞込み</option>
-      </select>
-      <select class="form-select" id="filter-loc-cp" onchange="renderLocations()" style="font-size:12px;padding:6px 10px">
-        <option value="">CPで絞込み</option>
-      </select>
+<!-- Admin layout -->
+<div id="admin-wrap">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-title">🌸 Thai Series Map</div>
+      <div class="sb-logo-sub">管理者画面</div>
     </div>
-    <div id="locations-list"><div class="loading-msg">読み込み中...</div></div>
-  </div>
+    <div class="sb-nav">
+      <div class="sb-section">メイン</div>
+      <button class="sb-item active" onclick="showPage('dashboard')" id="nav-dashboard">
+        <span class="icon">📊</span>ダッシュボード
+      </button>
+      <button class="sb-item" onclick="showPage('pending')" id="nav-pending">
+        <span class="icon">📬</span>承認待ち
+        <span class="sb-badge" id="pending-badge" style="display:none">0</span>
+      </button>
+      <div class="sb-section">データ管理</div>
+      <button class="sb-item" onclick="showPage('locations')" id="nav-locations">
+        <span class="icon">📍</span>場所一覧
+      </button>
+      <button class="sb-item" onclick="showPage('appearances')" id="nav-appearances">
+        <span class="icon">🎬</span>紐付け
+      </button>
+      <button class="sb-item" onclick="showPage('add')" id="nav-add">
+        <span class="icon">➕</span>新規追加
+      </button>
+      <div class="sb-section">マスタ設定</div>
+      <button class="sb-item" onclick="showPage('cp')" id="nav-cp">
+        <span class="icon">💗</span>CP管理
+      </button>
+      <button class="sb-item" onclick="showPage('series')" id="nav-series">
+        <span class="icon">🎨</span>作品設定
+      </button>
+      <button class="sb-item" onclick="showPage('category')" id="nav-category">
+        <span class="icon">📂</span>カテゴリー
+      </button>
+    </div>
+    <div class="sb-footer">
+      <img class="sb-avatar" id="sb-avatar" src="" alt="">
+      <div class="sb-user-name" id="sb-uname"></div>
+      <button class="sb-logout" onclick="doLogout()">ログアウト</button>
+    </div>
+  </nav>
 
-  <!-- 紐付け -->
-  <div class="tab-content" id="tab-appearances">
-    <div style="display:flex;gap:8px;margin-bottom:10px">
-      <select class="form-select" id="filter-app-series" onchange="renderAppearances()" style="font-size:12px;padding:6px 10px">
-        <option value="">作品で絞込み</option>
-      </select>
-      <select class="form-select" id="filter-app-cp" onchange="renderAppearances()" style="font-size:12px;padding:6px 10px">
-        <option value="">CPで絞込み</option>
-      </select>
-      <select class="form-select" id="filter-app-status" onchange="renderAppearances()" style="font-size:12px;padding:6px 10px">
-        <option value="">状態で絞込み</option>
-        <option value="公開">公開</option>
-        <option value="未承認">未承認</option>
-        <option value="却下">却下</option>
-      </select>
+  <!-- Main -->
+  <div class="main" id="main-area">
+    <div class="page-header">
+      <div class="page-title" id="page-title">ダッシュボード</div>
+      <div class="page-sub" id="page-sub">概要と承認待ちの確認</div>
     </div>
-    <div id="appearances-list"><div class="loading-msg">読み込み中...</div></div>
-  </div>
-
-  <!-- 作品・シリーズ設定 -->
-  <div class="tab-content" id="tab-series">
-    <div class="section-label">作品カラー・Thai GL Worksリンク設定</div>
-    <div style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.7">
-      各作品のテーマカラーとThai GL WorksのドラマIDを設定します。<br>
-      ドラマIDはThai GL Worksの作品URLの <code style="background:#F3F4F6;padding:1px 6px;border-radius:4px">?drama=</code> の後の数字です。
+    <div class="page-body" id="page-body">
+      <div style="color:var(--sub);text-align:center;padding:40px">読み込み中...</div>
     </div>
-    <button class="btn-primary" onclick="addSeriesModal()" style="margin-bottom:14px">＋ 新しい作品を追加</button>
-    <div id="series-list-el"><div class="loading-msg">読み込み中...</div></div>
-  </div>
-
-  <!-- 新規追加 -->
-  <div class="tab-content" id="tab-add">
-    <div class="section-label">新しい場所を追加</div>
-    <div class="card">
-      <div class="form-group"><label class="form-label">場所名 <span class="required">*</span></label><input class="form-input" id="a-name" placeholder="例: 99 House Studio"></div>
-      <div class="form-group">
-        <label class="form-label">GoogleマップURL（貼ると座標を自動取得）</label>
-        <input class="form-input" id="a-gmap-url-auto" placeholder="https://www.google.com/maps/place/.../@13.75,100.50..." oninput="window.onUrlInput(this.value,'a-lat','a-lng','a-coords-msg')">
-        <div id="a-coords-msg" style="font-size:11px;min-height:16px;margin-top:4px;color:#888"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">緯度 <span class="required">*</span></label><input class="form-input" id="a-lat" type="number" step="any" placeholder="13.7563"></div>
-        <div class="form-group"><label class="form-label">経度 <span class="required">*</span></label><input class="form-input" id="a-lng" type="number" step="any" placeholder="100.5018"></div>
-      </div>
-      <div class="form-group"><label class="form-label">カテゴリー <span class="required">*</span></label>
-        <select class="form-select" id="a-cat">
-          <option>スタジオ</option><option>カフェ</option><option>レストラン</option><option>ホテル</option>
-          <option>ショッピング</option><option>観光地</option><option>邸宅/スタジオ</option><option>寺院</option>
-          <option>大学</option><option>図書館</option><option>アート</option><option>病院</option>
-          <option>スポーツ</option><option>放送局</option><option>国立公園</option>
-        </select>
-      </div>
-      <div class="form-group"><label class="form-label">住所</label><input class="form-input" id="a-address" placeholder="例: 117 Soi Ram Intra, Bangkok"></div>
-      <div class="form-group"><label class="form-label">GoogleマップURL</label><input class="form-input" id="a-url" placeholder="https://maps.app.goo.gl/..."></div>
-      <div class="form-group"><label class="form-label">訪問メモ</label><input class="form-input" id="a-memo" placeholder="例: 入場500B、FB予約推奨"></div>
-    </div>
-    <div class="section-label">作品との紐付け</div>
-    <div class="card">
-      <div class="form-group"><label class="form-label">作品名 <span class="required">*</span></label><input class="form-input" id="a-series" placeholder="例: GAP The Series"></div>
-      <div class="form-group"><label class="form-label">CP名 <span class="required">*</span></label><input class="form-input" id="a-cp" placeholder="例: FreenBecky"></div>
-      <div class="form-group"><label class="form-label">分類 <span class="required">*</span></label>
-        <select class="form-select" id="a-type"><option value="作品">作品（ロケ地）</option><option value="プライベート">プライベート</option><option value="来日">来日</option></select>
-      </div>
-      <div class="form-group"><label class="form-label">シーン説明</label><input class="form-input" id="a-scene" placeholder="例: Monの家として使用されたスタジオ"></div>
-      <div class="form-group">
-        <label class="form-label">SNSリンク（任意）</label>
-        <input class="form-input" id="a-sns" placeholder="https://x.com/... または https://www.instagram.com/...">
-        <div style="font-size:11px;color:#999;margin-top:3px">X(Twitter)・Instagram・TikTokなどのURL</div>
-      </div>
-    </div>
-    <div id="add-msg" style="font-size:13px;text-align:center;min-height:18px;margin:6px 0"></div>
-    <button class="btn-primary" onclick="addNewSpot()">✅ 追加して公開</button>
   </div>
 </div>
 
-<!-- 編集モーダル -->
-<div class="modal-overlay" id="edit-modal" style="display:none" onclick="closeEditModal(event)">
-  <div class="modal-card" onclick="event.stopPropagation()">
-    <button class="modal-close" onclick="closeEditModal()">×</button>
-    <div class="modal-title" id="edit-modal-title">編集</div>
-    <div id="edit-modal-body"></div>
+<!-- Modal -->
+<div class="modal-bg" id="modal" style="display:none" onclick="closeModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-title" id="modal-title"></div>
+    <div id="modal-body"></div>
   </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, getDocs, getDoc, doc,
-         addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch }
+import { getFirestore, collection, getDocs, doc, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const FB_CFG={
-  apiKey:"AIzaSyARPFANz5DZa6KpEBiw77PCCYPPZghMGeg",
-  authDomain:"thai-gl-works-2c835.firebaseapp.com",
-  databaseURL:"https://thai-gl-works-2c835-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:"thai-gl-works-2c835",
-  storageBucket:"thai-gl-works-2c835.firebasestorage.app",
-  messagingSenderId:"71290080508",
-  appId:"1:71290080508:web:47de06018b8617225bdb79"
-};
+const FB_CFG={apiKey:"AIzaSyARPFANz5DZa6KpEBiw77PCCYPPZghMGeg",authDomain:"thai-gl-works-2c835.firebaseapp.com",databaseURL:"https://thai-gl-works-2c835-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"thai-gl-works-2c835",storageBucket:"thai-gl-works-2c835.firebasestorage.app",messagingSenderId:"71290080508",appId:"1:71290080508:web:47de06018b8617225bdb79"};
 const fbApp=initializeApp(FB_CFG);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);
 const prov=new GoogleAuthProvider();
 const ADMIN="cory92059@gmail.com";
 
-let LOCS=[], APPS=[], SUBS=[], SERIES_MASTER=[];
+let LOCS=[],APPS=[],SUBS=[],CP_MASTER=[],SERIES_MASTER=[],CAT_MASTER=[];
+let currentPage='dashboard';
 
-window.doLogin=async()=>{try{await signInWithPopup(auth,prov);}catch(e){console.error(e);}};
+// ── Auth ──────────────────────────────────────────────────────
+window.doLogin=async()=>{try{await signInWithPopup(auth,prov);}catch(e){if(e.code==='auth/popup-blocked'||e.code==='auth/popup-closed-by-user'){await signInWithRedirect(auth,prov);}else{alert('ログイン失敗: '+e.message);}}};
 window.doLogout=async()=>signOut(auth);
+getRedirectResult(auth).catch(e=>console.error(e));
 
 onAuthStateChanged(auth,async user=>{
   if(user&&user.email===ADMIN){
     document.getElementById('auth-gate').style.display='none';
-    document.getElementById('admin-app').style.display='block';
+    document.getElementById('admin-wrap').style.display='flex';
+    document.getElementById('sb-avatar').src=user.photoURL||'';
+    document.getElementById('sb-uname').textContent=user.displayName||user.email;
     await loadAll();
-    updateFilterOptions();
-    renderPending(); renderLocations(); renderAppearances(); renderSeriesMaster();
+    showPage('dashboard');
   } else if(user){
-    document.getElementById('auth-gate').innerHTML=`<div style="font-size:48px">🚫</div><div style="font-size:18px;font-weight:900">アクセス権限がありません</div><button class="login-btn" onclick="doLogout()" style="margin-top:16px">別のアカウントでログイン</button>`;
+    document.getElementById('auth-gate').innerHTML='<div style="font-size:48px">🚫</div><div style="font-size:18px;font-weight:900;margin:8px">アクセス権限がありません</div><button class="g-btn" onclick="doLogout()">ログアウト</button>';
   } else {
     document.getElementById('auth-gate').style.display='flex';
-    document.getElementById('admin-app').style.display='none';
+    document.getElementById('admin-wrap').style.display='none';
   }
 });
 
+// ── Data ──────────────────────────────────────────────────────
 async function loadAll(){
-  const[ls,as,ss,sm]=await Promise.all([
+  const[ls,as,ss,cs,cms,cats]=await Promise.all([
     getDocs(collection(db,'locations')),
     getDocs(collection(db,'appearances')),
     getDocs(collection(db,'location_submissions')),
+    getDocs(collection(db,'cp_master')).catch(()=>({docs:[]})),
     getDocs(collection(db,'series_master')).catch(()=>({docs:[]})),
+    getDocs(collection(db,'category_master')).catch(()=>({docs:[]})),
   ]);
   LOCS=ls.docs.map(d=>({id:d.id,...d.data()}));
   APPS=as.docs.map(d=>({id:d.id,...d.data()}));
   SUBS=ss.docs.map(d=>({id:d.id,...d.data()}));
-  SERIES_MASTER=sm.docs.map(d=>({id:d.id,...d.data()}));
+  CP_MASTER=cs.docs.map(d=>({id:d.id,...d.data()}));
+  SERIES_MASTER=cms.docs.map(d=>({id:d.id,...d.data()}));
+  CAT_MASTER=cats.docs.map(d=>({id:d.id,...d.data()}));
   const pending=SUBS.filter(s=>s.status==='未承認').length;
-  document.getElementById('pending-count').textContent=pending>0?` (${pending})`:'';
+  const badge=document.getElementById('pending-badge');
+  badge.style.display=pending?'inline':'none';
+  badge.textContent=pending;
 }
 
-window.switchTab=function(name){
-  document.querySelectorAll('.tab-btn').forEach((b,i)=>{b.classList.toggle('active',['pending','locations','appearances','series','add'][i]===name);});
-  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-  document.getElementById(`tab-${name}`).classList.add('active');
+// ── Navigation ────────────────────────────────────────────────
+const PAGE_META={
+  dashboard:{title:'ダッシュボード',sub:'概要と承認待ちの確認'},
+  pending:{title:'📬 承認待ち',sub:'ファンからの投稿を確認・承認'},
+  locations:{title:'📍 場所一覧',sub:'登録済みのスポットを編集'},
+  appearances:{title:'🎬 紐付け',sub:'作品とロケ地の紐付けを管理'},
+  add:{title:'➕ 新規追加',sub:'新しいスポットを追加'},
+  cp:{title:'💗 CP管理',sub:'CP名・テーマカラーを設定'},
+  series:{title:'🎨 作品設定',sub:'作品名・Thai GL Worksリンクを設定'},
+  category:{title:'📂 カテゴリー',sub:'場所のカテゴリーと絵文字を管理'},
 };
 
-// ── 承認待ち ──────────────────────────────────────────────────
-function renderPending(){
+window.showPage=function(name){
+  currentPage=name;
+  document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-'+name)?.classList.add('active');
+  const m=PAGE_META[name]||{title:name,sub:''};
+  document.getElementById('page-title').textContent=m.title;
+  document.getElementById('page-sub').textContent=m.sub;
+  const renders={dashboard:renderDashboard,pending:renderPending,locations:renderLocations,appearances:renderAppearances,add:renderAdd,cp:renderCp,series:renderSeries,category:renderCategory};
+  (renders[name]||(() => {}))();
+};
+
+function setBody(html){document.getElementById('page-body').innerHTML=html;}
+
+// ── Dashboard ─────────────────────────────────────────────────
+function renderDashboard(){
   const pending=SUBS.filter(s=>s.status==='未承認');
-  const el=document.getElementById('pending-list');
-  if(!pending.length){el.innerHTML=`<div class="empty-msg">承認待ちの投稿はありません 🎉</div>`;return;}
-  el.innerHTML=pending.map(s=>`
-    <div class="card" id="sub-${s.id}">
-      <span class="badge badge-pending">未承認</span>
-      <div class="card-title">${s.name}</div>
-      <div class="card-sub">${s.series} / ${s.cp} / ${s.type}<br>${s.scene_desc}${s.memo?`<br>💡 ${s.memo}`:''}</div>
-      <div class="card-meta">投稿者: ${s.submittedBy||'不明'}</div>
-      <div class="btn-row">
-        <button class="btn btn-approve" onclick="approveSub('${s.id}')">✅ 承認して公開</button>
-        <button class="btn btn-reject"  onclick="rejectSub('${s.id}')">✕ 却下</button>
-      </div>
-    </div>`).join('');
+  const pubApps=APPS.filter(a=>a.status==='公開');
+  const cps=[...new Set(APPS.map(a=>a.cp).filter(Boolean))];
+  const series=[...new Set(APPS.map(a=>a.series).filter(Boolean))];
+  let html=`<div class="stat-grid">
+    <div class="stat-card"><div class="stat-num">${LOCS.length}</div><div class="stat-label">📍 登録場所</div></div>
+    <div class="stat-card"><div class="stat-num">${pubApps.length}</div><div class="stat-label">🎬 公開中紐付け</div></div>
+    <div class="stat-card${pending.length?' pending':''}"><div class="stat-num">${pending.length}</div><div class="stat-label">📬 承認待ち</div></div>
+    <div class="stat-card"><div class="stat-num">${cps.length}</div><div class="stat-label">💗 登録CP数</div></div>
+  </div>`;
+  if(pending.length){
+    html+=`<div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#EC4899">⚡ 承認待ちの投稿</div>`;
+    html+=pending.slice(0,5).map(s=>pendingCard(s)).join('');
+    if(pending.length>5)html+=`<button class="btn btn-edit" onclick="showPage('pending')" style="margin-top:4px">すべて見る（${pending.length}件）→</button>`;
+  }
+  // CP別件数
+  html+=`<div style="font-size:13px;font-weight:700;margin:20px 0 10px">💗 CP別スポット数</div>
+  <div class="stat-grid">`;
+  cps.forEach(cp=>{
+    const cnt=pubApps.filter(a=>a.cp===cp).length;
+    const c=CP_MASTER.find(m=>m.name===cp);
+    html+=`<div class="stat-card"><div class="stat-num" style="color:${c?.color||'#888'}">${cnt}</div><div class="stat-label">${c?.emoji||'💗'} ${cp}</div></div>`;
+  });
+  html+='</div>';
+  setBody(html);
 }
 
+// ── Pending ───────────────────────────────────────────────────
+function renderPending(){
+  const pending=SUBS.filter(s=>s.status==='未承認');
+  if(!pending.length){setBody('<div style="text-align:center;color:var(--sub);padding:60px">承認待ちの投稿はありません 🎉</div>');return;}
+  setBody(pending.map(s=>pendingCard(s)).join(''));
+}
+function pendingCard(s){
+  return`<div style="background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
+      <div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:4px">${s.name}</div>
+        <div style="font-size:12px;color:var(--sub);line-height:1.7">${s.series||''} / 💗 ${s.cp||''} / ${s.type||''}<br>${s.scene_desc||''}${s.memo?'<br>💡 '+s.memo:''}</div>
+        <div style="font-size:11px;color:#bbb;margin-top:4px">投稿者: ${s.submittedBy||'不明'}</div>
+      </div>
+      <div class="btn-row" style="flex-shrink:0">
+        <button class="btn btn-approve" onclick="approveSub('${s.id}')">✅ 承認</button>
+        <button class="btn btn-reject" onclick="rejectSub('${s.id}')">✕ 却下</button>
+      </div>
+    </div>
+  </div>`;
+}
 window.approveSub=async function(subId){
   const sub=SUBS.find(s=>s.id===subId);
-  if(!sub||!confirm(`「${sub.name}」を承認して公開しますか？`))return;
+  if(!sub||!confirm('「'+sub.name+'」を承認して公開しますか？'))return;
   try{
     const locRef=doc(collection(db,'locations'));
     await setDoc(locRef,{name:sub.name,lat:sub.lat||0,lng:sub.lng||0,category:sub.category||'観光地',address:sub.address||'',googleMapsUrl:sub.googleMapsUrl||'',memo:sub.memo||''});
-    await addDoc(collection(db,'appearances'),{location_id:locRef.id,series:sub.series,cp:sub.cp,type:sub.type,scene_desc:sub.scene_desc,status:'公開'});
+    await addDoc(collection(db,'appearances'),{location_id:locRef.id,series:sub.series||'',cp:sub.cp||'',type:sub.type||'作品',scene_desc:sub.scene_desc||'',sns_url:sub.sns_url||'',status:'公開'});
     await updateDoc(doc(db,'location_submissions',subId),{status:'承認済み'});
-    alert('✅ 承認しました！');
-    await loadAll(); renderPending(); renderLocations(); renderAppearances();
-    localStorage.removeItem('tsmap_loc_v1'); localStorage.removeItem('tsmap_app_v1');
+    clearCaches(); await loadAll(); showPage(currentPage);
   }catch(e){alert('エラー: '+e.message);}
 };
 window.rejectSub=async function(subId){
-  const sub=SUBS.find(s=>s.id===subId);
-  if(!confirm(`「${sub.name}」を却下しますか？`))return;
+  if(!confirm('却下しますか？'))return;
   await updateDoc(doc(db,'location_submissions',subId),{status:'却下'});
-  await loadAll(); renderPending();
+  await loadAll(); showPage(currentPage);
 };
 
-// ── 場所一覧 ─────────────────────────────────────────────────
-function updateFilterOptions(){
-  const series=[...new Set(APPS.map(a=>a.series).filter(Boolean))].sort();
-  const cps=[...new Set(APPS.map(a=>a.cp).filter(Boolean))].sort();
-  ['filter-loc-series','filter-app-series'].forEach(id=>{
-    const el=document.getElementById(id); if(!el)return;
-    const prev=el.value;
-    el.innerHTML='<option value="">作品で絞込み</option>'+series.map(s=>`<option value="${s}">${s}</option>`).join('');
-    if(prev)el.value=prev;
-  });
-  ['filter-loc-cp','filter-app-cp'].forEach(id=>{
-    const el=document.getElementById(id); if(!el)return;
-    const prev=el.value;
-    el.innerHTML='<option value="">CPで絞込み</option>'+cps.map(c=>`<option value="${c}">${c}</option>`).join('');
-    if(prev)el.value=prev;
-  });
-  // 追加フォームのdatalist更新（コンボボックス）
-  updateAddFormDatalist(series, cps);
-}
-
-function updateAddFormDatalist(series, cps){
-  let sl=document.getElementById('series-datalist');
-  if(!sl){sl=document.createElement('datalist');sl.id='series-datalist';document.body.appendChild(sl);}
-  sl.innerHTML=series.map(s=>`<option value="${s}">`).join('');
-  let cl=document.getElementById('cp-datalist');
-  if(!cl){cl=document.createElement('datalist');cl.id='cp-datalist';document.body.appendChild(cl);}
-  cl.innerHTML=cps.map(c=>`<option value="${c}">`).join('');
-  // フォームに紐付け
-  const as=document.getElementById('a-series'); if(as)as.setAttribute('list','series-datalist');
-  const ac=document.getElementById('a-cp'); if(ac)ac.setAttribute('list','cp-datalist');
-}
-
+// ── Locations ─────────────────────────────────────────────────
 function renderLocations(){
-  const filterSeries=document.getElementById('filter-loc-series')?.value||'';
-  const filterCp=document.getElementById('filter-loc-cp')?.value||'';
-  const el=document.getElementById('locations-list');
-  if(!LOCS.length){el.innerHTML=`<div class="empty-msg">場所データがありません</div>`;return;}
+  const fSeries=document.getElementById('f-loc-series')?.value||'';
+  const fCp=document.getElementById('f-loc-cp')?.value||'';
+  const fQ=document.getElementById('f-loc-q')?.value?.toLowerCase()||'';
+  const allSeries=[...new Set(APPS.map(a=>a.series).filter(Boolean))].sort();
+  const allCps=[...new Set(APPS.map(a=>a.cp).filter(Boolean))].sort();
   const filtered=LOCS.filter(loc=>{
     const apps=APPS.filter(a=>a.location_id===loc.id);
-    if(filterSeries&&!apps.some(a=>a.series===filterSeries))return false;
-    if(filterCp&&!apps.some(a=>a.cp===filterCp))return false;
+    if(fSeries&&!apps.some(a=>a.series===fSeries))return false;
+    if(fCp&&!apps.some(a=>a.cp===fCp))return false;
+    if(fQ&&!loc.name.toLowerCase().includes(fQ))return false;
     return true;
   });
-  if(!filtered.length){el.innerHTML=`<div class="empty-msg">該当する場所がありません</div>`;return;}
-  el.innerHTML=filtered.map(loc=>{
+  let html=`<div class="toolbar">
+    <input class="search-input" id="f-loc-q" placeholder="場所名で検索..." oninput="renderLocations()" value="${fQ}">
+    <select class="filter-sel" id="f-loc-series" onchange="renderLocations()">
+      <option value="">作品で絞込み</option>${allSeries.map(s=>`<option value="${s}"${fSeries===s?' selected':''}>${s}</option>`).join('')}
+    </select>
+    <select class="filter-sel" id="f-loc-cp" onchange="renderLocations()">
+      <option value="">CPで絞込み</option>${allCps.map(c=>`<option value="${c}"${fCp===c?' selected':''}>${c}</option>`).join('')}
+    </select>
+    <span style="font-size:12px;color:var(--sub)">${filtered.length}件</span>
+  </div>
+  <table class="data-table"><thead><tr>
+    <th>場所名</th><th>カテゴリー</th><th>作品/CP</th><th>座標</th><th>操作</th>
+  </tr></thead><tbody>`;
+  if(!filtered.length)html+='<tr class="empty-row"><td colspan="5">該当なし</td></tr>';
+  filtered.forEach(loc=>{
     const apps=APPS.filter(a=>a.location_id===loc.id&&a.status==='公開');
-    return`<div class="card">
-      <div class="card-title">${loc.name}</div>
-      <div class="card-meta">${loc.category} / lat:${loc.lat} lng:${loc.lng}</div>
-      <div class="card-meta" style="margin-top:2px">${apps.map(a=>a.series).join(' · ')||'紐付けなし'}</div>
-      <div class="btn-row">
-        <button class="btn btn-edit" onclick="editLocationModal('${loc.id}')">✏ 編集</button>
-        <button class="btn btn-delete" onclick="deleteLocation('${loc.id}')">🗑 削除</button>
-      </div>
-    </div>`;
-  }).join('');
+    const cpColors=apps.map(a=>{const c=CP_MASTER.find(m=>m.name===a.cp);return c?`<span class="cp-dot" style="background:${c.color}" title="${a.cp}"></span>`:a.cp;}).join(' ');
+    const cat=CAT_MASTER.find(m=>m.name===loc.category);
+    html+=`<tr>
+      <td><strong>${loc.name}</strong></td>
+      <td>${cat?cat.emoji+' ':''} ${loc.category||''}</td>
+      <td style="max-width:200px">
+        <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">${cpColors}</div>
+        <div style="font-size:11px;color:var(--sub);margin-top:2px">${apps.map(a=>a.series).filter((v,i,a)=>a.indexOf(v)===i).join(' / ')}</div>
+      </td>
+      <td style="font-size:11px;color:var(--sub);font-family:monospace">${loc.lat},${loc.lng}</td>
+      <td><div class="btn-row">
+        <button class="btn btn-edit" onclick="editLocModal('${loc.id}')">✏ 編集</button>
+        <button class="btn btn-del" onclick="deleteLoc('${loc.id}')">🗑</button>
+      </div></td>
+    </tr>`;
+  });
+  html+='</tbody></table>';
+  setBody(html);
 }
 
-window.editLocationModal=function(locId){
+window.editLocModal=function(locId){
   const loc=LOCS.find(l=>l.id===locId);
   if(!loc)return;
-  document.getElementById('edit-modal-title').textContent=`✏ ${loc.name}`;
-  document.getElementById('edit-modal-body').innerHTML=`
-    <div class="form-group"><label class="form-label">場所名</label><input class="form-input" id="el-name" value="${loc.name||''}"></div>
-    <div class="form-row">
+  const catOptions=buildCatOptions(loc.category);
+  document.getElementById('modal-title').textContent='✏ '+loc.name;
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">場所名</label><input class="form-input" id="el-name" value="${esc(loc.name)}"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
       <div class="form-group"><label class="form-label">緯度</label><input class="form-input" id="el-lat" type="number" step="any" value="${loc.lat||''}"></div>
       <div class="form-group"><label class="form-label">経度</label><input class="form-input" id="el-lng" type="number" step="any" value="${loc.lng||''}"></div>
     </div>
-    <div class="form-group"><label class="form-label">カテゴリー</label>
-      <select class="form-select" id="el-cat">
-        ${['スタジオ','カフェ','レストラン','ホテル','ショッピング','観光地','邸宅/スタジオ','寺院','大学','図書館','アート','病院','スポーツ','放送局','国立公園']
-          .map(o=>`<option${loc.category===o?' selected':''}>${o}</option>`).join('')}
-      </select>
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">GoogleマップURL（貼ると座標自動取得）</label>
+      <input class="form-input" id="el-gmap" placeholder="https://www.google.com/maps/place/.../@lat,lng..." oninput="autoCoords(this.value,'el-lat','el-lng','el-cmsg')">
+      <div id="el-cmsg" style="font-size:11px;min-height:14px;color:var(--sub)"></div>
     </div>
-    <div class="form-group"><label class="form-label">住所</label><input class="form-input" id="el-address" value="${loc.address||''}"></div>
-    <div class="form-group"><label class="form-label">GoogleマップURL</label><input class="form-input" id="el-url" value="${loc.googleMapsUrl||''}"></div>
-    <div class="form-group"><label class="form-label">訪問メモ</label><input class="form-input" id="el-memo" value="${loc.memo||''}"></div>
-    <div id="el-msg" style="font-size:13px;text-align:center;min-height:18px"></div>
-    <button class="btn-primary" onclick="saveLocation('${locId}')">💾 保存</button>`;
-  document.getElementById('edit-modal').style.display='flex';
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">カテゴリー</label><select class="form-select" id="el-cat">${catOptions}</select></div>
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">住所</label><input class="form-input" id="el-address" value="${esc(loc.address||'')}"></div>
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">GoogleマップURL（保存用）</label><input class="form-input" id="el-url" value="${esc(loc.googleMapsUrl||'')}"></div>
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">訪問メモ</label><input class="form-input" id="el-memo" value="${esc(loc.memo||'')}"></div>
+    <div id="el-msg" class="form-msg"></div>
+    <button class="btn btn-primary" style="width:100%" onclick="saveLoc('${locId}')">💾 保存</button>`;
+  document.getElementById('modal').style.display='flex';
 };
-window.saveLocation=async function(locId){
-  const msgEl=document.getElementById('el-msg');
-  msgEl.style.color='#9333EA';msgEl.textContent='保存中...';
+window.saveLoc=async function(locId){
+  const msg=document.getElementById('el-msg');
+  msg.style.color='var(--purple)';msg.textContent='保存中...';
   try{
+    const url=document.getElementById('el-url').value.trim();
+    const gmapUrl=document.getElementById('el-gmap').value.trim();
     await updateDoc(doc(db,'locations',locId),{
       name:document.getElementById('el-name').value.trim(),
       lat:parseFloat(document.getElementById('el-lat').value)||0,
       lng:parseFloat(document.getElementById('el-lng').value)||0,
       category:document.getElementById('el-cat').value,
       address:document.getElementById('el-address').value.trim(),
-      googleMapsUrl:document.getElementById('el-url').value.trim(),
+      googleMapsUrl:url||gmapUrl,
       memo:document.getElementById('el-memo').value.trim(),
     });
-    msgEl.style.color='#059669';msgEl.textContent='✅ 保存しました';
-    localStorage.removeItem('tsmap_loc_v1');
-    await loadAll(); renderLocations();
-    setTimeout(()=>closeEditModal(),1200);
-  }catch(e){msgEl.style.color='#DC2626';msgEl.textContent='エラー: '+e.message;}
+    msg.style.color='var(--green)';msg.textContent='✅ 保存しました';
+    clearCaches(); await loadAll(); setTimeout(closeModal,1000); renderLocations();
+  }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
 };
-window.deleteLocation=async function(locId){
+window.deleteLoc=async function(locId){
   const loc=LOCS.find(l=>l.id===locId);
-  if(!confirm(`「${loc.name}」を削除しますか？紐付けも削除されます。`))return;
+  if(!confirm('「'+loc.name+'」を削除しますか？紐付けも削除されます。'))return;
   const batch=writeBatch(db);
   batch.delete(doc(db,'locations',locId));
   APPS.filter(a=>a.location_id===locId).forEach(a=>batch.delete(doc(db,'appearances',a.id)));
   await batch.commit();
-  localStorage.removeItem('tsmap_loc_v1'); localStorage.removeItem('tsmap_app_v1');
-  await loadAll(); renderLocations(); renderAppearances();
+  clearCaches(); await loadAll(); renderLocations();
 };
 
-// ── 紐付け ───────────────────────────────────────────────────
+// ── Appearances ───────────────────────────────────────────────
 function renderAppearances(){
-  const filterSeries=document.getElementById('filter-app-series')?.value||'';
-  const filterCp=document.getElementById('filter-app-cp')?.value||'';
-  const filterStatus=document.getElementById('filter-app-status')?.value||'';
-  const el=document.getElementById('appearances-list');
-  if(!APPS.length){el.innerHTML=`<div class="empty-msg">紐付けデータがありません</div>`;return;}
-  const filtered=APPS.filter(app=>{
-    if(filterSeries&&app.series!==filterSeries)return false;
-    if(filterCp&&app.cp!==filterCp)return false;
-    if(filterStatus&&app.status!==filterStatus)return false;
+  const fSeries=document.getElementById('f-app-series')?.value||'';
+  const fCp=document.getElementById('f-app-cp')?.value||'';
+  const fStatus=document.getElementById('f-app-status')?.value||'';
+  const allSeries=[...new Set(APPS.map(a=>a.series).filter(Boolean))].sort();
+  const allCps=[...new Set(APPS.map(a=>a.cp).filter(Boolean))].sort();
+  const filtered=APPS.filter(a=>{
+    if(fSeries&&a.series!==fSeries)return false;
+    if(fCp&&a.cp!==fCp)return false;
+    if(fStatus&&a.status!==fStatus)return false;
     return true;
   });
-  if(!filtered.length){el.innerHTML=`<div class="empty-msg">該当する紐付けがありません</div>`;return;}
-  el.innerHTML=filtered.map(app=>{
+  let html=`<div class="toolbar">
+    <select class="filter-sel" id="f-app-series" onchange="renderAppearances()">
+      <option value="">作品で絞込み</option>${allSeries.map(s=>`<option value="${s}"${fSeries===s?' selected':''}>${s}</option>`).join('')}
+    </select>
+    <select class="filter-sel" id="f-app-cp" onchange="renderAppearances()">
+      <option value="">CPで絞込み</option>${allCps.map(c=>`<option value="${c}"${fCp===c?' selected':''}>${c}</option>`).join('')}
+    </select>
+    <select class="filter-sel" id="f-app-status" onchange="renderAppearances()">
+      <option value="">状態で絞込み</option>
+      <option value="公開"${fStatus==='公開'?' selected':''}>公開</option>
+      <option value="未承認"${fStatus==='未承認'?' selected':''}>未承認</option>
+      <option value="却下"${fStatus==='却下'?' selected':''}>却下</option>
+    </select>
+    <span style="font-size:12px;color:var(--sub)">${filtered.length}件</span>
+  </div>
+  <table class="data-table"><thead><tr>
+    <th>場所名</th><th>CP</th><th>作品/分類</th><th>シーン</th><th>状態</th><th>操作</th>
+  </tr></thead><tbody>`;
+  if(!filtered.length)html+='<tr class="empty-row"><td colspan="6">該当なし</td></tr>';
+  filtered.forEach(app=>{
     const loc=LOCS.find(l=>l.id===app.location_id);
-    const snsIcon=app.sns_url?'<a href="'+app.sns_url+'" target="_blank" style="font-size:11px;color:#3B82F6">SNS ↗</a>':'';
-    return`<div class="card">
-      <span class="badge ${app.status==='公開'?'badge-published':'badge-pending'}">${app.status}</span>
-      <div class="card-title">${loc?.name||'(削除済み)'}</div>
-      <div class="card-sub">${app.series||'作品未設定'} / 💗 ${app.cp||'CP未設定'} / ${app.type}<br>${app.scene_desc||''} ${snsIcon}</div>
-      <div class="btn-row">
-        <button class="btn btn-edit" onclick="editAppModal('${app.id}')">✏ 編集</button>
-        <button class="btn btn-delete" onclick="deleteApp('${app.id}')">🗑 削除</button>
-        ${app.status!=='公開'?`<button class="btn btn-approve" onclick="publishApp('${app.id}')">▶ 公開</button>`:''}
-      </div>
-    </div>`;
-  }).join('');
+    const cp=CP_MASTER.find(m=>m.name===app.cp);
+    const statusClass=app.status==='公開'?'badge-pub':app.status==='未承認'?'badge-pend':'badge-rej';
+    const snsIcon=app.sns_url?`<a href="${app.sns_url}" target="_blank" style="font-size:11px">SNS↗</a>`:'';
+    html+=`<tr>
+      <td>${loc?.name||'<span style="color:#bbb">(削除済み)</span>'}</td>
+      <td><span style="display:flex;align-items:center;gap:5px">${cp?`<span class="cp-dot" style="background:${cp.color}"></span>`:''}${app.cp||'未設定'}</span></td>
+      <td><div>${app.series||'未設定'}</div><div style="font-size:11px;color:var(--sub)">${app.type||''}</div></td>
+      <td style="max-width:180px;font-size:12px;color:var(--sub)">${app.scene_desc||''} ${snsIcon}</td>
+      <td><span class="badge ${statusClass}">${app.status}</span></td>
+      <td><div class="btn-row">
+        <button class="btn btn-edit" onclick="editAppModal('${app.id}')">✏</button>
+        <button class="btn btn-del" onclick="deleteApp('${app.id}')">🗑</button>
+        ${app.status!=='公開'?`<button class="btn btn-pub" onclick="publishApp('${app.id}')">▶</button>`:''}
+      </div></td>
+    </tr>`;
+  });
+  html+='</tbody></table>';
+  setBody(html);
 }
 window.editAppModal=function(appId){
   const app=APPS.find(a=>a.id===appId);
   if(!app)return;
-  document.getElementById('edit-modal-title').textContent='🎬 紐付けを編集';
-  document.getElementById('edit-modal-body').innerHTML=`
-    <div class="form-group"><label class="form-label">作品名</label><input class="form-input" id="ea-series" value="${app.series||''}"></div>
-    <div class="form-group"><label class="form-label">CP名</label><input class="form-input" id="ea-cp" value="${app.cp||''}"></div>
-    <div class="form-group"><label class="form-label">分類</label>
-      <select class="form-select" id="ea-type">${['作品','プライベート','来日'].map(o=>`<option${app.type===o?' selected':''}>${o}</option>`).join('')}</select>
-    </div>
-    <div class="form-group"><label class="form-label">シーン説明</label><input class="form-input" id="ea-scene" value="${app.scene_desc||''}"></div>
-    <div class="form-group"><label class="form-label">公開状態</label>
-      <select class="form-select" id="ea-status">${['公開','未承認','却下'].map(o=>`<option${app.status===o?' selected':''}>${o}</option>`).join('')}</select>
-    </div>
-    <div id="ea-msg" style="font-size:13px;text-align:center;min-height:18px"></div>
-    <button class="btn-primary" onclick="saveApp('${appId}')">💾 保存</button>`;
-  document.getElementById('edit-modal').style.display='flex';
+  const allCps=[...new Set([...APPS.map(a=>a.cp),...CP_MASTER.map(m=>m.name)].filter(Boolean))].sort();
+  const allSeries=[...new Set([...APPS.map(a=>a.series),...SERIES_MASTER.map(m=>m.name)].filter(Boolean))].sort();
+  document.getElementById('modal-title').textContent='🎬 紐付けを編集';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">CP名</label>
+      <input class="form-input" id="ea-cp" value="${esc(app.cp||'')}" list="ea-cp-list"><datalist id="ea-cp-list">${allCps.map(c=>`<option value="${c}">`).join('')}</datalist></div>
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">作品名</label>
+      <input class="form-input" id="ea-series" value="${esc(app.series||'')}" list="ea-series-list"><datalist id="ea-series-list">${allSeries.map(s=>`<option value="${s}">`).join('')}</datalist></div>
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">分類</label>
+      <select class="form-select" id="ea-type">${['作品','プライベート','来日'].map(o=>`<option${app.type===o?' selected':''}>${o}</option>`).join('')}</select></div>
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">シーン説明</label>
+      <input class="form-input" id="ea-scene" value="${esc(app.scene_desc||'')}"></div>
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">SNSリンク</label>
+      <input class="form-input" id="ea-sns" value="${esc(app.sns_url||'')}" placeholder="https://x.com/..."></div>
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">公開状態</label>
+      <select class="form-select" id="ea-status">${['公開','未承認','却下'].map(o=>`<option${app.status===o?' selected':''}>${o}</option>`).join('')}</select></div>
+    <div id="ea-msg" class="form-msg"></div>
+    <button class="btn btn-primary" style="width:100%" onclick="saveApp('${appId}')">💾 保存</button>`;
+  document.getElementById('modal').style.display='flex';
 };
 window.saveApp=async function(appId){
-  const msgEl=document.getElementById('ea-msg');
-  msgEl.style.color='#9333EA';msgEl.textContent='保存中...';
+  const msg=document.getElementById('ea-msg');
+  msg.style.color='var(--purple)';msg.textContent='保存中...';
   try{
     await updateDoc(doc(db,'appearances',appId),{
-      series:document.getElementById('ea-series').value.trim(),
       cp:document.getElementById('ea-cp').value.trim(),
+      series:document.getElementById('ea-series').value.trim(),
       type:document.getElementById('ea-type').value,
       scene_desc:document.getElementById('ea-scene').value.trim(),
+      sns_url:document.getElementById('ea-sns').value.trim(),
       status:document.getElementById('ea-status').value,
     });
-    msgEl.style.color='#059669';msgEl.textContent='✅ 保存しました';
-    localStorage.removeItem('tsmap_app_v1');
-    await loadAll(); renderAppearances();
-    setTimeout(()=>closeEditModal(),1200);
-  }catch(e){msgEl.style.color='#DC2626';msgEl.textContent='エラー: '+e.message;}
+    msg.style.color='var(--green)';msg.textContent='✅ 保存しました';
+    clearCaches(); await loadAll(); setTimeout(closeModal,1000); renderAppearances();
+  }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
 };
 window.deleteApp=async function(appId){
   if(!confirm('この紐付けを削除しますか？'))return;
   await deleteDoc(doc(db,'appearances',appId));
-  localStorage.removeItem('tsmap_app_v1');
-  await loadAll(); renderAppearances();
+  clearCaches(); await loadAll(); renderAppearances();
 };
 window.publishApp=async function(appId){
   await updateDoc(doc(db,'appearances',appId),{status:'公開'});
-  localStorage.removeItem('tsmap_app_v1');
-  await loadAll(); renderAppearances();
+  clearCaches(); await loadAll(); renderAppearances();
 };
 
-// ── 作品設定（series_master）────────────────────────────────
-function renderSeriesMaster(){
-  const el=document.getElementById('series-list-el');
-  if(!SERIES_MASTER.length){
-    el.innerHTML=`<div class="empty-msg">作品設定がありません<br><small>「新しい作品を追加」から登録してください</small></div>`;
-    return;
-  }
-  el.innerHTML=SERIES_MASTER.map(s=>`
-    <div class="series-card" style="border-left-color:${s.color||'#EEE'}">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-        <span class="color-preview" style="background:${s.color||'#EEE'};border-color:${s.color||'#EEE'}"></span>
-        <div class="card-title" style="margin:0">${s.name}</div>
-      </div>
-      <div class="card-meta">テーマカラー: ${s.color||'未設定'}</div>
-      <div class="card-meta">Thai GL Works ドラマID: ${s.drama_id||'未設定'}</div>
-      ${s.drama_id?`<div class="card-meta"><a href="https://thai-gl-works-2c835.web.app/index.html?drama=${s.drama_id}" target="_blank" style="color:#9333EA;font-size:11px">作品ページを確認 →</a></div>`:''}
-      <div class="btn-row">
-        <button class="btn btn-edit" onclick="editSeriesModal('${s.id}')">✏ 編集</button>
-        <button class="btn btn-delete" onclick="deleteSeries('${s.id}')">🗑 削除</button>
-      </div>
-    </div>`).join('');
-}
-
-window.addSeriesModal=function(){
-  document.getElementById('edit-modal-title').textContent='🎨 作品を追加';
-  document.getElementById('edit-modal-body').innerHTML=buildSeriesForm({});
-  document.getElementById('edit-modal').style.display='flex';
-};
-window.editSeriesModal=function(sId){
-  const s=SERIES_MASTER.find(x=>x.id===sId);
-  if(!s)return;
-  document.getElementById('edit-modal-title').textContent=`🎨 ${s.name} を編集`;
-  document.getElementById('edit-modal-body').innerHTML=buildSeriesForm(s,sId);
-  document.getElementById('edit-modal').style.display='flex';
-};
-
-function buildSeriesForm(s,sId){
-  return`
-    <div class="form-group"><label class="form-label">作品名 <span class="required">*</span></label>
-      <input class="form-input" id="sm-name" value="${s.name||''}" placeholder="例: GAP The Series"></div>
-    <div class="form-group"><label class="form-label">テーマカラー（16進数）</label>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input type="color" id="sm-color-picker" value="${s.color||'#EC4899'}" oninput="document.getElementById('sm-color').value=this.value" style="width:44px;height:36px;border:none;cursor:pointer;border-radius:8px;padding:2px">
-        <input class="form-input" id="sm-color" value="${s.color||'#EC4899'}" placeholder="#EC4899" oninput="document.getElementById('sm-color-picker').value=this.value" style="font-family:monospace">
-      </div>
+// ── Add new ───────────────────────────────────────────────────
+function renderAdd(){
+  const allCps=[...new Set([...APPS.map(a=>a.cp),...CP_MASTER.map(m=>m.name)].filter(Boolean))].sort();
+  const allSeries=[...new Set([...APPS.map(a=>a.series),...SERIES_MASTER.map(m=>m.name)].filter(Boolean))].sort();
+  const catOptions=buildCatOptions('');
+  setBody(`<div class="form-panel">
+    <div class="form-section">場所情報</div>
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">場所名 <span class="req">*</span></label><input class="form-input" id="a-name" placeholder="例: 99 House Studio"></div>
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">GoogleマップURL（貼ると座標を自動取得）</label>
+      <input class="form-input" id="a-gmap-auto" placeholder="https://www.google.com/maps/place/.../@13.75,100.50..." oninput="autoCoords(this.value,'a-lat','a-lng','a-cmsg')">
+      <div id="a-cmsg" class="form-hint"></div>
     </div>
-    <div class="form-group"><label class="form-label">Thai GL Works ドラマID</label>
-      <input class="form-input" id="sm-drama-id" value="${s.drama_id||''}" placeholder="例: 1774088911045" style="font-family:monospace">
-      <div style="font-size:11px;color:#999;margin-top:4px">Thai GL Worksの作品URLの ?drama= の後の数字</div>
+    <div class="form-grid three" style="margin-bottom:12px">
+      <div class="form-group"><label class="form-label">緯度 <span class="req">*</span></label><input class="form-input" id="a-lat" type="number" step="any" placeholder="13.7563"></div>
+      <div class="form-group"><label class="form-label">経度 <span class="req">*</span></label><input class="form-input" id="a-lng" type="number" step="any" placeholder="100.5018"></div>
+      <div class="form-group"><label class="form-label">カテゴリー</label><select class="form-select" id="a-cat">${catOptions}</select></div>
     </div>
-    <div id="sm-msg" style="font-size:13px;text-align:center;min-height:18px"></div>
-    <button class="btn-primary" onclick="saveSeries('${sId||''}')">💾 保存</button>`;
+    <div class="form-grid" style="margin-bottom:12px">
+      <div class="form-group"><label class="form-label">住所</label><input class="form-input" id="a-address" placeholder="例: Soi Ram Intra 117, Bangkok"></div>
+      <div class="form-group"><label class="form-label">GoogleマップURL（保存用）</label><input class="form-input" id="a-url" placeholder="https://maps.app.goo.gl/..."></div>
+    </div>
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">訪問メモ</label><input class="form-input" id="a-memo" placeholder="例: 入場500B、FB予約推奨"></div>
+
+    <div class="form-section">作品との紐付け（任意）</div>
+    <div class="form-grid" style="margin-bottom:12px">
+      <div class="form-group"><label class="form-label">CP名</label>
+        <input class="form-input" id="a-cp" placeholder="例: FreenBecky" list="a-cp-list"><datalist id="a-cp-list">${allCps.map(c=>`<option value="${c}">`).join('')}</datalist></div>
+      <div class="form-group"><label class="form-label">作品名 / 分類</label>
+        <input class="form-input" id="a-series" placeholder="例: GAP The Series / プライベート / 2024年秋来日" list="a-series-list"><datalist id="a-series-list">${allSeries.map(s=>`<option value="${s}">`).join('')}</datalist></div>
+    </div>
+    <div class="form-grid" style="margin-bottom:12px">
+      <div class="form-group"><label class="form-label">分類</label>
+        <select class="form-select" id="a-type"><option value="作品">作品（ロケ地）</option><option value="プライベート">プライベート</option><option value="来日">来日</option></select></div>
+      <div class="form-group"><label class="form-label">シーン説明</label><input class="form-input" id="a-scene" placeholder="例: Monの家として使用されたスタジオ"></div>
+    </div>
+    <div class="form-group" style="margin-bottom:16px"><label class="form-label">SNSリンク（任意）</label><input class="form-input" id="a-sns" placeholder="https://x.com/... など"></div>
+    <div id="add-msg" class="form-msg"></div>
+    <button class="btn btn-primary" onclick="addNewSpot()">✅ 追加して公開</button>
+  </div>`);
 }
-
-window.saveSeries=async function(sId){
-  const msgEl=document.getElementById('sm-msg');
-  const name=document.getElementById('sm-name').value.trim();
-  const color=document.getElementById('sm-color').value.trim();
-  const dramaId=document.getElementById('sm-drama-id').value.trim();
-  if(!name){msgEl.style.color='#DC2626';msgEl.textContent='作品名を入力してください';return;}
-  msgEl.style.color='#9333EA';msgEl.textContent='保存中...';
-  // light/borderを自動生成（colorから）
-  const light=color+'22', border=color+'88';
-  const data={name,color,light,border,drama_id:dramaId};
-  try{
-    if(sId){await updateDoc(doc(db,'series_master',sId),data);}
-    else{await addDoc(collection(db,'series_master'),data);}
-    msgEl.style.color='#059669';msgEl.textContent='✅ 保存しました';
-    localStorage.removeItem('tsmap_series_v1');
-    await loadAll(); renderSeriesMaster();
-    setTimeout(()=>closeEditModal(),1200);
-  }catch(e){msgEl.style.color='#DC2626';msgEl.textContent='エラー: '+e.message;}
-};
-window.deleteSeries=async function(sId){
-  const s=SERIES_MASTER.find(x=>x.id===sId);
-  if(!confirm(`「${s.name}」の設定を削除しますか？`))return;
-  await deleteDoc(doc(db,'series_master',sId));
-  localStorage.removeItem('tsmap_series_v1');
-  await loadAll(); renderSeriesMaster();
-};
-
-// ── GoogleマップURL→座標自動抽出 ────────────────────────────
-// フルURL例: https://www.google.com/maps/place/.../@13.7563,100.5018,17z/...
-// または:    https://maps.google.com/?q=13.7563,100.5018
-// または:    https://maps.app.goo.gl/xxx (短縮URL→フルURLに変換できないため手動)
-window.extractCoordsFromUrl=function(urlInput){
-  const url = urlInput.trim();
-  // パターン1: /@lat,lng,zoom or /@lat,lng,
-  let m = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)[,z]/);
-  if(m) return {lat:parseFloat(m[1]),lng:parseFloat(m[2])};
-  // パターン2: ?q=lat,lng or &q=lat,lng
-  m = url.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
-  if(m) return {lat:parseFloat(m[1]),lng:parseFloat(m[2])};
-  // パターン3: /place/.../@lat,lng or ll=lat,lng
-  m = url.match(/ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
-  if(m) return {lat:parseFloat(m[1]),lng:parseFloat(m[2])};
-  return null;
-};
-
-window.onUrlInput=function(val,latId,lngId,msgId){
-  if(!val.trim())return;
-  const coords=window.extractCoordsFromUrl(val);
-  if(coords){
-    document.getElementById(latId).value=coords.lat;
-    document.getElementById(lngId).value=coords.lng;
-    if(msgId){
-      const el=document.getElementById(msgId);
-      el.style.color='#059669';
-      el.textContent=`✅ 座標を自動取得: ${coords.lat}, ${coords.lng}`;
-    }
-  } else {
-    if(msgId){
-      const el=document.getElementById(msgId);
-      el.style.color='#888';
-      el.textContent='💡 短縮URL(maps.app.goo.gl)は自動取得できません。フルURLを使うか手動入力してください。';
-    }
-  }
-};
-
-// ── 新規追加 ─────────────────────────────────────────────────
 window.addNewSpot=async function(){
   const name=document.getElementById('a-name').value.trim();
   const lat=parseFloat(document.getElementById('a-lat').value)||0;
   const lng=parseFloat(document.getElementById('a-lng').value)||0;
   const cat=document.getElementById('a-cat').value;
   const address=document.getElementById('a-address').value.trim();
+  const gmapAuto=document.getElementById('a-gmap-auto').value.trim();
   const url=document.getElementById('a-url').value.trim();
   const memo=document.getElementById('a-memo').value.trim();
-  const series=document.getElementById('a-series').value.trim();
   const cp=document.getElementById('a-cp').value.trim();
+  const series=document.getElementById('a-series').value.trim();
   const type=document.getElementById('a-type').value;
   const scene=document.getElementById('a-scene').value.trim();
-  const sns=document.getElementById('a-sns')?.value.trim()||'';
-  const msgEl=document.getElementById('add-msg');
-  if(!name){msgEl.style.color='#DC2626';msgEl.textContent='※ 場所名は必須です';return;}
-  if(!lat||!lng){msgEl.style.color='#DC2626';msgEl.textContent='※ 緯度・経度を入力してください（GoogleマップのフルURLから自動取得できます）';return;}
-  msgEl.style.color='#9333EA';msgEl.textContent='追加中...';
+  const sns=document.getElementById('a-sns').value.trim();
+  const msg=document.getElementById('add-msg');
+  if(!name){msg.style.color='var(--red)';msg.textContent='場所名は必須です';return;}
+  if(!lat||!lng){msg.style.color='var(--red)';msg.textContent='緯度・経度を入力してください（GoogleマップのフルURLから自動取得できます）';return;}
+  msg.style.color='var(--purple)';msg.textContent='追加中...';
   try{
     const locRef=doc(collection(db,'locations'));
-    await setDoc(locRef,{name,lat,lng,category:cat,address,googleMapsUrl:url,memo,sns_url:sns});
-    if(series||cp||scene){
-      await addDoc(collection(db,'appearances'),{location_id:locRef.id,series:series||'',cp:cp||'',type,scene_desc:scene||'',sns_url:sns,status:'公開'});
+    await setDoc(locRef,{name,lat,lng,category:cat,address,googleMapsUrl:url||gmapAuto,memo});
+    if(cp||series||scene){
+      await addDoc(collection(db,'appearances'),{location_id:locRef.id,cp,series,type,scene_desc:scene,sns_url:sns,status:'公開'});
     }
-    msgEl.style.color='#059669';msgEl.textContent='✅ 追加しました！';
-    ['a-name','a-lat','a-lng','a-address','a-url','a-memo','a-series','a-cp','a-scene'].forEach(id=>{document.getElementById(id).value='';});
-    localStorage.removeItem('tsmap_loc_v1'); localStorage.removeItem('tsmap_app_v1');
-    await loadAll(); renderLocations(); renderAppearances();
-  }catch(e){msgEl.style.color='#DC2626';msgEl.textContent='エラー: '+e.message;}
+    msg.style.color='var(--green)';msg.textContent='✅ 追加しました！';
+    clearCaches(); await loadAll();
+    ['a-name','a-lat','a-lng','a-address','a-gmap-auto','a-url','a-memo','a-cp','a-series','a-scene','a-sns'].forEach(id=>{document.getElementById(id).value='';});
+  }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
 };
 
-// ── モーダル ──────────────────────────────────────────────────
-window.closeEditModal=e=>{
-  if(!e||e.target===document.getElementById('edit-modal'))document.getElementById('edit-modal').style.display='none';
+// ── CP Master ─────────────────────────────────────────────────
+function renderCp(){
+  setBody(`<div style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
+    <button class="btn btn-primary" onclick="cpModal()">＋ CPを追加</button>
+  </div>
+  <div class="master-grid" id="cp-grid"></div>`);
+  document.getElementById('cp-grid').innerHTML=CP_MASTER.length
+    ? CP_MASTER.map(m=>`<div class="master-card">
+        <span class="color-swatch" style="background:${m.color||'#888'}"></span>
+        <div class="master-card-left">
+          <div class="master-card-name">${m.emoji||'💗'} ${m.name}</div>
+          <div class="master-card-meta" style="font-family:monospace">${m.color||''}</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-edit" onclick="cpModal('${m.id}')">✏</button>
+          <button class="btn btn-del" onclick="deleteMaster('cp_master','${m.id}','cp')">🗑</button>
+        </div>
+      </div>`).join('')
+    : '<div style="color:var(--sub);font-size:13px">CPが登録されていません</div>';
+}
+window.cpModal=function(id){
+  const m=id?CP_MASTER.find(x=>x.id===id):{};
+  document.getElementById('modal-title').textContent=id?`💗 ${m.name} を編集`:'💗 CPを追加';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">CP名 <span class="req">*</span></label><input class="form-input" id="m-name" value="${esc(m?.name||'')}" placeholder="例: FreenBecky"></div>
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">テーマカラー</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="color" id="m-cpicker" value="${m?.color||'#EC4899'}" oninput="document.getElementById('m-color').value=this.value" style="width:44px;height:36px;border:none;cursor:pointer;border-radius:8px;padding:2px">
+        <input class="form-input" id="m-color" value="${m?.color||'#EC4899'}" oninput="document.getElementById('m-cpicker').value=this.value" style="font-family:monospace">
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:16px"><label class="form-label">絵文字</label>
+      <input class="form-input" id="m-emoji" value="${esc(m?.emoji||'💗')}" placeholder="💗" style="font-size:20px;width:80px"></div>
+    <div id="m-msg" class="form-msg"></div>
+    <button class="btn btn-primary" style="width:100%" onclick="saveMasterItem('cp_master','${id||''}','cp')">💾 保存</button>`;
+  document.getElementById('modal').style.display='flex';
+};
+
+// ── Series Master ─────────────────────────────────────────────
+function renderSeries(){
+  const GL='https://thai-gl-works-2c835.web.app/index.html';
+  setBody(`<div style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
+    <button class="btn btn-primary" onclick="seriesModal()">＋ 作品を追加</button>
+    <span style="font-size:12px;color:var(--sub)">来日の時期も「2024年秋来日」などで登録できます</span>
+  </div>
+  <div class="master-grid" id="series-grid"></div>`);
+  document.getElementById('series-grid').innerHTML=SERIES_MASTER.length
+    ? SERIES_MASTER.map(m=>`<div class="master-card">
+        <div class="master-card-left">
+          <div class="master-card-name">${m.name}</div>
+          <div class="master-card-meta">ID: ${m.drama_id||'未設定'}${m.drama_id?` <a href="${GL}?drama=${m.drama_id}" target="_blank" style="color:var(--purple);font-size:10px">確認↗</a>`:''}</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-edit" onclick="seriesModal('${m.id}')">✏</button>
+          <button class="btn btn-del" onclick="deleteMaster('series_master','${m.id}','series')">🗑</button>
+        </div>
+      </div>`).join('')
+    : '<div style="color:var(--sub);font-size:13px">作品が登録されていません</div>';
+}
+window.seriesModal=function(id){
+  const m=id?SERIES_MASTER.find(x=>x.id===id):{};
+  document.getElementById('modal-title').textContent=id?`🎨 ${m.name} を編集`:'🎨 作品を追加';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">作品名 / 時期 <span class="req">*</span></label>
+      <input class="form-input" id="m-name" value="${esc(m?.name||'')}" placeholder="例: GAP The Series / 2024年秋来日"></div>
+    <div class="form-group" style="margin-bottom:16px"><label class="form-label">Thai GL Works ドラマID</label>
+      <input class="form-input" id="m-drama" value="${esc(m?.drama_id||'')}" placeholder="例: GAP または 1774088911045" style="font-family:monospace">
+      <div class="form-hint">作品URLの ?drama= の後の値</div>
+    </div>
+    <div id="m-msg" class="form-msg"></div>
+    <button class="btn btn-primary" style="width:100%" onclick="saveMasterItem('series_master','${id||''}','series')">💾 保存</button>`;
+  document.getElementById('modal').style.display='flex';
+};
+
+// ── Category Master ───────────────────────────────────────────
+function renderCategory(){
+  setBody(`<div style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
+    <button class="btn btn-primary" onclick="catModal()">＋ カテゴリーを追加</button>
+  </div>
+  <div class="master-grid" id="cat-grid"></div>`);
+  document.getElementById('cat-grid').innerHTML=CAT_MASTER.length
+    ? CAT_MASTER.map(m=>`<div class="master-card">
+        <span class="emoji-badge">${m.emoji||'📍'}</span>
+        <div class="master-card-left"><div class="master-card-name">${m.name}</div></div>
+        <div class="btn-row">
+          <button class="btn btn-edit" onclick="catModal('${m.id}')">✏</button>
+          <button class="btn btn-del" onclick="deleteMaster('category_master','${m.id}','category')">🗑</button>
+        </div>
+      </div>`).join('')
+    : '<div style="color:var(--sub);font-size:13px">カテゴリーが登録されていません<br><span style="font-size:11px">デフォルト（カフェ・ホテルなど）はコードに内蔵されています</span></div>';
+}
+window.catModal=function(id){
+  const m=id?CAT_MASTER.find(x=>x.id===id):{};
+  document.getElementById('modal-title').textContent=id?`📂 ${m.name} を編集`:'📂 カテゴリーを追加';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">カテゴリー名 <span class="req">*</span></label>
+      <input class="form-input" id="m-name" value="${esc(m?.name||'')}" placeholder="例: カフェ"></div>
+    <div class="form-group" style="margin-bottom:16px"><label class="form-label">絵文字</label>
+      <input class="form-input" id="m-emoji" value="${esc(m?.emoji||'📍')}" placeholder="☕" style="font-size:20px;width:80px">
+      <div class="form-hint">絵文字をそのまま入力してください</div>
+    </div>
+    <div id="m-msg" class="form-msg"></div>
+    <button class="btn btn-primary" style="width:100%" onclick="saveMasterItem('category_master','${id||''}','category')">💾 保存</button>`;
+  document.getElementById('modal').style.display='flex';
+};
+
+// ── Master CRUD ───────────────────────────────────────────────
+window.saveMasterItem=async function(colName, id, type){
+  const msg=document.getElementById('m-msg');
+  const name=document.getElementById('m-name')?.value.trim();
+  if(!name){msg.style.color='var(--red)';msg.textContent='名前を入力してください';return;}
+  msg.style.color='var(--purple)';msg.textContent='保存中...';
+  try{
+    let data={name};
+    if(type==='cp'){data.color=document.getElementById('m-color').value;data.emoji=document.getElementById('m-emoji').value;}
+    if(type==='series'){data.drama_id=document.getElementById('m-drama').value.trim();}
+    if(type==='category'){data.emoji=document.getElementById('m-emoji').value;}
+    if(id){await updateDoc(doc(db,colName,id),data);}
+    else{await addDoc(collection(db,colName),data);}
+    msg.style.color='var(--green)';msg.textContent='✅ 保存しました';
+    clearCaches(); await loadAll();
+    setTimeout(()=>{closeModal();showPage(type==='cp'?'cp':type==='series'?'series':'category');},800);
+  }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
+};
+window.deleteMaster=async function(colName,id,type){
+  if(!confirm('削除しますか？'))return;
+  await deleteDoc(doc(db,colName,id));
+  clearCaches(); await loadAll();
+  showPage(type==='cp'?'cp':type==='series'?'series':'category');
+};
+
+// ── Helpers ───────────────────────────────────────────────────
+function buildCatOptions(selected){
+  const defaults=['スタジオ','カフェ','レストラン','ホテル','ショッピング','観光地','邸宅/スタジオ','寺院','大学','図書館','アート','病院','スポーツ','放送局','国立公園'];
+  const cats=[...new Set([...defaults,...CAT_MASTER.map(m=>m.name)])].sort();
+  return cats.map(c=>`<option value="${c}"${selected===c?' selected':''}>${c}</option>`).join('');
+}
+
+window.autoCoords=function(urlVal,latId,lngId,msgId){
+  if(!urlVal.trim())return;
+  const u=urlVal.trim();
+  let m=u.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)[,z]/);
+  if(!m)m=u.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+  if(!m)m=u.match(/ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+  const el=document.getElementById(msgId);
+  if(m){
+    document.getElementById(latId).value=m[1];
+    document.getElementById(lngId).value=m[2];
+    if(el){el.style.color='var(--green)';el.textContent='✅ 座標を取得: '+m[1]+', '+m[2];}
+  } else if(el){
+    el.style.color='var(--sub)';
+    el.textContent='💡 短縮URLは自動取得不可。google.com/maps/...のフルURLを使ってください。';
+  }
+};
+
+function esc(s){return(s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function clearCaches(){['tsmap_loc_v2','tsmap_app_v2','tsmap_series_v2','tsmap_cp_v1','tsmap_cat_v1'].forEach(k=>localStorage.removeItem(k));}
+
+window.closeModal=function(e){
+  if(!e||e.target===document.getElementById('modal'))document.getElementById('modal').style.display='none';
 };
 </script>
 </body>
