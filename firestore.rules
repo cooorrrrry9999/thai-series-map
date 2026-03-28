@@ -54,6 +54,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // series_master: 作品名・drama_id管理
+    match /series_master/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // locations: 場所情報
     //   読み取り → 全員OK（地図を誰でも見られるように）
     //   書き込み → 管理者のみ

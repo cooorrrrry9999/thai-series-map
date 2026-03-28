@@ -402,24 +402,69 @@ window.editLocModal=function(locId){
   const loc=LOCS.find(l=>l.id===locId);
   if(!loc)return;
   const catOptions=buildCatOptions(loc.category);
+  const locApps=APPS.filter(a=>a.location_id===locId);
+  const allCps=[...new Set([...APPS.map(a=>a.cp),...CP_MASTER.map(m=>m.name)].filter(Boolean))].sort();
+  const allSeries=[...new Set([...APPS.map(a=>a.series),...SERIES_MASTER.map(m=>m.name)].filter(Boolean))].sort();
+
+  // 既存の紐付けリスト
+  const appRows=locApps.map(a=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border-radius:8px;margin-bottom:6px;font-size:12px">
+      <span style="flex:1"><strong>${a.cp||'CP未設定'}</strong> — ${a.series||'作品未設定'} / ${a.type||''}<br><span style="color:var(--sub)">${a.scene_desc||''}</span></span>
+      <span class="badge ${a.status==='公開'?'badge-pub':'badge-pend'}">${a.status}</span>
+      <button class="btn btn-edit" style="padding:3px 8px;font-size:11px" onclick="editAppModal('${a.id}')">✏</button>
+      <button class="btn btn-del" style="padding:3px 8px;font-size:11px" onclick="deleteApp('${a.id}');editLocModal('${locId}')">🗑</button>
+    </div>`).join('');
+
   document.getElementById('modal-title').textContent='✏ '+loc.name;
   document.getElementById('modal-body').innerHTML=`
-    <div class="form-group" style="margin-bottom:12px"><label class="form-label">場所名</label><input class="form-input" id="el-name" value="${esc(loc.name)}"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-      <div class="form-group"><label class="form-label">緯度</label><input class="form-input" id="el-lat" type="number" step="any" value="${loc.lat||''}"></div>
-      <div class="form-group"><label class="form-label">経度</label><input class="form-input" id="el-lng" type="number" step="any" value="${loc.lng||''}"></div>
-    </div>
-    <div class="form-group" style="margin-bottom:12px"><label class="form-label">GoogleマップURL（貼ると座標自動取得）</label>
-      <input class="form-input" id="el-gmap" placeholder="https://www.google.com/maps/place/.../@lat,lng..." oninput="autoCoords(this.value,'el-lat','el-lng','el-cmsg')">
-      <div id="el-cmsg" style="font-size:11px;min-height:14px;color:var(--sub)"></div>
-    </div>
-    <div class="form-group" style="margin-bottom:12px"><label class="form-label">カテゴリー</label><select class="form-select" id="el-cat">${catOptions}</select></div>
-    <div class="form-group" style="margin-bottom:12px"><label class="form-label">住所</label><input class="form-input" id="el-address" value="${esc(loc.address||'')}"></div>
-    <div class="form-group" style="margin-bottom:12px"><label class="form-label">GoogleマップURL（保存用）</label><input class="form-input" id="el-url" value="${esc(loc.googleMapsUrl||'')}"></div>
-    <div class="form-group" style="margin-bottom:12px"><label class="form-label">訪問メモ</label><input class="form-input" id="el-memo" value="${esc(loc.memo||'')}"></div>
-    <div id="el-msg" class="form-msg"></div>
-    <button class="btn btn-primary" style="width:100%" onclick="saveLoc('${locId}')">💾 保存</button>`;
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.07em;margin-bottom:10px">場所情報</div>
+        <div class="form-group" style="margin-bottom:10px"><label class="form-label">場所名</label><input class="form-input" id="el-name" value="${esc(loc.name)}"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div class="form-group"><label class="form-label">緯度</label><input class="form-input" id="el-lat" type="number" step="any" value="${loc.lat||''}"></div>
+          <div class="form-group"><label class="form-label">経度</label><input class="form-input" id="el-lng" type="number" step="any" value="${loc.lng||''}"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:10px"><label class="form-label">GoogleマップURL（自動取得）</label>
+          <input class="form-input" id="el-gmap" placeholder="https://www.google.com/maps/.../@lat,lng..." oninput="autoCoords(this.value,'el-lat','el-lng','el-cmsg')">
+          <div id="el-cmsg" style="font-size:10px;min-height:12px;color:var(--sub)"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:10px"><label class="form-label">カテゴリー</label><select class="form-select" id="el-cat">${catOptions}</select></div>
+        <div class="form-group" style="margin-bottom:10px"><label class="form-label">住所</label><input class="form-input" id="el-address" value="${esc(loc.address||'')}"></div>
+        <div class="form-group" style="margin-bottom:10px"><label class="form-label">GoogleマップURL（保存用）</label><input class="form-input" id="el-url" value="${esc(loc.googleMapsUrl||'')}"></div>
+        <div class="form-group" style="margin-bottom:10px"><label class="form-label">訪問メモ</label><input class="form-input" id="el-memo" value="${esc(loc.memo||'')}"></div>
+        <div id="el-msg" class="form-msg"></div>
+        <button class="btn btn-primary" style="width:100%" onclick="saveLoc('${locId}')">💾 場所情報を保存</button>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.07em;margin-bottom:10px">紐付け（${locApps.length}件）</div>
+        <div id="loc-apps-list">${appRows||'<div style="color:var(--sub);font-size:12px;padding:8px 0">紐付けなし</div>'}</div>
+        <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:8px">＋ 紐付けを追加</div>
+          <div class="form-group" style="margin-bottom:8px"><label class="form-label">CP名</label>
+            <input class="form-input" id="na-cp" placeholder="例: FreenBecky" list="na-cp-list" style="font-size:12px;padding:6px 10px">
+            <datalist id="na-cp-list">${allCps.map(c=>`<option value="${c}">`).join('')}</datalist></div>
+          <div class="form-group" style="margin-bottom:8px"><label class="form-label">作品名 / 分類</label>
+            <input class="form-input" id="na-series" placeholder="例: GAP The Series" list="na-series-list" style="font-size:12px;padding:6px 10px">
+            <datalist id="na-series-list">${allSeries.map(s=>`<option value="${s}">`).join('')}</datalist></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <div class="form-group"><label class="form-label">分類</label>
+              <select class="form-select" id="na-type" style="font-size:12px;padding:6px 10px">
+                <option value="作品">作品</option><option value="プライベート">プライベート</option><option value="来日">来日</option>
+              </select></div>
+            <div class="form-group"><label class="form-label">シーン説明</label>
+              <input class="form-input" id="na-scene" placeholder="例: Monの家のシーン" style="font-size:12px;padding:6px 10px"></div>
+          </div>
+          <div class="form-group" style="margin-bottom:8px"><label class="form-label">SNSリンク（任意）</label>
+            <input class="form-input" id="na-sns" placeholder="https://x.com/..." style="font-size:12px;padding:6px 10px"></div>
+          <div id="na-msg" style="font-size:11px;min-height:14px;text-align:center"></div>
+          <button class="btn btn-primary" style="width:100%;padding:8px" onclick="addAppToLoc('${locId}')">＋ 紐付けを追加</button>
+        </div>
+      </div>
+    </div>`;
   document.getElementById('modal').style.display='flex';
+  // モーダルを広げる
+  document.querySelector('.modal-box').style.width='820px';
 };
 window.saveLoc=async function(locId){
   const msg=document.getElementById('el-msg');
@@ -440,6 +485,23 @@ window.saveLoc=async function(locId){
     clearCaches(); await loadAll(); setTimeout(closeModal,1000); renderLocations();
   }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
 };
+window.addAppToLoc=async function(locId){
+  const cp=document.getElementById('na-cp').value.trim();
+  const series=document.getElementById('na-series').value.trim();
+  const type=document.getElementById('na-type').value;
+  const scene=document.getElementById('na-scene').value.trim();
+  const sns=document.getElementById('na-sns')?.value.trim()||'';
+  const msg=document.getElementById('na-msg');
+  msg.style.color='var(--purple)';msg.textContent='追加中...';
+  try{
+    await addDoc(collection(db,'appearances'),{location_id:locId,cp,series,type,scene_desc:scene,sns_url:sns,status:'公開'});
+    msg.style.color='var(--green)';msg.textContent='✅ 追加しました';
+    clearCaches(); await loadAll();
+    // 紐付けリストをその場で更新
+    setTimeout(()=>editLocModal(locId),500);
+  }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
+};
+
 window.deleteLoc=async function(locId){
   const loc=LOCS.find(l=>l.id===locId);
   if(!confirm('「'+loc.name+'」を削除しますか？紐付けも削除されます。'))return;
