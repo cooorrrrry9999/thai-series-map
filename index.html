@@ -49,16 +49,27 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 .filter-drawer-header{padding:20px 18px 14px;border-bottom:1px solid #F1F5F9;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .filter-drawer-title{font-size:16px;font-weight:900}
 .filter-drawer-close{width:30px;height:30px;border-radius:50%;background:#F3F4F6;border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#666}
-.filter-drawer-body{flex:1;overflow-y:auto;padding:16px 18px}
-.filter-section{margin-bottom:20px}
-.filter-section-title{font-size:11px;font-weight:700;color:#999;letter-spacing:.08em;margin-bottom:8px}
-.filter-pill{display:block;width:100%;text-align:left;padding:9px 13px;border-radius:10px;border:1.5px solid #EEE;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s;background:white;color:#555;margin-bottom:5px}
-.filter-pill:hover{background:#F8FAFC}
+.filter-drawer-body{flex:1;overflow-y:auto;padding:12px 14px}
+.filter-section{margin-bottom:16px}
+.filter-section-title{font-size:10px;font-weight:700;color:#bbb;letter-spacing:.1em;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+/* 分類ボタン：横並び */
+.type-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px}
+.filter-pill{display:flex;align-items:center;justify-content:center;padding:9px 10px;border-radius:10px;border:1.5px solid #EEE;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s;background:white;color:#555}
+.filter-pill:hover{background:#F8FAFC;border-color:#ddd}
 .filter-pill.active{background:#111;color:#fff;border-color:#111;font-weight:700}
-.cp-pill{display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:10px;border:1.5px solid #EEE;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s;background:white;color:#555;margin-bottom:5px;width:100%;text-align:left}
+/* CPボタン：コンパクト */
+.cp-pill{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:10px;border:1.5px solid #EEE;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s;background:white;color:#555;margin-bottom:4px;width:100%;text-align:left}
 .cp-pill:hover{background:#F8FAFC}
 .cp-pill.active{border-width:2px;font-weight:700}
-.filter-drawer-footer{padding:14px 18px;border-top:1px solid #F1F5F9;flex-shrink:0}
+.cp-dot-lg{width:14px;height:14px;border-radius:50%;flex-shrink:0;display:inline-block}
+/* 作品展開エリア */
+.series-expand{background:#F8FAFC;border-radius:10px;padding:8px;margin-top:4px;margin-bottom:8px;border-left:3px solid #EEE}
+.series-btn{display:block;width:100%;text-align:left;padding:7px 10px;border-radius:8px;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;background:transparent;color:#555;margin-bottom:2px}
+.series-btn:hover{background:white}
+.series-btn.active{background:white;font-weight:700;color:#111}
+/* 選択中バッジ */
+.active-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;margin-left:auto}
+.filter-drawer-footer{padding:12px 14px;border-top:1px solid #F1F5F9;flex-shrink:0}
 .filter-reset-btn{width:100%;padding:10px;border-radius:10px;border:1.5px solid #E5E7EB;background:white;color:#555;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
 /* 上部に常時表示するアクティブフィルター表示 */
 .active-filters{position:fixed;top:calc(max(env(safe-area-inset-top),10px) + 48px);left:0;right:0;z-index:40;padding:6px 12px;display:flex;gap:6px;align-items:center;overflow-x:auto;-webkit-overflow-scrolling:touch;pointer-events:none}
@@ -441,7 +452,8 @@ function seriesDramaId(s){return(SERIES_MAP[s]||{}).drama_id||'';}
 // ICONSはCAT_MAPから動的生成するが後方互換のためフォールバックも保持
 
 let LOCS=[], APPS=[], map=null, markers={};
-let activeType="すべて", activeCp=null, activeSeries=null, searchQ="", selId=null, currentUser=null;
+// フィルターは複数選択可能（Set使用）
+let activeTypes=new Set(), activeCps=new Set(), activeSeries=new Set(), searchQ="", selId=null, currentUser=null;
 let drawerOpen=true;
 
 const locApps=id=>APPS.filter(a=>a.location_id===id&&a.status==='公開');
@@ -456,9 +468,12 @@ function getFiltered(){
   return LOCS.filter(loc=>{
     const apps=locApps(loc.id);
     if(!apps.length)return false;
-    if(activeType!=='すべて'&&!apps.some(a=>a.type===activeType))return false;
-    if(activeCp&&!apps.some(a=>a.cp===activeCp))return false;
-    if(activeSeries&&!apps.some(a=>a.series===activeSeries))return false;
+    // 分類フィルター（複数選択：どれか1つに一致すればOK）
+    if(activeTypes.size>0&&!apps.some(a=>activeTypes.has(a.type)))return false;
+    // CPフィルター（複数選択：どれか1つのCPが一致すればOK）
+    if(activeCps.size>0&&!apps.some(a=>activeCps.has(a.cp)))return false;
+    // 作品フィルター（複数選択：どれか1つの作品が一致すればOK）
+    if(activeSeries.size>0&&!apps.some(a=>activeSeries.has(a.series)))return false;
     if(searchQ){
       const q=searchQ.toLowerCase();
       const hit=loc.name.toLowerCase().includes(q)||
@@ -634,24 +649,26 @@ function renderFilters(){
 }
 
 function renderActiveFilterBar(){
-  const activeCount=[activeCp,activeSeries,activeType!=='すべて'?activeType:null].filter(Boolean).length;
+  const totalActive=activeTypes.size+activeCps.size+activeSeries.size;
   const chips=[];
 
-  // フィルターを開くボタン（常に表示）
-  const filterIcon=activeCount>0?`<span style="background:#EC4899;color:white;border-radius:50%;width:18px;height:18px;font-size:10px;display:inline-flex;align-items:center;justify-content:center;font-weight:700">${activeCount}</span>`:'🔍';
+  // フィルターを開くボタン
+  const filterIcon=totalActive>0?`<span style="background:#EC4899;color:white;border-radius:50%;width:18px;height:18px;font-size:10px;display:inline-flex;align-items:center;justify-content:center;font-weight:700">${totalActive}</span>`:'🔍';
   chips.push(`<button class="filter-open-btn" onclick="openFilterDrawer()">${filterIcon} フィルター</button>`);
 
-  // アクティブなフィルターをチップ表示
-  if(activeType!=='すべて'){
-    chips.push(`<button class="active-filter-chip" style="background:#111;color:white" onclick="window._setType('すべて')">${activeType} ✕</button>`);
-  }
-  if(activeCp){
-    const cfg=cpCfg(activeCp);
-    chips.push(`<button class="active-filter-chip" style="background:${cfg.color};color:white;border:none" onclick="window._setCp(null)">${cfg.emoji||'💗'} ${activeCp} ✕</button>`);
-  }
-  if(activeSeries){
-    chips.push(`<button class="active-filter-chip" style="background:rgba(255,255,255,.92);color:#333;border:1.5px solid #ddd" onclick="window._setSeries('${activeSeries.replace(/'/g,"\'")}') ">${activeSeries} ✕</button>`);
-  }
+  // 分類チップ（複数）
+  activeTypes.forEach(t=>{
+    chips.push(`<button class="active-filter-chip" style="background:#111;color:white" onclick="window._setType('${t}')">${t} ✕</button>`);
+  });
+  // CPチップ（複数）
+  activeCps.forEach(cp=>{
+    const cfg=cpCfg(cp);
+    chips.push(`<button class="active-filter-chip" style="background:${cfg.color};color:white;border:none" onclick="window._setCp('${cp}')">${cfg.emoji||'💗'} ${cp} ✕</button>`);
+  });
+  // 作品チップ（複数）
+  activeSeries.forEach(s=>{
+    chips.push(`<button class="active-filter-chip" style="background:rgba(255,255,255,.92);color:#333;border:1.5px solid #ddd" onclick="window._setSeries('${s.replace(/'/g,"\'")}') ">${s} ✕</button>`);
+  });
 
   document.getElementById('active-filters').innerHTML=chips.join('');
 }
@@ -700,9 +717,9 @@ function renderMapOverlayInfo(){
   const el=document.getElementById('map-overlay-info');
   if(!el)return;
   const parts=[];
-  if(activeCp){const cfg=cpCfg(activeCp);parts.push(`<span class="cp-dot" style="background:${cfg.color}"></span><span>${cfg.emoji||'💗'} ${activeCp}</span>`);}
-  if(activeSeries)parts.push(`<span>${activeSeries}</span>`);
-  if(activeType!=='すべて')parts.push(`<span>${activeType}</span>`);
+  activeCps.forEach(cp=>{const cfg=cpCfg(cp);parts.push(`<span class="cp-dot" style="background:${cfg.color}"></span><span>${cfg.emoji||'💗'} ${cp}</span>`);});
+  activeSeries.forEach(s=>parts.push(`<span>${s}</span>`));
+  activeTypes.forEach(t=>parts.push(`<span>${t}</span>`));
   parts.push(`<span style="color:#bbb;font-weight:400">📍 ${filtered.length}件</span>`);
   el.innerHTML=parts.join('<span style="color:#ddd">|</span>');
 }
@@ -717,7 +734,7 @@ window.closeFilterDrawer=function(){
   document.getElementById('filter-overlay').classList.remove('open');
 };
 window.resetFilters=function(){
-  activeType='すべて';activeCp=null;activeSeries=null;
+  activeTypes.clear();activeCps.clear();activeSeries.clear();
   renderFilters();renderMarkers();renderDrawer();
 };
 
@@ -807,16 +824,22 @@ window.closeDetailDirect=()=>{
 };
 
 // ── Filter actions ────────────────────────────────────────────
-window._setType=t=>{activeType=t;activeCp=null;activeSeries=null;renderFilters();renderMarkers();renderDrawer();};
+// フィルタートグル（複数選択対応）
+window._setType=t=>{
+  if(t==='すべて'){activeTypes.clear();}
+  else if(activeTypes.has(t)){activeTypes.delete(t);}
+  else{activeTypes.add(t);}
+  renderFilters();renderMarkers();renderDrawer();
+};
 window._setCp=cp=>{
-  activeCp=(cp===null||activeCp===cp)?null:cp;
-  if(activeSeries&&activeCp&&!getCpSeries(activeCp).includes(activeSeries))activeSeries=null;
+  if(cp===null){activeCps.clear();}
+  else if(activeCps.has(cp)){activeCps.delete(cp);}
+  else{activeCps.add(cp);}
   renderFilters();renderMarkers();renderDrawer();
 };
 window._setSeries=s=>{
-  activeSeries=activeSeries===s?null:s;
-  // 作品変更時に関連しないCP選択をリセット
-  if(activeCp&&activeSeries&&!getSeriesCps(activeSeries).includes(activeCp))activeCp=null;
+  if(activeSeries.has(s)){activeSeries.delete(s);}
+  else{activeSeries.add(s);}
   renderFilters();renderMarkers();renderDrawer();
 };
 window.onSearch=q=>{searchQ=q;renderMarkers();renderDrawer();};
@@ -902,9 +925,9 @@ window.exportKML=function(){
   const filtered=getFiltered();
   if(!filtered.length){alert('表示中のスポットがありません');return;}
   let fname='thai-series-map';
-  if(activeCp)fname+='-'+activeCp;
-  if(activeType!=='すべて')fname+='-'+activeType;
-  if(activeSeries)fname+='-'+activeSeries.replace(/[^a-zA-Z0-9゠-ヿ぀-ゟ一-鿿]/g,'_');
+  if(activeCps.size>0)fname+='-'+[...activeCps].join('_');
+  if(activeTypes.size>0)fname+='-'+[...activeTypes].join('_');
+  if(activeSeries.size>0)fname+='-'+[...activeSeries].join('_');
   fname+='.kml';
   const parts=filtered.map(function(loc){
     const apps=locApps(loc.id);
