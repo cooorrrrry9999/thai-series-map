@@ -79,42 +79,44 @@ const LOCATIONS = [
 ];
 
 // ── appearances データ ────────────────────────────────────────
+// 分類体系変更: typeフィールド廃止 → seriesが中カテゴリを兼ねる
+// （作品名 / プライベート / 〇〇年来日 がすべて同じ階層）
 const APPEARANCES = [
-  { id:"APP001", location_id:"LOC001", series:"GAP The Series",   cp:"FreenBecky", type:"作品",      scene_desc:"Monの家として使用。予約すれば見学可能。",             status:"公開" },
-  { id:"APP002", location_id:"LOC001", series:"Blank The Series", cp:"Blank Cast", type:"作品",      scene_desc:"Sam邸とアヌンちゃんの家。同じ管理人が運営。",           status:"公開" },
-  { id:"APP003", location_id:"LOC002", series:"GAP The Series",   cp:"FreenBecky", type:"作品",      scene_desc:"モールのシーン。",                                  status:"公開" },
-  { id:"APP004", location_id:"LOC003", series:"GAP The Series",   cp:"FreenBecky", type:"作品",      scene_desc:"オフィス内シーンの撮影スタジオ。一般公開なし。",          status:"公開" },
-  { id:"APP005", location_id:"LOC004", series:"GAP The Series",   cp:"FreenBecky", type:"作品",      scene_desc:"お寿司シーン・Samの誕生日会。",                       status:"公開" },
-  { id:"APP006", location_id:"LOC005", series:"GAP The Series",   cp:"FreenBecky", type:"作品",      scene_desc:"エビデートのレストラン。",                            status:"公開" },
-  { id:"APP007", location_id:"LOC006", series:"GAP The Series",   cp:"FreenBecky", type:"作品",      scene_desc:"SamMon新婚旅行（？）シーン。",                        status:"公開" },
-  { id:"APP008", location_id:"LOC007", series:"GAP The Series",   cp:"FreenBecky", type:"作品",      scene_desc:"各ドラマに登場する宮殿。",                           status:"公開" },
-  { id:"APP009", location_id:"LOC008", series:"URANUS2324",       cp:"FreenBecky", type:"作品",      scene_desc:"ソフトクリームを食べるシーン。",                       status:"公開" },
-  { id:"APP010", location_id:"LOC009", series:"URANUS2324",       cp:"FreenBecky", type:"作品",      scene_desc:"劇中の印象的な橋。",                                status:"公開" },
-  { id:"APP011", location_id:"LOC010", series:"URANUS2324",       cp:"FreenBecky", type:"作品",      scene_desc:"ジャングルと湖が美しい国立公園。",                     status:"公開" },
-  { id:"APP012", location_id:"LOC011", series:"The Loyal Pin",    cp:"FreenBecky", type:"作品",      scene_desc:"チェンマイのダンスシーン等。",                         status:"公開" },
-  { id:"APP013", location_id:"LOC012", series:"The Loyal Pin",    cp:"FreenBecky", type:"作品",      scene_desc:"バンコクの古い街並みを再現したエリア。",                status:"公開" },
-  { id:"APP014", location_id:"LOC013", series:"The Loyal Pin",    cp:"FreenBecky", type:"作品",      scene_desc:"Pinが通っていた大学のモデル。",                       status:"公開" },
-  { id:"APP015", location_id:"LOC014", series:"プライベート",        cp:"FreenBecky", type:"プライベート", scene_desc:"伝説のデート場所。",                                status:"公開" },
-  { id:"APP016", location_id:"LOC015", series:"プライベート",        cp:"FreenBecky", type:"プライベート", scene_desc:"Freen・Hengの母校。SCOYのロケ地でもある。",           status:"公開" },
-  { id:"APP017", location_id:"LOC016", series:"プライベート",        cp:"FreenBecky", type:"プライベート", scene_desc:"FreenがBeckyを連れて行ったカフェ。",                  status:"公開" },
-  { id:"APP018", location_id:"LOC017", series:"プライベート",        cp:"FreenBecky", type:"プライベート", scene_desc:"FreenBeckyデートスポット。Dreamのロケ地でもある。",   status:"公開" },
-  { id:"APP019", location_id:"LOC018", series:"プライベート",        cp:"FreenBecky", type:"プライベート", scene_desc:"屋上のムーカタ屋さん。店員さんが親切。",               status:"公開" },
-  { id:"APP020", location_id:"LOC019", series:"プライベート",        cp:"FreenBecky", type:"プライベート", scene_desc:"美しい天井画のある寺院。拝観無料。",                   status:"公開" },
-  { id:"APP021", location_id:"LOC020", series:"プライベート",        cp:"FreenBecky", type:"プライベート", scene_desc:"アフターユー（かき氷）やスタバなど。",                  status:"公開" },
-  { id:"APP022", location_id:"LOC021", series:"プライベート",        cp:"FreenBecky", type:"プライベート", scene_desc:"Beckyが友人のイベントで訪れた場所。",                  status:"公開" },
-  { id:"APP023", location_id:"LOC022", series:"プライベート",        cp:"FreenBecky", type:"プライベート", scene_desc:"お絵描きデートをしていた場所。",                       status:"公開" },
-  { id:"APP024", location_id:"LOC023", series:"プライベート",        cp:"FreenBecky", type:"プライベート", scene_desc:"Freenのお母様のカフェ。バンコクから車で3時間。",        status:"公開" },
-  { id:"APP025", location_id:"LOC024", series:"来日",              cp:"FreenBecky", type:"来日",      scene_desc:"フリべきがはしゃいでたあたり。",                       status:"公開" },
-  { id:"APP026", location_id:"LOC025", series:"The Secret Of Us", cp:"PondPhuwin", type:"作品",      scene_desc:"P'morが働く病院のロケ地。",                          status:"公開" },
-  { id:"APP027", location_id:"LOC026", series:"The Secret Of Us", cp:"PondPhuwin", type:"作品",      scene_desc:"ケンカしてバッチバチだった時のカフェ。",                status:"公開" },
-  { id:"APP028", location_id:"LOC027", series:"The Secret Of Us", cp:"PondPhuwin", type:"作品",      scene_desc:"ジムのシーン・バーのシーン。",                         status:"公開" },
-  { id:"APP029", location_id:"LOC028", series:"The Secret Of Us", cp:"PondPhuwin", type:"作品",      scene_desc:"アメリカシーンのロケ地。",                            status:"公開" },
-  { id:"APP030", location_id:"LOC029", series:"The Secret Of Us", cp:"PondPhuwin", type:"作品",      scene_desc:"PondPhuwinを輩出した放送局。ロビーで出待ち可。",       status:"公開" },
-  { id:"APP031", location_id:"LOC030", series:"Lucky My Love",    cp:"NearMine",   type:"作品",      scene_desc:"デートシーンのカフェ。",                              status:"公開" },
-  { id:"APP032", location_id:"LOC031", series:"Lucky My Love",    cp:"NearMine",   type:"作品",      scene_desc:"Nabdaoの部屋・会社・カフェ・飲み会シーンなど多数。",   status:"公開" },
-  { id:"APP033", location_id:"LOC032", series:"Lucky My Love",    cp:"NearMine",   type:"作品",      scene_desc:"スポーツシーンのロケ地。",                            status:"公開" },
-  { id:"APP034", location_id:"LOC033", series:"Lucky My Love",    cp:"NearMine",   type:"作品",      scene_desc:"Weaさんの家のロケ地。最終話の車から降りるシーンもここ。",status:"公開" },
-  { id:"APP035", location_id:"LOC034", series:"Lucky My Love",    cp:"NearMine",   type:"作品",      scene_desc:"日本風ショッピングモール。",                          status:"公開" }
+  { id:"APP001", location_id:"LOC001", series:"GAP The Series",   cp:"FreenBecky", scene_desc:"Monの家として使用。予約すれば見学可能。",             status:"公開" },
+  { id:"APP002", location_id:"LOC001", series:"Blank The Series", cp:"Blank Cast", scene_desc:"Sam邸とアヌンちゃんの家。同じ管理人が運営。",           status:"公開" },
+  { id:"APP003", location_id:"LOC002", series:"GAP The Series",   cp:"FreenBecky", scene_desc:"モールのシーン。",                                  status:"公開" },
+  { id:"APP004", location_id:"LOC003", series:"GAP The Series",   cp:"FreenBecky", scene_desc:"オフィス内シーンの撮影スタジオ。一般公開なし。",          status:"公開" },
+  { id:"APP005", location_id:"LOC004", series:"GAP The Series",   cp:"FreenBecky", scene_desc:"お寿司シーン・Samの誕生日会。",                       status:"公開" },
+  { id:"APP006", location_id:"LOC005", series:"GAP The Series",   cp:"FreenBecky", scene_desc:"エビデートのレストラン。",                            status:"公開" },
+  { id:"APP007", location_id:"LOC006", series:"GAP The Series",   cp:"FreenBecky", scene_desc:"SamMon新婚旅行（？）シーン。",                        status:"公開" },
+  { id:"APP008", location_id:"LOC007", series:"GAP The Series",   cp:"FreenBecky", scene_desc:"各ドラマに登場する宮殿。",                           status:"公開" },
+  { id:"APP009", location_id:"LOC008", series:"URANUS2324",       cp:"FreenBecky", scene_desc:"ソフトクリームを食べるシーン。",                       status:"公開" },
+  { id:"APP010", location_id:"LOC009", series:"URANUS2324",       cp:"FreenBecky", scene_desc:"劇中の印象的な橋。",                                status:"公開" },
+  { id:"APP011", location_id:"LOC010", series:"URANUS2324",       cp:"FreenBecky", scene_desc:"ジャングルと湖が美しい国立公園。",                     status:"公開" },
+  { id:"APP012", location_id:"LOC011", series:"The Loyal Pin",    cp:"FreenBecky", scene_desc:"チェンマイのダンスシーン等。",                         status:"公開" },
+  { id:"APP013", location_id:"LOC012", series:"The Loyal Pin",    cp:"FreenBecky", scene_desc:"バンコクの古い街並みを再現したエリア。",                status:"公開" },
+  { id:"APP014", location_id:"LOC013", series:"The Loyal Pin",    cp:"FreenBecky", scene_desc:"Pinが通っていた大学のモデル。",                       status:"公開" },
+  { id:"APP015", location_id:"LOC014", series:"プライベート",        cp:"FreenBecky", scene_desc:"伝説のデート場所。",                                status:"公開" },
+  { id:"APP016", location_id:"LOC015", series:"プライベート",        cp:"FreenBecky", scene_desc:"Freen・Hengの母校。SCOYのロケ地でもある。",           status:"公開" },
+  { id:"APP017", location_id:"LOC016", series:"プライベート",        cp:"FreenBecky", scene_desc:"FreenがBeckyを連れて行ったカフェ。",                  status:"公開" },
+  { id:"APP018", location_id:"LOC017", series:"プライベート",        cp:"FreenBecky", scene_desc:"FreenBeckyデートスポット。Dreamのロケ地でもある。",   status:"公開" },
+  { id:"APP019", location_id:"LOC018", series:"プライベート",        cp:"FreenBecky", scene_desc:"屋上のムーカタ屋さん。店員さんが親切。",               status:"公開" },
+  { id:"APP020", location_id:"LOC019", series:"プライベート",        cp:"FreenBecky", scene_desc:"美しい天井画のある寺院。拝観無料。",                   status:"公開" },
+  { id:"APP021", location_id:"LOC020", series:"プライベート",        cp:"FreenBecky", scene_desc:"アフターユー（かき氷）やスタバなど。",                  status:"公開" },
+  { id:"APP022", location_id:"LOC021", series:"プライベート",        cp:"FreenBecky", scene_desc:"Beckyが友人のイベントで訪れた場所。",                  status:"公開" },
+  { id:"APP023", location_id:"LOC022", series:"プライベート",        cp:"FreenBecky", scene_desc:"お絵描きデートをしていた場所。",                       status:"公開" },
+  { id:"APP024", location_id:"LOC023", series:"プライベート",        cp:"FreenBecky", scene_desc:"Freenのお母様のカフェ。バンコクから車で3時間。",        status:"公開" },
+  { id:"APP025", location_id:"LOC024", series:"2024年来日",         cp:"FreenBecky", scene_desc:"フリべきがはしゃいでたあたり。",                       status:"公開" },
+  { id:"APP026", location_id:"LOC025", series:"The Secret Of Us", cp:"PondPhuwin", scene_desc:"P'morが働く病院のロケ地。",                          status:"公開" },
+  { id:"APP027", location_id:"LOC026", series:"The Secret Of Us", cp:"PondPhuwin", scene_desc:"ケンカしてバッチバチだった時のカフェ。",                status:"公開" },
+  { id:"APP028", location_id:"LOC027", series:"The Secret Of Us", cp:"PondPhuwin", scene_desc:"ジムのシーン・バーのシーン。",                         status:"公開" },
+  { id:"APP029", location_id:"LOC028", series:"The Secret Of Us", cp:"PondPhuwin", scene_desc:"アメリカシーンのロケ地。",                            status:"公開" },
+  { id:"APP030", location_id:"LOC029", series:"The Secret Of Us", cp:"PondPhuwin", scene_desc:"PondPhuwinを輩出した放送局。ロビーで出待ち可。",       status:"公開" },
+  { id:"APP031", location_id:"LOC030", series:"Lucky My Love",    cp:"NearMine",   scene_desc:"デートシーンのカフェ。",                              status:"公開" },
+  { id:"APP032", location_id:"LOC031", series:"Lucky My Love",    cp:"NearMine",   scene_desc:"Nabdaoの部屋・会社・カフェ・飲み会シーンなど多数。",   status:"公開" },
+  { id:"APP033", location_id:"LOC032", series:"Lucky My Love",    cp:"NearMine",   scene_desc:"スポーツシーンのロケ地。",                            status:"公開" },
+  { id:"APP034", location_id:"LOC033", series:"Lucky My Love",    cp:"NearMine",   scene_desc:"Weaさんの家のロケ地。最終話の車から降りるシーンもここ。",status:"公開" },
+  { id:"APP035", location_id:"LOC034", series:"Lucky My Love",    cp:"NearMine",   scene_desc:"日本風ショッピングモール。",                          status:"公開" }
 ];
 
 window.runImport = async function() {
@@ -142,7 +144,7 @@ window.runImport = async function() {
     add('📦 appearances をインポート中...');
     for (const app of APPEARANCES) {
       await setDoc(doc(db, 'appearances', app.id), app);
-      add(`  ✅ ${app.id}: ${app.series} / ${app.cp}`, 'ok');
+      add(`  ✅ ${app.id}: [${app.cp}] ${app.series}`, 'ok');
     }
 
     add('');

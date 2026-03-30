@@ -278,11 +278,8 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
   <div class="modal-card" onclick="event.stopPropagation()">
     <div class="modal-title">📍 スポットを投稿する</div>
     <div class="form-group"><label class="form-label">場所名 <span style="color:#DC2626">*</span></label><input class="form-input" id="f-name" placeholder="例: 99 House Studio"></div>
-    <div class="form-group"><label class="form-label">作品名 <span style="color:#DC2626">*</span></label><input class="form-input" id="f-series" placeholder="例: GAP The Series" list="series-list"><datalist id="series-list"></datalist></div>
+    <div class="form-group"><label class="form-label">中カテゴリ（作品名 / プライベート / 〇〇年来日） <span style="color:#DC2626">*</span></label><input class="form-input" id="f-series" placeholder="例: GAP The Series / プライベート / 2024年来日" list="series-list"><datalist id="series-list"></datalist></div>
     <div class="form-group"><label class="form-label">CP名 <span style="color:#DC2626">*</span></label><input class="form-input" id="f-cp" placeholder="例: FreenBecky" list="cp-list"><datalist id="cp-list"></datalist></div>
-    <div class="form-group"><label class="form-label">分類 <span style="color:#DC2626">*</span></label>
-      <select class="form-select" id="f-type"><option value="作品">作品（ロケ地）</option><option value="プライベート">プライベート</option><option value="来日">来日</option></select>
-    </div>
     <div class="form-group"><label class="form-label">シーン説明 <span style="color:#DC2626">*</span></label><input class="form-input" id="f-scene" placeholder="例: Monの家として使用されたスタジオ"></div>
     <div class="form-group"><label class="form-label">GoogleマップURL（任意）</label><input class="form-input" id="f-url" placeholder="https://maps.app.goo.gl/..."></div>
     <div class="form-group"><label class="form-label">訪問メモ（任意）</label><input class="form-input" id="f-memo" placeholder="例: 入場500B、事前予約必要"></div>
@@ -468,8 +465,8 @@ function getFiltered(){
   return LOCS.filter(loc=>{
     const apps=locApps(loc.id);
     if(!apps.length)return false;
-    // 分類フィルター（複数選択：どれか1つに一致すればOK）
-    if(activeTypes.size>0&&!apps.some(a=>activeTypes.has(a.type)))return false;
+    // 中カテゴリフィルター（複数選択：どれか1つに一致すればOK）
+    if(activeTypes.size>0&&!apps.some(a=>activeTypes.has(a.series)))return false;
     // CPフィルター（複数選択：どれか1つのCPが一致すればOK）
     if(activeCps.size>0&&!apps.some(a=>activeCps.has(a.cp)))return false;
     // 作品フィルター（複数選択：どれか1つの作品が一致すればOK）
@@ -615,7 +612,7 @@ function renderMarkers(){
   LOCS.forEach(loc=>{
     if(!loc.lat||!loc.lng)return;
     const apps=locApps(loc.id); if(!apps.length)return;
-    if(apps.every(a=>a.type==='来日'))return;
+    if(apps.every(a=>a.series==='2024年来日'||a.series==='2025年来日'))return;
     const cfg=primaryCfg(loc.id), n=apps.length, inF=filteredIds.has(loc.id), isSel=loc.id===selId;
     // フィルター対象外は非表示
     const scale=isSel?1.35:1;
@@ -675,41 +672,31 @@ function renderActiveFilterBar(){
 
 function renderFilterDrawerBody(){
   const allCps=getUniqueCPs();
-  const relatedSeries=activeCp?getCpSeries(activeCp):[...new Set(APPS.map(a=>a.series).filter(Boolean))].sort();
-  const visibleCps=activeSeries?getSeriesCps(activeSeries):allCps;
+  const visibleCps=activeSeries.size>0?[...new Set([...activeSeries].flatMap(s=>getSeriesCps(s)))].sort():allCps;
 
-  const typePills=['すべて','作品','プライベート','来日'].map(t=>`
-    <button class="filter-pill${(activeType===t&&!activeCp&&!activeSeries&&t==='すべて')||(activeType===t&&t!=='すべて')?' active':''}" onclick="window._setType('${t}');${t==='すべて'?'closeFilterDrawer();':''}">${t}</button>`).join('');
+  const allSeries=getUniqueSeries();
+  // 中カテゴリ = seriesの一覧（作品名・プライベート・〇〇年来日がすべて同列）
+  const typePills=['すべて',...allSeries].map(t=>`
+    <button class="filter-pill${(activeTypes.size===0&&t==='すべて')||(activeTypes.has(t))?' active':''}" onclick="window._setType('${t.replace(/'/g,"\\'")}');${t==='すべて'?'closeFilterDrawer();':''}">${t}</button>`).join('');
 
   const cpPills=visibleCps.map(cp=>{
     const cfg=cpCfg(cp);
-    const isActive=activeCp===cp;
+    const isActive=activeCps.has(cp);
     return `<button class="cp-pill${isActive?' active':''}" style="${isActive?`background:${cfg.color}18;border-color:${cfg.color};color:${cfg.color}`:''}" onclick="window._setCp('${cp}')">
       <span class="cp-dot" style="background:${cfg.color||'#888'}"></span>
       <span>${cfg.emoji||'💗'} ${cp}</span>
     </button>`;
   }).join('');
 
-  const seriesSection=activeCp?`
-    <div class="filter-section">
-      <div class="filter-section-title">作品を絞り込む</div>
-      ${relatedSeries.map(s=>`<button class="filter-pill${activeSeries===s?' active':''}" onclick="window._setSeries('${s.replace(/'/g,"\'")}') ">${s}</button>`).join('')}
-    </div>`:
-    `<div class="filter-section">
-      <div class="filter-section-title">作品</div>
-      ${relatedSeries.map(s=>`<button class="filter-pill${activeSeries===s?' active':''}" onclick="window._setSeries('${s.replace(/'/g,"\'")}') ;openFilterDrawer()">${s}</button>`).join('')}
-    </div>`;
-
   document.getElementById('filter-drawer-body').innerHTML=`
     <div class="filter-section">
-      <div class="filter-section-title">分類</div>
-      ${typePills}
+      <div class="filter-section-title">中カテゴリ（作品名 / プライベート / 来日）</div>
+      <div class="type-grid">${typePills}</div>
     </div>
     <div class="filter-section">
       <div class="filter-section-title">CP</div>
       ${cpPills||'<div style="color:#bbb;font-size:13px">CPが登録されていません</div>'}
-    </div>
-    ${seriesSection}`;
+    </div>`;
 }
 
 function renderMapOverlayInfo(){
@@ -778,7 +765,7 @@ window._sel=function(locId){
   }
   document.getElementById('detail-accent').style.background=`linear-gradient(90deg,${cfg.border},${cfg.color})`;
   document.getElementById('detail-tags').innerHTML=
-    [...new Set(apps.map(a=>a.type))].map(t=>`<span class="detail-tag" style="background:#F3F4F6;color:#555;border-color:#E5E7EB">${t}</span>`).join('')+
+    [...new Set(apps.map(a=>a.series))].map(s=>`<span class="detail-tag" style="background:#F3F4F6;color:#555;border-color:#E5E7EB">${s}</span>`).join('')+
     `<span class="detail-tag" style="background:${cfg.light};color:${cfg.color};border-color:${cfg.border}">${catEmoji(loc.category)} ${loc.category}</span>`;
   document.getElementById('detail-name').textContent=loc.name;
   document.getElementById('detail-address').innerHTML=loc.address?`<span>📌</span> ${loc.address}`:'';
@@ -873,7 +860,6 @@ window.submitSpot=async()=>{
   const name=document.getElementById('f-name').value.trim();
   const series=document.getElementById('f-series').value.trim();
   const cp=document.getElementById('f-cp').value.trim();
-  const type=document.getElementById('f-type').value;
   const scene=document.getElementById('f-scene').value.trim();
   const url=document.getElementById('f-url').value.trim();
   const memo=document.getElementById('f-memo').value.trim();
@@ -882,7 +868,7 @@ window.submitSpot=async()=>{
   msgEl.style.color='#9333EA';msgEl.textContent='送信中...';
   try{
     await addDoc(collection(db,'location_submissions'),{
-      name,series,cp,type,scene_desc:scene,googleMapsUrl:url||'',memo:memo||'',
+      name,series,cp,scene_desc:scene,googleMapsUrl:url||'',memo:memo||'',
       status:'未承認',submittedBy:currentUser.email,submittedAt:serverTimestamp()
     });
     msgEl.style.color='#059669';msgEl.textContent='✅ 投稿しました！管理者確認後に公開されます。';

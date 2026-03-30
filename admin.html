@@ -358,7 +358,7 @@ function pendingCardHTML(s){
   return`<div class="pending-card">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
       <div><div style="font-size:14px;font-weight:700;margin-bottom:3px">${s.name}</div>
-        <div style="font-size:12px;color:var(--sub);line-height:1.7">${s.series||''} / ${s.cp||''} / ${s.type||''}<br>${s.scene_desc||''}${s.memo?'<br>💡 '+s.memo:''}</div>
+        <div style="font-size:12px;color:var(--sub);line-height:1.7">${s.cp||''} / ${s.series||''}<br>${s.scene_desc||''}${s.memo?'<br>💡 '+s.memo:''}</div>
         <div style="font-size:10px;color:#bbb;margin-top:4px">投稿: ${s.submittedBy||'不明'}</div></div>
       <div style="display:flex;gap:6px;flex-shrink:0">
         <button class="btn btn-approve" onclick="approveSub('${s.id}')">✅ 承認</button>
@@ -373,7 +373,7 @@ window.approveSub=async function(id){
   try{
     const ref=doc(collection(db,'locations'));
     await setDoc(ref,{name:s.name,lat:s.lat||0,lng:s.lng||0,category:s.category||'観光地',address:s.address||'',googleMapsUrl:s.googleMapsUrl||'',memo:s.memo||''});
-    await addDoc(collection(db,'appearances'),{location_id:ref.id,cp:s.cp||'',series:s.series||'',type:s.type||'作品',scene_desc:s.scene_desc||'',sns_url:s.sns_url||'',status:'公開'});
+    await addDoc(collection(db,'appearances'),{location_id:ref.id,cp:s.cp||'',series:s.series||'',scene_desc:s.scene_desc||'',sns_url:s.sns_url||'',status:'公開'});
     await updateDoc(doc(db,'location_submissions',id),{status:'承認済み'});
     clearC(); await loadAll(); showPage(currentPage);
   }catch(e){alert('エラー: '+e.message);}
@@ -483,7 +483,7 @@ function renderSpotDetail(locId){
         <span style="color:var(--sub);font-weight:400">— ${a.series||'未設定'}</span>
         <span class="badge ${a.status==='公開'?'badge-pub':'badge-pend'}">${a.status}</span>
       </div>
-      <div class="app-chip-sub">${a.type||''} / ${a.scene_desc||''}</div>
+      <div class="app-chip-sub">${a.scene_desc||''}</div>
       ${a.sns_url?`<a href="${a.sns_url}" target="_blank" style="font-size:10px;color:var(--blue)">SNS ↗</a>`:''}
       <div class="app-chip-actions">
         <button class="btn btn-edit btn-sm" onclick="editAppModal('${a.id}','${locId}')">✏</button>
@@ -513,14 +513,10 @@ function renderSpotDetail(locId){
             <input class="inline-input" id="na-cp-${locId}" placeholder="FreenBecky" list="na-cp-list-${locId}"
               oninput="updateInlineSeries(this.value,'${locId}')">
             <datalist id="na-cp-list-${locId}">${allCps.map(c=>`<option value="${c}">`).join('')}</datalist></div>
-          <div><div class="form-label" style="font-size:10px;margin-bottom:3px">作品名 / 分類</div>
-            <input class="inline-input" id="na-series-${locId}" placeholder="GAP / プライベート" list="na-series-list-${locId}">
+          <div><div class="form-label" style="font-size:10px;margin-bottom:3px">中カテゴリ（作品名 / プライベート / 〇〇年来日）</div>
+            <input class="inline-input" id="na-series-${locId}" placeholder="GAP The Series / プライベート / 2024年来日" list="na-series-list-${locId}">
             <datalist id="na-series-list-${locId}">${allSeries.map(s=>`<option value="${s}">`).join('')}</datalist>
             <div id="na-series-hint-${locId}" style="font-size:10px;color:var(--sub);margin-top:1px"></div></div>
-          <div><div class="form-label" style="font-size:10px;margin-bottom:3px">分類</div>
-            <select class="inline-select" id="na-type-${locId}">
-              <option value="作品">作品</option><option value="プライベート">プライベート</option><option value="来日">来日</option>
-            </select></div>
           <div><div class="form-label" style="font-size:10px;margin-bottom:3px">シーン説明</div>
             <input class="inline-input" id="na-scene-${locId}" placeholder="どのシーンか"></div>
         </div>
@@ -534,17 +530,16 @@ function renderSpotDetail(locId){
 window.addApp=async function(locId){
   const cp=document.getElementById('na-cp-'+locId)?.value.trim()||'';
   const series=document.getElementById('na-series-'+locId)?.value.trim()||'';
-  const type=document.getElementById('na-type-'+locId)?.value||'作品';
   const scene=document.getElementById('na-scene-'+locId)?.value.trim()||'';
   const sns=document.getElementById('na-sns-'+locId)?.value.trim()||'';
   const msg=document.getElementById('na-msg-'+locId);
   msg.style.color='var(--purple)';msg.textContent='追加中...';
   try{
-    await addDoc(collection(db,'appearances'),{location_id:locId,cp,series,type,scene_desc:scene,sns_url:sns,status:'公開'});
+    await addDoc(collection(db,'appearances'),{location_id:locId,cp,series,scene_desc:scene,sns_url:sns,status:'公開'});
     msg.style.color='var(--green)';msg.textContent='✅ 追加しました';
     clearC();
     const newAppId='local_'+Date.now();
-    localAddApp(newAppId,{location_id:locId,cp,series,type,scene_desc:scene,sns_url:sns,status:'公開'});
+    localAddApp(newAppId,{location_id:locId,cp,series,scene_desc:scene,sns_url:sns,status:'公開'});
     setTimeout(()=>renderSpotDetail(locId),200);
   }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
 };
@@ -674,11 +669,9 @@ window.editAppModal=function(appId,locId){
     <div class="form-group" style="margin-bottom:10px"><label class="form-label">CP名</label>
       <input class="form-input" id="ea-cp" value="${esc(a.cp||'')}" list="ea-cplist">
       <datalist id="ea-cplist">${allCps.map(c=>`<option value="${c}">`).join('')}</datalist></div>
-    <div class="form-group" style="margin-bottom:10px"><label class="form-label">作品名 / 分類</label>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">中カテゴリ（作品名 / プライベート / 〇〇年来日）</label>
       <input class="form-input" id="ea-series" value="${esc(a.series||'')}" list="ea-slist">
       <datalist id="ea-slist">${allSeries.map(s=>`<option value="${s}">`).join('')}</datalist></div>
-    <div class="form-group" style="margin-bottom:10px"><label class="form-label">分類</label>
-      <select class="form-select" id="ea-type">${['作品','プライベート','来日'].map(o=>`<option${a.type===o?' selected':''}>${o}</option>`).join('')}</select></div>
     <div class="form-group" style="margin-bottom:10px"><label class="form-label">シーン説明</label>
       <input class="form-input" id="ea-scene" value="${esc(a.scene_desc||'')}"></div>
     <div class="form-group" style="margin-bottom:10px"><label class="form-label">SNSリンク（任意）</label>
@@ -696,13 +689,12 @@ window.saveApp=async function(appId,locId){
     await updateDoc(doc(db,'appearances',appId),{
       cp:document.getElementById('ea-cp').value.trim(),
       series:document.getElementById('ea-series').value.trim(),
-      type:document.getElementById('ea-type').value,
       scene_desc:document.getElementById('ea-scene').value.trim(),
       sns_url:document.getElementById('ea-sns').value.trim(),
       status:document.getElementById('ea-status').value,
     });
     msg.style.color='var(--green)';msg.textContent='✅ 保存しました';
-    localUpdateApp(appId,{cp:document.getElementById('ea-cp').value.trim(),series:document.getElementById('ea-series').value.trim(),type:document.getElementById('ea-type').value,scene_desc:document.getElementById('ea-scene').value.trim(),sns_url:document.getElementById('ea-sns').value.trim(),status:document.getElementById('ea-status').value});
+    localUpdateApp(appId,{cp:document.getElementById('ea-cp').value.trim(),series:document.getElementById('ea-series').value.trim(),scene_desc:document.getElementById('ea-scene').value.trim(),sns_url:document.getElementById('ea-sns').value.trim(),status:document.getElementById('ea-status').value});
     clearC(); setTimeout(closeModal,800);
     if(locId)setTimeout(()=>renderSpotDetail(locId),900);
   }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
@@ -799,7 +791,7 @@ window.renderAdd=function(){
         value="${esc(draft?.memo||'')}" oninput="saveDraft()">
     </div>
 
-    <div class="form-section">作品との紐付け（任意）</div>
+    <div class="form-section">紐付け情報（任意）</div>
     <div class="form-grid" style="margin-bottom:10px">
       <div class="form-group">
         <label class="form-label">CP名</label>
@@ -809,28 +801,18 @@ window.renderAdd=function(){
         <datalist id="a-cplist">${allCps.map(c=>`<option value="${c}">`).join('')}</datalist>
       </div>
       <div class="form-group">
-        <label class="form-label">作品名 / 分類</label>
-        <input class="form-input" id="a-series" placeholder="例: GAP The Series / プライベート" list="a-slist"
+        <label class="form-label">中カテゴリ（作品名 / プライベート / 〇〇年来日）</label>
+        <input class="form-input" id="a-series" placeholder="例: GAP The Series / プライベート / 2024年来日" list="a-slist"
           value="${esc(draft?.series||'')}"
           oninput="updateCpListForSeries(this.value);saveDraft()">
         <datalist id="a-slist">${allSeries.map(s=>`<option value="${s}">`).join('')}</datalist>
         <div id="a-series-hint" style="font-size:10px;color:var(--sub);margin-top:2px"></div>
       </div>
     </div>
-    <div class="form-grid" style="margin-bottom:10px">
-      <div class="form-group">
-        <label class="form-label">分類</label>
-        <select class="form-select" id="a-type" onchange="saveDraft()">
-          <option value="作品"${(draft?.type||'作品')==='作品'?' selected':''}>作品（ロケ地）</option>
-          <option value="プライベート"${draft?.type==='プライベート'?' selected':''}>プライベート</option>
-          <option value="来日"${draft?.type==='来日'?' selected':''}>来日</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">シーン説明</label>
-        <input class="form-input" id="a-scene" placeholder="例: Monの家として使用されたスタジオ"
-          value="${esc(draft?.scene||'')}" oninput="saveDraft()">
-      </div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label class="form-label">シーン説明</label>
+      <input class="form-input" id="a-scene" placeholder="例: Monの家として使用されたスタジオ"
+        value="${esc(draft?.scene||'')}" oninput="saveDraft()">
     </div>
     <div class="form-group" style="margin-bottom:14px">
       <label class="form-label">SNSリンク（任意）</label>
@@ -880,7 +862,6 @@ function saveDraft(){
       memo:document.getElementById('a-memo')?.value||'',
       cp:document.getElementById('a-cp')?.value||'',
       series:document.getElementById('a-series')?.value||'',
-      type:document.getElementById('a-type')?.value||'作品',
       scene:document.getElementById('a-scene')?.value||'',
       sns:document.getElementById('a-sns')?.value||'',
       savedAt:new Date().toLocaleTimeString('ja-JP'),
@@ -918,7 +899,7 @@ window.addSpot=async function(){
     const scene=document.getElementById('a-scene').value.trim();
     const sns=document.getElementById('a-sns').value.trim();
     if(cp||series||scene){
-      await addDoc(collection(db,'appearances'),{location_id:ref.id,cp,series,type:document.getElementById('a-type').value,scene_desc:scene,sns_url:sns,status:'公開'});
+      await addDoc(collection(db,'appearances'),{location_id:ref.id,cp,series,scene_desc:scene,sns_url:sns,status:'公開'});
     }
     msg.style.color='var(--green)';msg.textContent='✅ 追加しました！';
     clearC();
