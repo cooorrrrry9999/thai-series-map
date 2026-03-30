@@ -125,6 +125,61 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 .drama-link-btn:active{opacity:.8}
 .detail-map-btn{width:100%;padding:13px;border-radius:12px;font-weight:800;font-size:15px;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;color:white;margin-top:12px}
 
+/* ── PC用レイアウト（768px以上） ── */
+@media(min-width:768px){
+  /* 詳細パネル：右サイドに固定 */
+  .detail-overlay{background:rgba(0,0,0,.2)}
+  .detail-panel{
+    position:fixed;top:0;right:0;bottom:0;left:auto;
+    width:380px;max-width:380px;margin:0;
+    border-radius:0;max-height:100vh;
+    animation:slideRight .3s cubic-bezier(.22,1,.36,1);
+    box-shadow:-4px 0 32px rgba(0,0,0,.15);
+  }
+  .detail-accent{height:5px;border-radius:0}
+  .detail-handle{display:none}
+  .detail-body{padding:20px 24px 0}
+  .detail-name{font-size:20px}
+
+  /* ドロワー：左サイドリスト */
+  .drawer{
+    position:fixed;top:60px;left:0;bottom:0;right:auto;
+    width:300px;border-radius:0;
+    box-shadow:4px 0 24px rgba(0,0,0,.10);
+    display:flex;flex-direction:column;
+  }
+  .drawer.collapsed{transform:translateX(-260px)}
+  .drawer-handle-wrap{display:none}
+  .drawer-header{padding:12px 16px 8px;border-bottom:1px solid #F1F5F9;flex-shrink:0}
+  .drawer-list{flex:1;overflow-y:auto;padding:8px}
+  .drawer-card{margin-bottom:6px}
+
+  /* 地図のパディング：ドロワー分を確保 */
+  #map{left:300px;transition:left .3s}
+
+  /* フィルタードロワーはPC幅を少し広く */
+  .filter-drawer{width:320px}
+
+  /* スポットカウント・現在地ボタンをドロワー右に */
+  .locate-btn{left:314px}
+  .spot-count{right:auto;left:314px}
+  .map-overlay-info{left:calc(300px + 50%);transform:translateX(-50%)}
+
+  /* モーダル：中央表示 */
+  .modal-overlay{align-items:center}
+  .modal-card{border-radius:16px;max-width:480px;max-height:85vh;animation:scaleIn .25s cubic-bezier(.22,1,.36,1)}
+  .howto-overlay{align-items:center}
+  .howto-card{border-radius:16px;max-width:560px;max-height:85vh;animation:scaleIn .25s cubic-bezier(.22,1,.36,1)}
+
+  /* ユーザーメニュー位置調整 */
+  .user-menu{top:56px;right:16px}
+
+  /* FABをドロワー右に */
+  .fab{left:316px;right:auto}
+}
+@keyframes slideRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
+@keyframes scaleIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+
 /* ── 投稿FAB ── */
 .fab{position:fixed;bottom:calc(var(--drawer-h) + 16px);right:14px;z-index:45;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#F9A8D4,#9333EA);border:none;cursor:pointer;font-size:26px;box-shadow:0 4px 16px rgba(147,51,234,.4);display:flex;align-items:center;justify-content:center;transition:transform .15s,bottom .3s}
 .fab:active{transform:scale(.92)}
@@ -534,12 +589,18 @@ function showUI(){
   document.getElementById('locate-btn').style.display='flex';
   updateDrawerVar();
 }
+function isPC(){return window.innerWidth>=768;}
 function hideUI(){
   ['top-bar','active-filters','map-overlay-info','spot-count','locate-btn','drawer','fab'].forEach(id=>{
     const el=document.getElementById(id); if(el)el.style.display='none';
   });
 }
 function updateDrawerVar(){
+  if(isPC()){
+    // PC：ドロワーは左サイドバー固定 → 地図の下マージン不要
+    document.documentElement.style.setProperty('--drawer-h','0px');
+    return;
+  }
   const el=document.getElementById('drawer');
   if(!el)return;
   const h=drawerCollapsed?parseInt(getComputedStyle(document.documentElement).getPropertyValue('--drawer-peek'))||64:el.offsetHeight;
@@ -673,12 +734,9 @@ function renderActiveFilterBar(){
 function renderFilterDrawerBody(){
   const allCps=getUniqueCPs();
   const visibleCps=activeSeries.size>0?[...new Set([...activeSeries].flatMap(s=>getSeriesCps(s)))].sort():allCps;
-
   const allSeries=getUniqueSeries();
-  // 中カテゴリ = seriesの一覧（作品名・プライベート・〇〇年来日がすべて同列）
   const typePills=['すべて',...allSeries].map(t=>`
     <button class="filter-pill${(activeTypes.size===0&&t==='すべて')||(activeTypes.has(t))?' active':''}" onclick="window._setType('${t.replace(/'/g,"\\'")}');${t==='すべて'?'closeFilterDrawer();':''}">${t}</button>`).join('');
-
   const cpPills=visibleCps.map(cp=>{
     const cfg=cpCfg(cp);
     const isActive=activeCps.has(cp);
@@ -687,7 +745,6 @@ function renderFilterDrawerBody(){
       <span>${cfg.emoji||'💗'} ${cp}</span>
     </button>`;
   }).join('');
-
   document.getElementById('filter-drawer-body').innerHTML=`
     <div class="filter-section">
       <div class="filter-section-title">中カテゴリ（作品名 / プライベート / 来日）</div>
@@ -794,19 +851,22 @@ window._sel=function(locId){
   btn.style.background=`linear-gradient(135deg,${cfg.border},${cfg.color})`;
   btn.onclick=()=>{if(loc.googleMapsUrl&&!loc.googleMapsUrl.includes('xxx')){window.open(loc.googleMapsUrl,'_blank');}else{alert('GoogleマップのURLは準備中です');}};
   document.getElementById('detail-overlay').style.display='block';
-  document.getElementById('drawer').style.display='none';
-  document.getElementById('drawer').classList.remove('collapsed');
-  drawerCollapsed=false;
+  if(!isPC()){
+    document.getElementById('drawer').style.display='none';
+    document.getElementById('drawer').classList.remove('collapsed');
+    drawerCollapsed=false;
+  }
 };
 
 window.closeDetail=e=>{if(e.target===document.getElementById('detail-overlay'))closeDetailDirect();};
 window.closeDetailDirect=()=>{
   document.getElementById('detail-overlay').style.display='none';
-  const dr=document.getElementById('drawer');
-  dr.style.display='block';
-  // 詳細を閉じたらドロワーを開いた状態に戻す
-  drawerCollapsed=false;
-  dr.classList.remove('collapsed');
+  if(!isPC()){
+    const dr=document.getElementById('drawer');
+    dr.style.display='block';
+    drawerCollapsed=false;
+    dr.classList.remove('collapsed');
+  }
   selId=null; renderMarkers(); renderDrawer();
 };
 
@@ -830,6 +890,7 @@ window._setSeries=s=>{
   renderFilters();renderMarkers();renderDrawer();
 };
 window.onSearch=q=>{searchQ=q;renderMarkers();renderDrawer();};
+window.addEventListener('resize',()=>updateDrawerVar());
 
 // ── User menu ─────────────────────────────────────────────────
 window.toggleUserMenu=()=>document.getElementById('user-menu').classList.toggle('open');
