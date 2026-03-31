@@ -125,61 +125,6 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 .drama-link-btn:active{opacity:.8}
 .detail-map-btn{width:100%;padding:13px;border-radius:12px;font-weight:800;font-size:15px;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;color:white;margin-top:12px}
 
-/* ── PC用レイアウト（768px以上） ── */
-@media(min-width:768px){
-  /* 詳細パネル：右サイドに固定 */
-  .detail-overlay{background:rgba(0,0,0,.2)}
-  .detail-panel{
-    position:fixed;top:0;right:0;bottom:0;left:auto;
-    width:380px;max-width:380px;margin:0;
-    border-radius:0;max-height:100vh;
-    animation:slideRight .3s cubic-bezier(.22,1,.36,1);
-    box-shadow:-4px 0 32px rgba(0,0,0,.15);
-  }
-  .detail-accent{height:5px;border-radius:0}
-  .detail-handle{display:none}
-  .detail-body{padding:20px 24px 0}
-  .detail-name{font-size:20px}
-
-  /* ドロワー：左サイドリスト */
-  .drawer{
-    position:fixed;top:60px;left:0;bottom:0;right:auto;
-    width:300px;border-radius:0;
-    box-shadow:4px 0 24px rgba(0,0,0,.10);
-    display:flex;flex-direction:column;
-  }
-  .drawer.collapsed{transform:translateX(-260px)}
-  .drawer-handle-wrap{display:none}
-  .drawer-header{padding:12px 16px 8px;border-bottom:1px solid #F1F5F9;flex-shrink:0}
-  .drawer-list{flex:1;overflow-y:auto;padding:8px}
-  .drawer-card{margin-bottom:6px}
-
-  /* 地図のパディング：ドロワー分を確保 */
-  #map{left:300px;transition:left .3s}
-
-  /* フィルタードロワーはPC幅を少し広く */
-  .filter-drawer{width:320px}
-
-  /* スポットカウント・現在地ボタンをドロワー右に */
-  .locate-btn{left:314px}
-  .spot-count{right:auto;left:314px}
-  .map-overlay-info{left:calc(300px + 50%);transform:translateX(-50%)}
-
-  /* モーダル：中央表示 */
-  .modal-overlay{align-items:center}
-  .modal-card{border-radius:16px;max-width:480px;max-height:85vh;animation:scaleIn .25s cubic-bezier(.22,1,.36,1)}
-  .howto-overlay{align-items:center}
-  .howto-card{border-radius:16px;max-width:560px;max-height:85vh;animation:scaleIn .25s cubic-bezier(.22,1,.36,1)}
-
-  /* ユーザーメニュー位置調整 */
-  .user-menu{top:56px;right:16px}
-
-  /* FABをドロワー右に */
-  .fab{left:316px;right:auto}
-}
-@keyframes slideRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
-@keyframes scaleIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
-
 /* ── 投稿FAB ── */
 .fab{position:fixed;bottom:calc(var(--drawer-h) + 16px);right:14px;z-index:45;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#F9A8D4,#9333EA);border:none;cursor:pointer;font-size:26px;box-shadow:0 4px 16px rgba(147,51,234,.4);display:flex;align-items:center;justify-content:center;transition:transform .15s,bottom .3s}
 .fab:active{transform:scale(.92)}
@@ -505,27 +450,36 @@ function seriesDramaId(s){return(SERIES_MAP[s]||{}).drama_id||'';}
 
 let LOCS=[], APPS=[], map=null, markers={};
 // フィルターは複数選択可能（Set使用）
-let activeTypes=new Set(), activeCps=new Set(), activeSeries=new Set(), searchQ="", selId=null, currentUser=null;
+let activeTypes=new Set(), activeCps=new Set(), searchQ="", selId=null, currentUser=null;
+// 全CPに共通で常に表示するタグ
+const COMMON_TAGS=new Set(['プライベート']);
 let drawerOpen=true;
 
 const locApps=id=>APPS.filter(a=>a.location_id===id&&a.status==='公開');
-// マーカー色はCPで決まる
 const primaryCfg=id=>{const a=locApps(id)[0];return a&&a.cp?cpCfg(a.cp):FB;};
 
-// appearancesの実績からCP↔作品の対応を動的に取得
+// CP↔タグの対応を動的に取得
 function getCpSeries(cp){return[...new Set(APPS.filter(a=>a.cp===cp).map(a=>a.series).filter(Boolean))];}
 function getSeriesCps(series){return[...new Set(APPS.filter(a=>a.series===series).map(a=>a.cp).filter(Boolean))];}
+
+// CPが選択されているとき、そのCPの作品タグ＋共通タグを返す
+function getVisibleTags(){
+  if(activeCps.size===0) return getUniqueSeries();
+  const cpTags=new Set();
+  activeCps.forEach(cp=>getCpSeries(cp).forEach(s=>cpTags.add(s)));
+  // 共通タグは常に追加
+  COMMON_TAGS.forEach(t=>{if(getUniqueSeries().includes(t))cpTags.add(t);});
+  return [...cpTags].sort();
+}
 
 function getFiltered(){
   return LOCS.filter(loc=>{
     const apps=locApps(loc.id);
     if(!apps.length)return false;
-    // 中カテゴリフィルター（複数選択：どれか1つに一致すればOK）
-    if(activeTypes.size>0&&!apps.some(a=>activeTypes.has(a.series)))return false;
-    // CPフィルター（複数選択：どれか1つのCPが一致すればOK）
+    // CPフィルター
     if(activeCps.size>0&&!apps.some(a=>activeCps.has(a.cp)))return false;
-    // 作品フィルター（複数選択：どれか1つの作品が一致すればOK）
-    if(activeSeries.size>0&&!apps.some(a=>activeSeries.has(a.series)))return false;
+    // 中カテゴリフィルター
+    if(activeTypes.size>0&&!apps.some(a=>activeTypes.has(a.series)))return false;
     if(searchQ){
       const q=searchQ.toLowerCase();
       const hit=loc.name.toLowerCase().includes(q)||
@@ -589,18 +543,12 @@ function showUI(){
   document.getElementById('locate-btn').style.display='flex';
   updateDrawerVar();
 }
-function isPC(){return window.innerWidth>=768;}
 function hideUI(){
   ['top-bar','active-filters','map-overlay-info','spot-count','locate-btn','drawer','fab'].forEach(id=>{
     const el=document.getElementById(id); if(el)el.style.display='none';
   });
 }
 function updateDrawerVar(){
-  if(isPC()){
-    // PC：ドロワーは左サイドバー固定 → 地図の下マージン不要
-    document.documentElement.style.setProperty('--drawer-h','0px');
-    return;
-  }
   const el=document.getElementById('drawer');
   if(!el)return;
   const h=drawerCollapsed?parseInt(getComputedStyle(document.documentElement).getPropertyValue('--drawer-peek'))||64:el.offsetHeight;
@@ -673,7 +621,7 @@ function renderMarkers(){
   LOCS.forEach(loc=>{
     if(!loc.lat||!loc.lng)return;
     const apps=locApps(loc.id); if(!apps.length)return;
-    if(apps.every(a=>a.series==='2024年来日'||a.series==='2025年来日'))return;
+    if(apps.every(a=>!COMMON_TAGS.has(a.series)&&(a.series||'').includes('来日')))return;
     const cfg=primaryCfg(loc.id), n=apps.length, inF=filteredIds.has(loc.id), isSel=loc.id===selId;
     // フィルター対象外は非表示
     const scale=isSel?1.35:1;
@@ -707,52 +655,62 @@ function renderFilters(){
 }
 
 function renderActiveFilterBar(){
-  const totalActive=activeTypes.size+activeCps.size+activeSeries.size;
+  const totalActive=activeTypes.size+activeCps.size;
   const chips=[];
-
-  // フィルターを開くボタン
   const filterIcon=totalActive>0?`<span style="background:#EC4899;color:white;border-radius:50%;width:18px;height:18px;font-size:10px;display:inline-flex;align-items:center;justify-content:center;font-weight:700">${totalActive}</span>`:'🔍';
   chips.push(`<button class="filter-open-btn" onclick="openFilterDrawer()">${filterIcon} フィルター</button>`);
-
-  // 分類チップ（複数）
-  activeTypes.forEach(t=>{
-    chips.push(`<button class="active-filter-chip" style="background:#111;color:white" onclick="window._setType('${t}')">${t} ✕</button>`);
-  });
-  // CPチップ（複数）
+  // CPチップ（優先・上）
   activeCps.forEach(cp=>{
     const cfg=cpCfg(cp);
     chips.push(`<button class="active-filter-chip" style="background:${cfg.color};color:white;border:none" onclick="window._setCp('${cp}')">${cfg.emoji||'💗'} ${cp} ✕</button>`);
   });
-  // 作品チップ（複数）
-  activeSeries.forEach(s=>{
-    chips.push(`<button class="active-filter-chip" style="background:rgba(255,255,255,.92);color:#333;border:1.5px solid #ddd" onclick="window._setSeries('${s.replace(/'/g,"\'")}') ">${s} ✕</button>`);
+  // 中カテゴリチップ
+  activeTypes.forEach(t=>{
+    chips.push(`<button class="active-filter-chip" style="background:#111;color:white" onclick="window._setType('${t.replace(/'/g,"\\'")}')">${t} ✕</button>`);
   });
-
   document.getElementById('active-filters').innerHTML=chips.join('');
 }
 
 function renderFilterDrawerBody(){
   const allCps=getUniqueCPs();
-  const visibleCps=activeSeries.size>0?[...new Set([...activeSeries].flatMap(s=>getSeriesCps(s)))].sort():allCps;
-  const allSeries=getUniqueSeries();
-  const typePills=['すべて',...allSeries].map(t=>`
-    <button class="filter-pill${(activeTypes.size===0&&t==='すべて')||(activeTypes.has(t))?' active':''}" onclick="window._setType('${t.replace(/'/g,"\\'")}');${t==='すべて'?'closeFilterDrawer();':''}">${t}</button>`).join('');
-  const cpPills=visibleCps.map(cp=>{
+  const visibleTags=getVisibleTags();
+
+  // CP ボタン群
+  const cpPills=allCps.map(cp=>{
     const cfg=cpCfg(cp);
     const isActive=activeCps.has(cp);
-    return `<button class="cp-pill${isActive?' active':''}" style="${isActive?`background:${cfg.color}18;border-color:${cfg.color};color:${cfg.color}`:''}" onclick="window._setCp('${cp}')">
+    return`<button class="cp-pill${isActive?' active':''}"
+      style="${isActive?`background:${cfg.color}18;border-color:${cfg.color};color:${cfg.color}`:''}"
+      onclick="window._setCp('${cp.replace(/'/g,"\\'")}')">
       <span class="cp-dot" style="background:${cfg.color||'#888'}"></span>
       <span>${cfg.emoji||'💗'} ${cp}</span>
     </button>`;
   }).join('');
+
+  // 中カテゴリ ボタン群（CPで絞り込まれた作品タグ＋共通タグ）
+  const tagPills=(['すべて',...visibleTags]).map(t=>{
+    const isAll=t==='すべて';
+    const isActive=isAll?(activeTypes.size===0):activeTypes.has(t);
+    const isCommon=COMMON_TAGS.has(t);
+    return`<button class="filter-pill${isActive?' active':''}"
+      style="${isCommon&&!isAll?'border-style:dashed':''}"
+      onclick="window._setType('${t.replace(/'/g,"\\'")}')">
+      ${isCommon&&!isAll?'🌐 ':''}${t}
+    </button>`;
+  }).join('');
+
+  const cpHint=activeCps.size>0
+    ?`<div style="font-size:10px;color:#bbb;margin-bottom:6px">💡 プライベートは全CPで共通表示</div>`:'';
+
   document.getElementById('filter-drawer-body').innerHTML=`
-    <div class="filter-section">
-      <div class="filter-section-title">中カテゴリ（作品名 / プライベート / 来日）</div>
-      <div class="type-grid">${typePills}</div>
-    </div>
     <div class="filter-section">
       <div class="filter-section-title">CP</div>
       ${cpPills||'<div style="color:#bbb;font-size:13px">CPが登録されていません</div>'}
+    </div>
+    <div class="filter-section">
+      <div class="filter-section-title">中カテゴリ</div>
+      ${cpHint}
+      <div class="type-grid">${tagPills}</div>
     </div>`;
 }
 
@@ -762,7 +720,6 @@ function renderMapOverlayInfo(){
   if(!el)return;
   const parts=[];
   activeCps.forEach(cp=>{const cfg=cpCfg(cp);parts.push(`<span class="cp-dot" style="background:${cfg.color}"></span><span>${cfg.emoji||'💗'} ${cp}</span>`);});
-  activeSeries.forEach(s=>parts.push(`<span>${s}</span>`));
   activeTypes.forEach(t=>parts.push(`<span>${t}</span>`));
   parts.push(`<span style="color:#bbb;font-weight:400">📍 ${filtered.length}件</span>`);
   el.innerHTML=parts.join('<span style="color:#ddd">|</span>');
@@ -778,7 +735,7 @@ window.closeFilterDrawer=function(){
   document.getElementById('filter-overlay').classList.remove('open');
 };
 window.resetFilters=function(){
-  activeTypes.clear();activeCps.clear();activeSeries.clear();
+  activeTypes.clear();activeCps.clear();
   renderFilters();renderMarkers();renderDrawer();
 };
 
@@ -851,27 +808,23 @@ window._sel=function(locId){
   btn.style.background=`linear-gradient(135deg,${cfg.border},${cfg.color})`;
   btn.onclick=()=>{if(loc.googleMapsUrl&&!loc.googleMapsUrl.includes('xxx')){window.open(loc.googleMapsUrl,'_blank');}else{alert('GoogleマップのURLは準備中です');}};
   document.getElementById('detail-overlay').style.display='block';
-  if(!isPC()){
-    document.getElementById('drawer').style.display='none';
-    document.getElementById('drawer').classList.remove('collapsed');
-    drawerCollapsed=false;
-  }
+  document.getElementById('drawer').style.display='none';
+  document.getElementById('drawer').classList.remove('collapsed');
+  drawerCollapsed=false;
 };
 
 window.closeDetail=e=>{if(e.target===document.getElementById('detail-overlay'))closeDetailDirect();};
 window.closeDetailDirect=()=>{
   document.getElementById('detail-overlay').style.display='none';
-  if(!isPC()){
-    const dr=document.getElementById('drawer');
-    dr.style.display='block';
-    drawerCollapsed=false;
-    dr.classList.remove('collapsed');
-  }
+  const dr=document.getElementById('drawer');
+  dr.style.display='block';
+  // 詳細を閉じたらドロワーを開いた状態に戻す
+  drawerCollapsed=false;
+  dr.classList.remove('collapsed');
   selId=null; renderMarkers(); renderDrawer();
 };
 
 // ── Filter actions ────────────────────────────────────────────
-// フィルタートグル（複数選択対応）
 window._setType=t=>{
   if(t==='すべて'){activeTypes.clear();}
   else if(activeTypes.has(t)){activeTypes.delete(t);}
@@ -879,18 +832,32 @@ window._setType=t=>{
   renderFilters();renderMarkers();renderDrawer();
 };
 window._setCp=cp=>{
-  if(cp===null){activeCps.clear();}
-  else if(activeCps.has(cp)){activeCps.delete(cp);}
-  else{activeCps.add(cp);}
+  if(activeCps.has(cp)){
+    activeCps.delete(cp);
+    // そのCPに固有のタグ選択を解除（共通タグは残す）
+    activeTypes.forEach(t=>{
+      if(!COMMON_TAGS.has(t)){
+        // 他の選択中CPにも紐づくタグなら残す
+        const stillValid=[...activeCps].some(c=>getCpSeries(c).includes(t));
+        if(!stillValid)activeTypes.delete(t);
+      }
+    });
+  } else {
+    activeCps.add(cp);
+    // そのCPに紐づかない（共通でもない）タグ選択を解除
+    activeTypes.forEach(t=>{
+      if(!COMMON_TAGS.has(t)){
+        const valid=[...activeCps].some(c=>getCpSeries(c).includes(t));
+        if(!valid)activeTypes.delete(t);
+      }
+    });
+  }
   renderFilters();renderMarkers();renderDrawer();
 };
-window._setSeries=s=>{
-  if(activeSeries.has(s)){activeSeries.delete(s);}
-  else{activeSeries.add(s);}
+window.resetFilters=function(){
+  activeTypes.clear();activeCps.clear();
   renderFilters();renderMarkers();renderDrawer();
 };
-window.onSearch=q=>{searchQ=q;renderMarkers();renderDrawer();};
-window.addEventListener('resize',()=>updateDrawerVar());
 
 // ── User menu ─────────────────────────────────────────────────
 window.toggleUserMenu=()=>document.getElementById('user-menu').classList.toggle('open');
@@ -974,7 +941,6 @@ window.exportKML=function(){
   let fname='thai-series-map';
   if(activeCps.size>0)fname+='-'+[...activeCps].join('_');
   if(activeTypes.size>0)fname+='-'+[...activeTypes].join('_');
-  if(activeSeries.size>0)fname+='-'+[...activeSeries].join('_');
   fname+='.kml';
   const parts=filtered.map(function(loc){
     const apps=locApps(loc.id);
