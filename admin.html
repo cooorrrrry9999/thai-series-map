@@ -355,11 +355,30 @@ window.renderPending=function(){
   setBody(list.length?list.map(s=>pendingCardHTML(s)).join(''):'<div style="text-align:center;color:var(--sub);padding:60px">承認待ちの投稿はありません 🎉</div>');
 };
 function pendingCardHTML(s){
+  const isAppAdd=s.submission_type==='appearance_add';
+  const isMemoAdd=s.submission_type==='memo_add';
+  const isNew=!s.submission_type;
+  // 既存スポット名を取得
+  const targetLoc=isAppAdd||isMemoAdd?LOCS.find(l=>l.id===s.target_location_id):null;
+  const badge=isNew
+    ?`<span style="background:#EDE9FE;color:#7C3AED;font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px">新規スポット</span>`
+    :isAppAdd
+    ?`<span style="background:#DBEAFE;color:#1D4ED8;font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px">紐付け追加</span>`
+    :`<span style="background:#D1FAE5;color:#065F46;font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px">メモ補足</span>`;
+  const target=targetLoc?`<div style="font-size:11px;color:var(--blue);margin-bottom:2px">📍 ${targetLoc.name}</div>`:'';
+  const body=isNew
+    ?`${s.name||''} / ${s.cp||''} / ${s.series||''}<br>${s.scene_desc||''}${s.memo?'<br>💡 '+s.memo:''}`
+    :isAppAdd
+    ?`${s.cp||''} / ${s.series||''}<br>${s.scene_desc||''}${s.sns_url?'<br>🔗 '+s.sns_url:''}`
+    :`${s.memo?'💡 '+s.memo:''}${s.sns_url?'<br>🔗 '+s.sns_url:''}`;
   return`<div class="pending-card">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
-      <div><div style="font-size:14px;font-weight:700;margin-bottom:3px">${s.name}</div>
-        <div style="font-size:12px;color:var(--sub);line-height:1.7">${s.cp||''} / ${s.series||''}<br>${s.scene_desc||''}${s.memo?'<br>💡 '+s.memo:''}</div>
-        <div style="font-size:10px;color:#bbb;margin-top:4px">投稿: ${s.submittedBy||'不明'}</div></div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">${badge}${target}</div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:2px">${isNew?(s.name||'名称未設定'):(targetLoc?.name||'不明なスポット')}</div>
+        <div style="font-size:12px;color:var(--sub);line-height:1.7">${body}</div>
+        <div style="font-size:10px;color:#bbb;margin-top:4px">投稿: ${s.submittedBy||'不明'}</div>
+      </div>
       <div style="display:flex;gap:6px;flex-shrink:0">
         <button class="btn btn-approve" onclick="approveSub('${s.id}')">✅ 承認</button>
         <button class="btn btn-del" onclick="rejectSub('${s.id}')">✕ 却下</button>
@@ -369,11 +388,37 @@ function pendingCardHTML(s){
 }
 window.approveSub=async function(id){
   const s=SUBS.find(x=>x.id===id);
-  if(!s||!confirm('「'+s.name+'」を承認しますか？'))return;
+  if(!s)return;
+  const isAppAdd=s.submission_type==='appearance_add';
+  const isMemoAdd=s.submission_type==='memo_add';
+  const label=isAppAdd?'紐付けを追加':isMemoAdd?'メモを反映':s.name;
+  if(!confirm(`「${label}」を承認しますか？`))return;
   try{
-    const ref=doc(collection(db,'locations'));
-    await setDoc(ref,{name:s.name,lat:s.lat||0,lng:s.lng||0,category:s.category||'観光地',address:s.address||'',googleMapsUrl:s.googleMapsUrl||'',memo:s.memo||''});
-    await addDoc(collection(db,'appearances'),{location_id:ref.id,cp:s.cp||'',series:s.series||'',scene_desc:s.scene_desc||'',sns_url:s.sns_url||'',status:'公開'});
+    if(isAppAdd){
+      // 既存スポットにappearanceを追加するだけ
+      await addDoc(collection(db,'appearances'),{
+        location_id:s.target_location_id,
+        cp:s.cp||'',series:s.series||'',scene_desc:s.scene_desc||'',
+        sns_url:s.sns_url||'',status:'公開'
+      });
+    } else if(isMemoAdd){
+      // 既存スポットのmemo・sns_urlを更新
+      const updates={};
+      if(s.memo){updates.memo=s.memo;}
+      if(Object.keys(updates).length)await updateDoc(doc(db,'locations',s.target_location_id),updates);
+      // SNSはappearanceに追加情報として追加
+      if(s.sns_url){
+        await addDoc(collection(db,'appearances'),{
+          location_id:s.target_location_id,
+          cp:'',series:'',scene_desc:'',sns_url:s.sns_url,status:'公開'
+        });
+      }
+    } else {
+      // 新規スポット
+      const ref=doc(collection(db,'locations'));
+      await setDoc(ref,{name:s.name,lat:s.lat||0,lng:s.lng||0,category:s.category||'観光地',address:s.address||'',googleMapsUrl:s.googleMapsUrl||'',memo:s.memo||''});
+      await addDoc(collection(db,'appearances'),{location_id:ref.id,cp:s.cp||'',series:s.series||'',scene_desc:s.scene_desc||'',sns_url:s.sns_url||'',status:'公開'});
+    }
     await updateDoc(doc(db,'location_submissions',id),{status:'承認済み'});
     clearC(); await loadAll(); showPage(currentPage);
   }catch(e){alert('エラー: '+e.message);}

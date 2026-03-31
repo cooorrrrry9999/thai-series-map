@@ -173,6 +173,26 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* ── タブ ── */
+.tab-btn{flex:1;padding:8px 10px;border-radius:9px;border:1.5px solid #E5E7EB;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--white);color:#555;transition:all .15s}
+.tab-btn.active{background:#111;color:#fff;border-color:#111}
+
+/* ── 詳細パネル内の追加情報ボタン ── */
+.detail-add-btn{width:100%;padding:10px;border-radius:10px;border:1.5px solid #E5E7EB;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;color:#9333EA;background:var(--white);margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px}
+.detail-add-btn:hover{background:#FAF5FF;border-color:#C4B5FD}
+
+/* ── PC: サイドバートグルボタン ── */
+.sidebar-toggle{display:none}
+@media(min-width:768px){
+  .sidebar-toggle{display:flex;position:fixed;top:50%;left:0;transform:translateY(-50%);z-index:65;width:20px;height:48px;background:rgba(255,255,255,.95);border:1px solid #E5E7EB;border-left:none;border-radius:0 8px 8px 0;cursor:pointer;align-items:center;justify-content:center;font-size:11px;color:#999;box-shadow:2px 0 8px rgba(0,0,0,.08);transition:left .3s}
+  .sidebar-toggle.closed{left:0}
+  .sidebar-toggle.open{left:300px}
+  .drawer{transition:transform .3s cubic-bezier(.22,1,.36,1),width .3s}
+  .drawer.pc-hidden{transform:translateX(-100%);pointer-events:none}
+  #map.drawer-open{left:300px;transition:left .3s}
+  #map.drawer-closed{left:0;transition:left .3s}
+}
 </style>
 </head>
 <body>
@@ -241,6 +261,9 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 <!-- スポット数バッジ -->
 <div class="spot-count" id="spot-count" style="display:none"></div>
 
+<!-- PC: サイドバートグルボタン -->
+<button class="sidebar-toggle open" id="sidebar-toggle" onclick="toggleSidebar()" title="スポット一覧を開閉">›</button>
+
 <!-- 現在地ボタン -->
 <button class="locate-btn" id="locate-btn" style="display:none" onclick="locateMe()" title="現在地">📍</button>
 
@@ -269,23 +292,104 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
       <div class="appearances-title" id="app-title" style="display:none">登場作品</div>
       <div id="detail-apps"></div>
       <button class="detail-map-btn" id="detail-map-btn">🗺 Googleマップで開く</button>
+      <button class="detail-add-btn" id="detail-add-btn" onclick="openAddInfoModal()">➕ このスポットに情報を追加する</button>
     </div>
   </div>
 </div>
 
-<!-- 投稿モーダル -->
+<!-- 新規スポット投稿モーダル -->
 <div class="modal-overlay" id="submit-modal" style="display:none" onclick="closeSubmitModal(event)">
   <div class="modal-card" onclick="event.stopPropagation()">
-    <div class="modal-title">📍 スポットを投稿する</div>
-    <div class="form-group"><label class="form-label">場所名 <span style="color:#DC2626">*</span></label><input class="form-input" id="f-name" placeholder="例: 99 House Studio"></div>
-    <div class="form-group"><label class="form-label">中カテゴリ（作品名 / プライベート / 〇〇年来日） <span style="color:#DC2626">*</span></label><input class="form-input" id="f-series" placeholder="例: GAP The Series / プライベート / 2024年来日" list="series-list"><datalist id="series-list"></datalist></div>
-    <div class="form-group"><label class="form-label">CP名 <span style="color:#DC2626">*</span></label><input class="form-input" id="f-cp" placeholder="例: FreenBecky" list="cp-list"><datalist id="cp-list"></datalist></div>
-    <div class="form-group"><label class="form-label">シーン説明 <span style="color:#DC2626">*</span></label><input class="form-input" id="f-scene" placeholder="例: Monの家として使用されたスタジオ"></div>
-    <div class="form-group"><label class="form-label">GoogleマップURL（任意）</label><input class="form-input" id="f-url" placeholder="https://maps.app.goo.gl/..."></div>
-    <div class="form-group"><label class="form-label">訪問メモ（任意）</label><input class="form-input" id="f-memo" placeholder="例: 入場500B、事前予約必要"></div>
+    <div class="modal-title">📍 新しいスポットを投稿</div>
+
+    <div class="form-group">
+      <label class="form-label">場所名 <span style="color:#DC2626">*</span></label>
+      <input class="form-input" id="f-name" placeholder="例: 99 House Studio">
+    </div>
+    <div class="form-group">
+      <label class="form-label">CP名 <span style="color:#DC2626">*</span></label>
+      <select class="form-select" id="f-cp" onchange="onSubmitCpChange()">
+        <option value="">— 選択してください —</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">中カテゴリ <span style="color:#DC2626">*</span></label>
+      <select class="form-select" id="f-series">
+        <option value="プライベート">プライベート</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">シーン説明 <span style="color:#DC2626">*</span></label>
+      <input class="form-input" id="f-scene" placeholder="例: Monの家として使用されたスタジオ">
+    </div>
+    <div class="form-group">
+      <label class="form-label">SNSリンク（任意）</label>
+      <input class="form-input" id="f-sns" placeholder="https://x.com/... など">
+    </div>
+    <div class="form-group">
+      <label class="form-label">GoogleマップURL（任意）</label>
+      <input class="form-input" id="f-url" placeholder="https://maps.app.goo.gl/...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">訪問メモ（任意）</label>
+      <input class="form-input" id="f-memo" placeholder="例: 入場500B、事前予約必要">
+    </div>
     <div id="submit-msg" style="font-size:13px;text-align:center;min-height:20px;margin:6px 0"></div>
     <button class="btn-primary" onclick="submitSpot()">投稿する（管理者確認後に公開）</button>
     <button class="btn-cancel" onclick="closeSubmitModal()">キャンセル</button>
+  </div>
+</div>
+
+<!-- 既存スポットへの追加情報投稿モーダル -->
+<div class="modal-overlay" id="add-info-modal" style="display:none" onclick="if(event.target===this)closeAddInfoModal()">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div class="modal-title">➕ <span id="add-info-spot-name">このスポット</span>に情報を追加</div>
+
+    <!-- タブ -->
+    <div style="display:flex;gap:6px;margin-bottom:16px">
+      <button id="tab-btn-appearance" class="tab-btn active" onclick="switchAddInfoTab('appearance')">🎬 紐付け追加</button>
+      <button id="tab-btn-memo"       class="tab-btn"        onclick="switchAddInfoTab('memo')">💡 メモ・SNS補足</button>
+    </div>
+
+    <!-- 紐付け追加タブ -->
+    <div id="tab-appearance">
+      <div class="form-group">
+        <label class="form-label">CP名 <span style="color:#DC2626">*</span></label>
+        <select class="form-select" id="ai-cp" onchange="onAddInfoCpChange()">
+          <option value="">— 選択してください —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">中カテゴリ <span style="color:#DC2626">*</span></label>
+        <select class="form-select" id="ai-series">
+          <option value="プライベート">プライベート</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">シーン説明 <span style="color:#DC2626">*</span></label>
+        <input class="form-input" id="ai-scene" placeholder="例: 別CPのロケ地として使用">
+      </div>
+      <div class="form-group">
+        <label class="form-label">SNSリンク（任意）</label>
+        <input class="form-input" id="ai-sns" placeholder="https://x.com/...">
+      </div>
+    </div>
+
+    <!-- メモ・SNS補足タブ -->
+    <div id="tab-memo" style="display:none">
+      <div class="form-group">
+        <label class="form-label">訪問メモ・アクセス情報</label>
+        <textarea class="form-input" id="ai-memo" rows="3" placeholder="例: 入場500B、予約方法、アクセスのコツなど" style="resize:vertical"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">SNSリンク（補足情報）</label>
+        <input class="form-input" id="ai-sns-memo" placeholder="https://x.com/...">
+      </div>
+    </div>
+
+    <div id="add-info-msg" style="font-size:13px;text-align:center;min-height:20px;margin:6px 0"></div>
+    <button class="btn-primary" onclick="submitAddInfo()">送信する（管理者確認後に反映）</button>
+    <button class="btn-cancel" onclick="closeAddInfoModal()">キャンセル</button>
   </div>
 </div>
 
@@ -541,6 +645,11 @@ function showUI(){
   document.getElementById('filter-btn').style.display='flex';
   document.getElementById('spot-count').style.display='block';
   document.getElementById('locate-btn').style.display='flex';
+  if(isPC()){
+    document.getElementById('map').classList.add('drawer-open');
+    const tog=document.getElementById('sidebar-toggle');
+    if(tog){tog.style.display='flex';tog.textContent='‹';tog.classList.add('open');}
+  }
   updateDrawerVar();
 }
 function hideUI(){
@@ -575,8 +684,8 @@ async function loadAll(){
   const catMaster=ck||await getDocs(collection(db,'category_master')).then(s=>{const d=s.docs.map(x=>({id:x.id,...x.data()}));sc(CK,d);return d;}).catch(()=>[]);
   catMaster.forEach(m=>{if(m.name&&m.emoji)CAT_MAP[m.name]=m.emoji;});
   initMap(); renderFilters(); renderDrawer();
-  document.getElementById('series-list').innerHTML=getUniqueSeries().map(s=>`<option value="${s}">`).join('');
-  document.getElementById('cp-list').innerHTML=Object.keys(CP_MAP).map(c=>`<option value="${c}">`).join('');
+  // 投稿フォームのCP・中カテゴリをselectに反映
+  populateSubmitSelects();
 }
 
 // ── Leaflet ───────────────────────────────────────────────────
@@ -877,31 +986,148 @@ window.locateMe=()=>{
 };
 
 // ── Submit ────────────────────────────────────────────────────
+
+// CP・中カテゴリのselectを最新データで構築
+function populateSubmitSelects(){
+  const cpSel=document.getElementById('f-cp');
+  const aiCpSel=document.getElementById('ai-cp');
+  if(!cpSel||!aiCpSel)return;
+  const cpOpts='<option value="">— 選択してください —</option>'+
+    Object.keys(CP_MAP).map(c=>`<option value="${c}">${CP_MAP[c].emoji||'💗'} ${c}</option>`).join('');
+  cpSel.innerHTML=cpOpts;
+  aiCpSel.innerHTML=cpOpts;
+}
+
+function buildSeriesOpts(cp, defaultSeries='プライベート'){
+  const cpTags=cp?getCpSeries(cp):[];
+  const all=[...new Set([...cpTags,...getUniqueSeries()])].sort();
+  // プライベートを先頭に
+  const ordered=['プライベート',...all.filter(s=>s!=='プライベート')];
+  return ordered.map(s=>`<option value="${s}"${s===defaultSeries?' selected':''}>${s}</option>`).join('');
+}
+
+window.onSubmitCpChange=function(){
+  const cp=document.getElementById('f-cp').value;
+  document.getElementById('f-series').innerHTML=buildSeriesOpts(cp,'プライベート');
+};
+window.onAddInfoCpChange=function(){
+  const cp=document.getElementById('ai-cp').value;
+  document.getElementById('ai-series').innerHTML=buildSeriesOpts(cp,'プライベート');
+};
+
 window.openSubmitModal=()=>{
-  ['f-name','f-series','f-cp','f-scene','f-url','f-memo'].forEach(id=>{document.getElementById(id).value='';});
+  ['f-name','f-scene','f-sns','f-url','f-memo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('f-cp').value='';
+  document.getElementById('f-series').innerHTML=buildSeriesOpts('','プライベート');
   document.getElementById('submit-msg').textContent='';
   document.getElementById('submit-modal').style.display='flex';
   toggleUserMenuClose();
 };
-window.closeSubmitModal=e=>{if(!e||e.target===document.getElementById('submit-modal'))document.getElementById('submit-modal').style.display='none';};
+window.closeSubmitModal=e=>{
+  if(!e||e.target===document.getElementById('submit-modal'))
+    document.getElementById('submit-modal').style.display='none';
+};
 window.submitSpot=async()=>{
   const name=document.getElementById('f-name').value.trim();
-  const series=document.getElementById('f-series').value.trim();
-  const cp=document.getElementById('f-cp').value.trim();
+  const cp=document.getElementById('f-cp').value;
+  const series=document.getElementById('f-series').value;
   const scene=document.getElementById('f-scene').value.trim();
+  const sns=document.getElementById('f-sns').value.trim();
   const url=document.getElementById('f-url').value.trim();
   const memo=document.getElementById('f-memo').value.trim();
   const msgEl=document.getElementById('submit-msg');
-  if(!name||!series||!cp||!scene){msgEl.style.color='#DC2626';msgEl.textContent='※ 必須項目を入力してください';return;}
+  if(!name||!cp||!series||!scene){msgEl.style.color='#DC2626';msgEl.textContent='※ 必須項目を入力してください';return;}
   msgEl.style.color='#9333EA';msgEl.textContent='送信中...';
   try{
     await addDoc(collection(db,'location_submissions'),{
-      name,series,cp,scene_desc:scene,googleMapsUrl:url||'',memo:memo||'',
+      name,series,cp,scene_desc:scene,sns_url:sns||'',googleMapsUrl:url||'',memo:memo||'',
       status:'未承認',submittedBy:currentUser.email,submittedAt:serverTimestamp()
     });
     msgEl.style.color='#059669';msgEl.textContent='✅ 投稿しました！管理者確認後に公開されます。';
     setTimeout(()=>document.getElementById('submit-modal').style.display='none',2000);
   }catch(e){msgEl.style.color='#DC2626';msgEl.textContent='送信に失敗しました。';}
+};
+
+// ── 既存スポットへの追加情報投稿 ─────────────────────────────
+let addInfoTargetId=null;
+
+window.openAddInfoModal=function(){
+  if(!selId)return;
+  const loc=LOCS.find(l=>l.id===selId);
+  if(!loc)return;
+  addInfoTargetId=selId;
+  document.getElementById('add-info-spot-name').textContent=loc.name;
+  // フォームリセット
+  ['ai-scene','ai-sns','ai-memo','ai-sns-memo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('ai-cp').value='';
+  document.getElementById('ai-series').innerHTML=buildSeriesOpts('','プライベート');
+  document.getElementById('add-info-msg').textContent='';
+  switchAddInfoTab('appearance');
+  document.getElementById('add-info-modal').style.display='flex';
+};
+window.closeAddInfoModal=function(){
+  document.getElementById('add-info-modal').style.display='none';
+  addInfoTargetId=null;
+};
+window.switchAddInfoTab=function(tab){
+  document.getElementById('tab-appearance').style.display=tab==='appearance'?'block':'none';
+  document.getElementById('tab-memo').style.display=tab==='memo'?'block':'none';
+  document.getElementById('tab-btn-appearance').classList.toggle('active',tab==='appearance');
+  document.getElementById('tab-btn-memo').classList.toggle('active',tab==='memo');
+};
+window.submitAddInfo=async function(){
+  const msgEl=document.getElementById('add-info-msg');
+  const isAppearance=document.getElementById('tab-appearance').style.display!=='none';
+  msgEl.style.color='#9333EA';msgEl.textContent='送信中...';
+  try{
+    if(isAppearance){
+      const cp=document.getElementById('ai-cp').value;
+      const series=document.getElementById('ai-series').value;
+      const scene=document.getElementById('ai-scene').value.trim();
+      const sns=document.getElementById('ai-sns').value.trim();
+      if(!cp||!series||!scene){msgEl.style.color='#DC2626';msgEl.textContent='※ CP・中カテゴリ・シーン説明は必須です';return;}
+      await addDoc(collection(db,'location_submissions'),{
+        target_location_id:addInfoTargetId,
+        submission_type:'appearance_add',
+        cp,series,scene_desc:scene,sns_url:sns||'',
+        status:'未承認',submittedBy:currentUser.email,submittedAt:serverTimestamp()
+      });
+    } else {
+      const memo=document.getElementById('ai-memo').value.trim();
+      const sns=document.getElementById('ai-sns-memo').value.trim();
+      if(!memo&&!sns){msgEl.style.color='#DC2626';msgEl.textContent='※ メモかSNSリンクを入力してください';return;}
+      await addDoc(collection(db,'location_submissions'),{
+        target_location_id:addInfoTargetId,
+        submission_type:'memo_add',
+        memo:memo||'',sns_url:sns||'',
+        status:'未承認',submittedBy:currentUser.email,submittedAt:serverTimestamp()
+      });
+    }
+    msgEl.style.color='#059669';msgEl.textContent='✅ 送信しました！管理者確認後に反映されます。';
+    setTimeout(()=>closeAddInfoModal(),2000);
+  }catch(e){msgEl.style.color='#DC2626';msgEl.textContent='送信に失敗しました。';}
+};
+
+// ── PCサイドバー トグル ───────────────────────────────────────
+let sidebarOpen=true;
+window.toggleSidebar=function(){
+  sidebarOpen=!sidebarOpen;
+  const drawer=document.getElementById('drawer');
+  const toggle=document.getElementById('sidebar-toggle');
+  const mapEl=document.getElementById('map');
+  if(!drawer||!toggle)return;
+  if(sidebarOpen){
+    drawer.classList.remove('pc-hidden');
+    toggle.textContent='‹';
+    toggle.classList.add('open');toggle.classList.remove('closed');
+    if(isPC())mapEl.classList.add('drawer-open'),mapEl.classList.remove('drawer-closed');
+  } else {
+    drawer.classList.add('pc-hidden');
+    toggle.textContent='›';
+    toggle.classList.remove('open');toggle.classList.add('closed');
+    if(isPC())mapEl.classList.add('drawer-closed'),mapEl.classList.remove('drawer-open');
+  }
+  if(map)setTimeout(()=>map.invalidateSize(),320);
 };
 
 // ── SNS リンク生成 ───────────────────────────────────────────

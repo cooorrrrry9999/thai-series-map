@@ -7,50 +7,41 @@
 
 set -e
 
+GITHUB_USER="cooorrrrry9999"
 REPO="thai-series-map"
-GITHUB_USER="cooorrrrry9999"  # ← ここにGitHubのユーザー名を入れてください（例: "yamada-hanako"）
 
-# ユーザー名チェック
-if [ -z "$GITHUB_USER" ]; then
-  echo "❌ エラー: GITHUB_USER を設定してください"
-  echo "   このファイルをテキストエディタで開いて、3行目の \"\" の中にGitHubユーザー名を入れてください"
-  exit 1
-fi
-
-echo "🌸 Thai Series Map デプロイ開始..."
-echo ""
-
-# --- 1. 作業フォルダに移動 ---
+# ── 作業フォルダに移動 ──────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
+echo "📁 フォルダ: $SCRIPT_DIR"
 
-# --- 2. Gitが入っているか確認 ---
+# ── Gitが入っているか確認 ───────────────────────────────────
 if ! command -v git &> /dev/null; then
   echo "❌ Gitがインストールされていません"
   echo "   https://git-scm.com からインストールしてください"
   exit 1
 fi
 
-# --- 3. 初回 or 既存リポジトリか判定 ---
+# ── 初回のみ: Gitリポジトリ初期化 ──────────────────────────
 if [ ! -d ".git" ]; then
-  echo "📁 Gitリポジトリを初期化します..."
+  echo "🔧 Gitリポジトリを初期化します..."
   git init
   git remote add origin "https://github.com/${GITHUB_USER}/${REPO}.git"
   echo "✅ 初期化完了"
 fi
 
-# --- 4. 必要なファイルの存在確認 ---
+# ── index.html が存在するか確認 ────────────────────────────
 if [ ! -f "index.html" ]; then
   echo "❌ index.html が見つかりません"
   echo "   このスクリプトと同じフォルダに index.html を置いてください"
   exit 1
 fi
 
-# --- 5. ステージング & コミット ---
-echo "📦 ファイルをまとめています..."
+# ── ステージング & コミット ────────────────────────────────
+echo ""
+echo "📦 変更ファイルをまとめています..."
 git add .
 
-# 変更がなければスキップ
 if git diff --cached --quiet; then
   echo "ℹ️  変更がないためスキップします（すでに最新です）"
 else
@@ -59,11 +50,12 @@ else
   echo "✅ コミット完了"
 fi
 
-# --- 6. プッシュ ---
+# ── GitHub へプッシュ ──────────────────────────────────────
 echo "🚀 GitHubにアップロードしています..."
 git branch -M main
 git push -u origin main
 
+# ── 完了メッセージ ─────────────────────────────────────────
 echo ""
 echo "✅ デプロイ完了！"
 echo ""
