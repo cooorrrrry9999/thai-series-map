@@ -1074,12 +1074,30 @@ window.saveCp=async function(id){
   }catch(e){alert('エラー: '+e.message);}
 };
 // ── タレント管理（talent_master）──────────────────────────────
-let _talentDir=null; // タレント名鑑(talents)の取得結果を一時保持
-function detectTalentName(d){
-  const cands=['name','name_en','nameEn','name_jp','nameJp','displayName','title','Name','talent_name','name_th','nameTh','romanized','en'];
-  for(const k of cands){if(typeof d[k]==='string'&&d[k].trim())return d[k].trim();}
-  for(const k of Object.keys(d)){if(typeof d[k]==='string'&&d[k].trim())return d[k].trim();}
-  return '';
+let _talentDir=null,_talentFields=[],_talentNameField='name';
+function isNameLike(v){
+  if(typeof v!=='string')return false;
+  const s=v.trim();
+  if(!s||s.length>40)return false;
+  if(/^https?:/i.test(s))return false;            // URL除外
+  if(/^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}$/.test(s))return false; // 日付除外
+  if(/^[\d\s./-]+$/.test(s))return false;          // 数字のみ除外
+  return /[A-Za-z\u3040-\u30ff\u4e00-\u9fff]/.test(s);
+}
+const NAME_PRIORITY=['nickname','name','name_en','stage_name','real_name','displayName','nickname_kana'];
+function bestNameField(fields,dir){
+  // 優先フィールドが存在し、名前らしい値があれば最優先
+  for(const p of NAME_PRIORITY){
+    if(fields.includes(p)&&dir.some(t=>isNameLike(t.raw?.[p])))return p;
+  }
+  // フォールバック: 名前らしい値が最も多いフィールド
+  let best=fields[0]||'name',bestScore=-1;
+  for(const f of fields){
+    let s=0; for(const t of dir){if(isNameLike(t.raw?.[f]))s++;}
+    if(/name/i.test(f))s+=0.5;
+    if(s>bestScore){bestScore=s;best=f;}
+  }
+  return best;
 }
 window.renderTalent=function(){
   const rows=TALENT_M.map(m=>`
@@ -1087,7 +1105,7 @@ window.renderTalent=function(){
       <td>
         <div style="display:flex;align-items:center;gap:8px">
           <span style="width:12px;height:12px;border-radius:50%;background:${m.color||'#888'};display:inline-block;flex-shrink:0"></span>
-          <strong>${m.name}</strong>
+          <strong>${m.name}</strong>${m.real_name?`<span style="font-size:10px;color:var(--sub)">${esc(m.real_name)}</span>`:''}
         </div>
       </td>
       <td style="font-family:monospace;color:var(--sub)">${m.color||'未設定'}</td>
@@ -1101,6 +1119,7 @@ window.renderTalent=function(){
     <div id="tl-import-bar" style="background:var(--pl);border:1px solid var(--purple);border-radius:8px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <span style="font-size:12px;color:var(--purple);font-weight:700">📥 タレント名鑑から取り込み</span>
       <button class="btn btn-primary btn-sm" id="tl-load-btn" onclick="loadTalentDirectory()">名鑑を読み込む</button>
+      ${TALENT_M.length?`<button class="btn btn-del btn-sm" onclick="resetAllTalents()">🗑 取り込み済みを全削除（${TALENT_M.length}）</button>`:''}
       <span id="tl-import-msg" style="font-size:11px;color:var(--sub)"></span>
     </div>`;
   setBody(`
@@ -1130,13 +1149,30 @@ window.loadTalentDirectory=async function(){
   if(msg)msg.textContent='';
   try{
     const snap=await getDocs(collection(db,'talents'));
-    _talentDir=snap.docs.map(d=>({srcId:d.id,name:detectTalentName(d.data()),raw:d.data()}));
+    _talentDir=snap.docs.map(d=>({srcId:d.id,raw:d.data()}));
+    const set=new Set(); _talentDir.forEach(t=>Object.keys(t.raw||{}).forEach(k=>set.add(k)));
+    _talentFields=[...set];
+    _talentNameField=bestNameField(_talentFields,_talentDir);
     renderTalentImportPreview();
   }catch(e){
     if(btn){btn.disabled=false;btn.textContent='再試行';}
     if(msg){msg.style.color='var(--red)';msg.textContent='読込エラー: '+e.message;}
   }
 };
+window.setTalentNameField=function(f){_talentNameField=f;renderTalentImportPreview();};
+function talentImportList(){
+  // 取り込み対象：名鑑のドキュメントID(src_id)基準で未登録のもの（同名でも別人なら別扱い）
+  const haveSrc=new Set(TALENT_M.map(m=>m.src_id).filter(Boolean));
+  const seen=new Set(),out=[];
+  for(const t of (_talentDir||[])){
+    const r=t.raw||{};
+    const name=String(r[_talentNameField]??'').trim();
+    if(!name||haveSrc.has(t.srcId)||seen.has(t.srcId))continue;
+    seen.add(t.srcId);
+    out.push({srcId:t.srcId,name,real_name:typeof r.real_name==='string'?r.real_name:'',raw:r});
+  }
+  return out;
+}
 function renderTalentImportPreview(){
   const bar=document.getElementById('tl-import-bar');
   if(!bar)return;
@@ -1144,37 +1180,53 @@ function renderTalentImportPreview(){
     bar.innerHTML='<span style="font-size:12px;color:var(--sub)">タレント名鑑（talents コレクション）にデータが見つかりませんでした。</span>';
     return;
   }
-  const have=new Set(TALENT_M.map(m=>m.name));
-  const named=_talentDir.filter(t=>t.name);
-  const toAdd=named.filter(t=>!have.has(t.name));
-  const keys=Object.keys(_talentDir[0].raw||{}).join(', ');
+  const list=talentImportList();
+  // 同名（ニックネーム重複）は本名を併記して見分ける
+  const freq={}; list.forEach(t=>{freq[t.name]=(freq[t.name]||0)+1;});
+  const label=t=>freq[t.name]>1&&t.real_name?`${esc(t.name)} (${esc(t.real_name)})`:esc(t.name);
+  const dupCount=Object.values(freq).filter(c=>c>1).reduce((a,c)=>a+c,0);
+  const sample=_talentDir.slice(0,3).map((t,i)=>`#${i+1}  `+_talentFields.map(f=>`${esc(f)}=${esc(String(t.raw?.[f]??'').slice(0,20))}`).join('  /  ')).join('<br>');
   bar.innerHTML=`
     <div style="width:100%">
-      <div style="font-size:12px;color:var(--purple);font-weight:700;margin-bottom:4px">📥 名鑑: ${_talentDir.length}件 ／ 取り込み対象（未登録）: ${toAdd.length}件</div>
-      <div style="font-size:11px;color:var(--sub);margin-bottom:6px">検出した名前: ${named.slice(0,40).map(t=>esc(t.name)).join(' / ')||'（名前を検出できませんでした）'}${named.length>40?' …他':''}</div>
-      <div style="font-size:10px;color:var(--sub);margin-bottom:8px">※ 名前が正しく取れていない場合は教えてください。名鑑のフィールド: ${esc(keys)}</div>
+      <div style="font-size:12px;color:var(--purple);font-weight:700;margin-bottom:6px">📥 名鑑 ${_talentDir.length}件 — どのフィールドが「名前」か選んでください</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+        <span style="font-size:11px">名前フィールド:</span>
+        <select id="tl-field-sel" onchange="setTalentNameField(this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+          ${_talentFields.map(f=>`<option value="${esc(f)}"${f===_talentNameField?' selected':''}>${esc(f)}</option>`).join('')}
+        </select>
+        <span style="font-size:11px;color:var(--sub)">→ 取り込み対象 ${list.length}件${dupCount?`（うち同名 ${dupCount}件は本名併記）`:''}</span>
+      </div>
+      <div style="font-size:11px;background:#fff;border:1px solid var(--border);border-radius:6px;padding:6px 8px;margin-bottom:6px;max-height:90px;overflow:auto">${list.slice(0,60).map(label).join(' / ')||'<span style="color:var(--red)">このフィールドでは名前が取れません。別のフィールドを選んでください。</span>'}${list.length>60?' …他':''}</div>
+      <details style="margin-bottom:8px"><summary style="font-size:10px;color:var(--sub);cursor:pointer">名鑑の中身を見る（先頭3件）</summary><div style="font-size:10px;color:var(--sub);font-family:monospace;margin-top:4px;line-height:1.7">${sample}</div></details>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-primary btn-sm" id="tl-import-btn" onclick="importTalentDirectory()"${toAdd.length?'':' disabled style="opacity:.5"'}>この内容で ${toAdd.length}件 取り込む</button>
+        <button class="btn btn-primary btn-sm" onclick="importTalentDirectory()"${list.length?'':' disabled style="opacity:.5"'}>この内容で ${list.length}件 取り込む</button>
         <button class="btn btn-sm" style="background:#F3F4F6;color:var(--sub)" onclick="renderTalent()">取消</button>
       </div>
     </div>`;
 }
 window.importTalentDirectory=async function(){
-  const btn=document.getElementById('tl-import-btn');
-  if(btn){btn.disabled=true;btn.textContent='取り込み中...';}
   try{
-    const have=new Set(TALENT_M.map(m=>m.name));
-    const seen=new Set();
-    for(const t of (_talentDir||[])){
-      if(!t.name||have.has(t.name)||seen.has(t.name))continue;
-      seen.add(t.name);
+    for(const t of talentImportList()){
+      const r=t.raw||{};
       const color=autoCpColor(t.name);
       const data={name:t.name,color,emoji:'⭐',light:color+'22',border:color+'88',src_id:t.srcId};
+      if(typeof r.image_url==='string'&&r.image_url)data.photo=r.image_url;
+      if(typeof r.nickname_kana==='string'&&r.nickname_kana)data.kana=r.nickname_kana;
+      if(typeof r.real_name==='string'&&r.real_name)data.real_name=r.real_name;
       const ref=await addDoc(collection(db,'talent_master'),data);
       localAddTalent(ref.id,data);
     }
     clearC(); renderTalent();
-  }catch(e){if(btn){btn.disabled=false;btn.textContent='再試行';}alert('エラー: '+e.message);}
+  }catch(e){alert('エラー: '+e.message);}
+};
+window.resetAllTalents=async function(){
+  if(!TALENT_M.length){alert('削除するタレントがありません');return;}
+  if(!confirm('登録済みタレント '+TALENT_M.length+'件をすべて削除します。よろしいですか？\n（talent_master のみ削除。名鑑や他データには影響しません）'))return;
+  try{
+    for(const m of [...TALENT_M]){await deleteDoc(doc(db,'talent_master',m.id));}
+    TALENT_M=[]; saveAC(CACHE_KEYS.talent,TALENT_M);
+    clearC(); renderTalent();
+  }catch(e){alert('エラー: '+e.message);}
 };
 window.addTalent=async function(){
   const name=document.getElementById('new-tl-name').value.trim();
