@@ -179,6 +179,7 @@ html,body{height:100%;font-family:'Noto Sans JP',sans-serif;background:var(--bg)
       <button class="sb-item" onclick="showPage('add')" id="nav-add"><span class="icon">➕</span>新規追加</button>
       <div class="sb-section">マスタ設定</div>
       <button class="sb-item" onclick="showPage('cp')" id="nav-cp"><span class="icon">💗</span>CP管理</button>
+      <button class="sb-item" onclick="showPage('talent')" id="nav-talent"><span class="icon">🧑</span>タレント管理</button>
       <button class="sb-item" onclick="showPage('series')" id="nav-series"><span class="icon">🎬</span>作品設定</button>
       <button class="sb-item" onclick="showPage('category')" id="nav-category"><span class="icon">📂</span>カテゴリー</button>
     </div>
@@ -219,7 +220,7 @@ const FB={apiKey:"AIzaSyARPFANz5DZa6KpEBiw77PCCYPPZghMGeg",authDomain:"thai-gl-w
 const app=initializeApp(FB), auth=getAuth(app), db=getFirestore(app), prov=new GoogleAuthProvider();
 const ADMIN="cory92059@gmail.com";
 
-let LOCS=[],APPS=[],SUBS=[],CP_M=[],SERIES_M=[],CAT_M=[];
+let LOCS=[],APPS=[],SUBS=[],CP_M=[],SERIES_M=[],CAT_M=[],TALENT_M=[];
 let currentPage='dashboard';
 
 // ── Auth ──────────────────────────────────────────────────────
@@ -244,7 +245,7 @@ onAuthStateChanged(auth,async user=>{
 // ── Data ──────────────────────────────────────────────────────
 // ── キャッシュ設定（admin用・短め）──────────────────────────
 const ADMIN_CACHE_TTL = 5*60*1000; // 5分
-const CACHE_KEYS={locs:'adm_loc',apps:'adm_app',subs:'adm_sub',cp:'adm_cp',series:'adm_series',cat:'adm_cat'};
+const CACHE_KEYS={locs:'adm_loc',apps:'adm_app',subs:'adm_sub',cp:'adm_cp',series:'adm_series',cat:'adm_cat',talent:'adm_talent'};
 const saveAC=(k,d)=>{try{sessionStorage.setItem(k,JSON.stringify({ts:Date.now(),data:d}));}catch(e){}};
 const loadAC=(k)=>{try{const r=sessionStorage.getItem(k);if(!r)return null;const{ts,data}=JSON.parse(r);if(Date.now()-ts>ADMIN_CACHE_TTL){sessionStorage.removeItem(k);return null;}return data;}catch(e){return null;}};
 function clearAdminCache(){Object.values(CACHE_KEYS).forEach(k=>sessionStorage.removeItem(k));}
@@ -256,6 +257,7 @@ async function loadAll(forceRefresh=false){
   const cc=!forceRefresh&&loadAC(CACHE_KEYS.cp);
   const csm=!forceRefresh&&loadAC(CACHE_KEYS.series);
   const ccat=!forceRefresh&&loadAC(CACHE_KEYS.cat);
+  const ct=!forceRefresh&&loadAC(CACHE_KEYS.talent);
 
   const fetches=[];
   if(!cl)fetches.push(getDocs(collection(db,'locations')));
@@ -270,6 +272,8 @@ async function loadAll(forceRefresh=false){
   else fetches.push(null);
   if(!ccat)fetches.push(getDocs(collection(db,'category_master')).catch(()=>({docs:[]})));
   else fetches.push(null);
+  if(!ct)fetches.push(getDocs(collection(db,'talent_master')).catch(()=>({docs:[]})));
+  else fetches.push(null);
 
   const results=await Promise.all(fetches.map(f=>f||Promise.resolve(null)));
   LOCS=results[0]?results[0].docs.map(d=>({id:d.id,...d.data()})):cl;
@@ -278,6 +282,7 @@ async function loadAll(forceRefresh=false){
   CP_M=results[3]?results[3].docs.map(d=>({id:d.id,...d.data()})):cc;
   SERIES_M=results[4]?results[4].docs.map(d=>({id:d.id,...d.data()})):csm;
   CAT_M=results[5]?results[5].docs.map(d=>({id:d.id,...d.data()})):ccat;
+  TALENT_M=results[6]?results[6].docs.map(d=>({id:d.id,...d.data()})):ct;
 
   if(results[0])saveAC(CACHE_KEYS.locs,LOCS);
   if(results[1])saveAC(CACHE_KEYS.apps,APPS);
@@ -285,6 +290,7 @@ async function loadAll(forceRefresh=false){
   if(results[3])saveAC(CACHE_KEYS.cp,CP_M);
   if(results[4])saveAC(CACHE_KEYS.series,SERIES_M);
   if(results[5])saveAC(CACHE_KEYS.cat,CAT_M);
+  if(results[6])saveAC(CACHE_KEYS.talent,TALENT_M);
 
   const n=SUBS.filter(s=>s.status==='未承認').length;
   const badge=document.getElementById('pending-badge');
@@ -304,6 +310,9 @@ function localAddApp(id,data){APPS.push({id,...data});saveAC(CACHE_KEYS.apps,APP
 function localDeleteApp(id){APPS=APPS.filter(a=>a.id!==id);saveAC(CACHE_KEYS.apps,APPS);}
 function localUpdateSub(id,data){const idx=SUBS.findIndex(s=>s.id===id);if(idx>=0)SUBS[idx]={...SUBS[idx],...data};saveAC(CACHE_KEYS.subs,SUBS);}
 function localUpdateCp(id,data){const idx=CP_M.findIndex(m=>m.id===id);if(idx>=0)CP_M[idx]={...CP_M[idx],...data};saveAC(CACHE_KEYS.cp,CP_M);}
+function localAddTalent(id,data){TALENT_M.push({id,...data});saveAC(CACHE_KEYS.talent,TALENT_M);}
+function localUpdateTalent(id,data){const idx=TALENT_M.findIndex(m=>m.id===id);if(idx>=0)TALENT_M[idx]={...TALENT_M[idx],...data};saveAC(CACHE_KEYS.talent,TALENT_M);}
+function localDeleteTalent(id){TALENT_M=TALENT_M.filter(m=>m.id!==id);saveAC(CACHE_KEYS.talent,TALENT_M);}
 function localAddCp(id,data){CP_M.push({id,...data});saveAC(CACHE_KEYS.cp,CP_M);}
 function localDeleteCp(id){CP_M=CP_M.filter(m=>m.id!==id);saveAC(CACHE_KEYS.cp,CP_M);}
 function localUpdateSeries(id,data){const idx=SERIES_M.findIndex(m=>m.id===id);if(idx>=0)SERIES_M[idx]={...SERIES_M[idx],...data};saveAC(CACHE_KEYS.series,SERIES_M);}
@@ -314,13 +323,13 @@ function localAddCat(id,data){CAT_M.push({id,...data});saveAC(CACHE_KEYS.cat,CAT
 function localDeleteCat(id){CAT_M=CAT_M.filter(m=>m.id!==id);saveAC(CACHE_KEYS.cat,CAT_M);}
 
 // ── Navigation ─────────────────────────────────────────────────
-const PAGE_TITLES={dashboard:'📊 ダッシュボード',pending:'📬 承認待ち',spots:'📍 スポット一覧',add:'➕ 新規追加',cp:'💗 CP管理',series:'🎬 作品設定',category:'📂 カテゴリー'};
+const PAGE_TITLES={dashboard:'📊 ダッシュボード',pending:'📬 承認待ち',spots:'📍 スポット一覧',add:'➕ 新規追加',cp:'💗 CP管理',talent:'🧑 タレント管理',series:'🎬 作品設定',category:'📂 カテゴリー'};
 window.showPage=function(name){
   currentPage=name;
   document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
   document.getElementById('nav-'+name)?.classList.add('active');
   document.getElementById('page-title').textContent=PAGE_TITLES[name]||name;
-  ({dashboard:window.renderDashboard,pending:window.renderPending,spots:window.renderSpots,add:window.renderAdd,cp:window.renderCp,series:window.renderSeries,category:window.renderCategory}[name]||(() => {}))();
+  ({dashboard:window.renderDashboard,pending:window.renderPending,spots:window.renderSpots,add:window.renderAdd,cp:window.renderCp,talent:window.renderTalent,series:window.renderSeries,category:window.renderCategory}[name]||(() => {}))();
 };
 function setBody(html){document.getElementById('page-body').innerHTML=html;}
 
@@ -1064,6 +1073,108 @@ window.saveCp=async function(id){
     clearC(); renderCp();
   }catch(e){alert('エラー: '+e.message);}
 };
+// ── タレント管理（talent_master）──────────────────────────────
+const SEED_TALENTS=['Freen','Becky','Pond','Phuwin','Near','Mine','Faye','Yoko'];
+window.renderTalent=function(){
+  const rows=TALENT_M.map(m=>`
+    <tr id="tl-row-${m.id}">
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="width:12px;height:12px;border-radius:50%;background:${m.color||'#888'};display:inline-block;flex-shrink:0"></span>
+          <strong>${m.name}</strong>
+        </div>
+      </td>
+      <td style="font-family:monospace;color:var(--sub)">${m.color||'未設定'}</td>
+      <td style="font-size:18px">${m.emoji||'⭐'}</td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn btn-edit btn-sm" onclick="inlineEditTalent('${m.id}')">✏ 編集</button>
+        <button class="btn btn-del btn-sm" onclick="delMaster('talent_master','${m.id}','talent')">🗑</button>
+      </div></td>
+    </tr>`).join('');
+  const missing=SEED_TALENTS.filter(n=>!TALENT_M.some(m=>m.name===n));
+  const seedBar=missing.length?`
+    <div style="background:var(--pl);border:1px solid var(--purple);border-radius:8px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:12px;color:var(--purple);font-weight:700">未登録の初期タレント: ${missing.join(' / ')}</span>
+      <button class="btn btn-primary btn-sm" id="seed-talent-btn" onclick="seedTalents()">＋ 一括登録（${missing.length}人）</button>
+    </div>`:'';
+  setBody(`
+    ${seedBar}
+    <div class="add-form-row">
+      <div class="form-group"><div class="form-label" style="font-size:10px;margin-bottom:3px">タレント名 <span class="req">*</span></div>
+        <input class="mini-input" id="new-tl-name" placeholder="例: Freen" style="width:160px"></div>
+      <div class="form-group"><div class="form-label" style="font-size:10px;margin-bottom:3px">カラー</div>
+        <div class="color-picker-wrap">
+          <input type="color" id="new-tl-picker" value="#9333EA" oninput="document.getElementById('new-tl-color').value=this.value">
+          <input class="mini-input" id="new-tl-color" value="#9333EA" style="width:90px;font-family:monospace" oninput="document.getElementById('new-tl-picker').value=this.value">
+        </div></div>
+      <div class="form-group"><div class="form-label" style="font-size:10px;margin-bottom:3px">絵文字</div>
+        <input class="mini-input" id="new-tl-emoji" value="⭐" style="width:60px;font-size:18px;text-align:center"></div>
+      <button class="btn btn-primary" style="padding:6px 16px" onclick="addTalent()">＋ 追加</button>
+      <div id="new-tl-msg" style="font-size:11px;align-self:center;color:var(--green)"></div>
+    </div>
+    <table class="master-table">
+      <thead><tr><th>タレント名</th><th>カラー</th><th>絵文字</th><th>操作</th></tr></thead>
+      <tbody>${rows||'<tr><td colspan="4" style="text-align:center;color:var(--sub);padding:20px">タレントが登録されていません</td></tr>'}</tbody>
+    </table>`);
+};
+window.seedTalents=async function(){
+  const btn=document.getElementById('seed-talent-btn');
+  if(btn){btn.disabled=true;btn.textContent='登録中...';}
+  try{
+    const missing=SEED_TALENTS.filter(n=>!TALENT_M.some(m=>m.name===n));
+    for(const name of missing){
+      const color=autoCpColor(name);
+      const data={name,color,emoji:'⭐',light:color+'22',border:color+'88'};
+      const ref=await addDoc(collection(db,'talent_master'),data);
+      localAddTalent(ref.id,data);
+    }
+    clearC(); renderTalent();
+  }catch(e){if(btn){btn.disabled=false;btn.textContent='再試行';}alert('エラー: '+e.message);}
+};
+window.addTalent=async function(){
+  const name=document.getElementById('new-tl-name').value.trim();
+  const color=document.getElementById('new-tl-color').value;
+  const emoji=document.getElementById('new-tl-emoji').value;
+  const msg=document.getElementById('new-tl-msg');
+  if(!name){msg.style.color='var(--red)';msg.textContent='タレント名を入力してください';return;}
+  if(TALENT_M.some(m=>m.name===name)){msg.style.color='var(--red)';msg.textContent='同名のタレントが既にあります';return;}
+  msg.style.color='var(--purple)';msg.textContent='追加中...';
+  try{
+    const data={name,color,emoji,light:color+'22',border:color+'88'};
+    const ref=await addDoc(collection(db,'talent_master'),data);
+    localAddTalent(ref.id,data);
+    clearC(); renderTalent();
+  }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
+};
+window.inlineEditTalent=function(id){
+  const m=TALENT_M.find(x=>x.id===id);
+  if(!m)return;
+  const row=document.getElementById('tl-row-'+id);
+  row.classList.add('editing');
+  row.innerHTML=`
+    <td><input class="mini-input" id="etl-name-${id}" value="${esc(m.name)}" style="width:140px"></td>
+    <td><div class="color-picker-wrap">
+      <input type="color" id="etl-picker-${id}" value="${m.color||'#9333EA'}" oninput="document.getElementById('etl-color-${id}').value=this.value">
+      <input class="mini-input" id="etl-color-${id}" value="${m.color||'#9333EA'}" style="width:90px;font-family:monospace" oninput="document.getElementById('etl-picker-${id}').value=this.value">
+    </div></td>
+    <td><input class="mini-input" id="etl-emoji-${id}" value="${esc(m.emoji||'⭐')}" style="width:55px;font-size:18px;text-align:center"></td>
+    <td><div style="display:flex;gap:5px">
+      <button class="btn btn-primary btn-sm" onclick="saveTalent('${id}')">💾 保存</button>
+      <button class="btn btn-sm" style="background:#F3F4F6;color:var(--sub)" onclick="renderTalent()">取消</button>
+    </div></td>`;
+};
+window.saveTalent=async function(id){
+  const name=document.getElementById('etl-name-'+id)?.value.trim();
+  const color=document.getElementById('etl-color-'+id)?.value;
+  const emoji=document.getElementById('etl-emoji-'+id)?.value;
+  if(!name)return;
+  try{
+    const data={name,color,emoji,light:color+'22',border:color+'88'};
+    await updateDoc(doc(db,'talent_master',id),data);
+    localUpdateTalent(id,data);
+    clearC(); renderTalent();
+  }catch(e){alert('エラー: '+e.message);}
+};
 window.renderSeries=function(){
   const GL='https://thai-gl-works-2c835.web.app/index.html';
   const rows=SERIES_M.map(m=>`
@@ -1252,9 +1363,10 @@ window.delMaster=async function(col,id,type){
   await deleteDoc(doc(db,col,id));
   if(type==='cp')localDeleteCp(id);
   else if(type==='series')localDeleteSeries(id);
+  else if(type==='talent')localDeleteTalent(id);
   else localDeleteCat(id);
   clearC();
-  ({cp:renderCp,series:renderSeries,category:renderCategory}[type])();
+  ({cp:renderCp,series:renderSeries,category:renderCategory,talent:renderTalent}[type])();
 };
 
 // ── Helpers ────────────────────────────────────────────────────

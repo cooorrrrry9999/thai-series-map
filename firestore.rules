@@ -48,6 +48,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // talent_master: タレント（個人）管理 ※CP管理と同じ権限
+    match /talent_master/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // category_master: カテゴリー管理
     match /category_master/{id} {
       allow read: if true;
