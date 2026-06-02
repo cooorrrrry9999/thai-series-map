@@ -1074,7 +1074,13 @@ window.saveCp=async function(id){
   }catch(e){alert('エラー: '+e.message);}
 };
 // ── タレント管理（talent_master）──────────────────────────────
-const SEED_TALENTS=['Freen','Becky','Pond','Phuwin','Near','Mine','Faye','Yoko'];
+let _talentDir=null; // タレント名鑑(talents)の取得結果を一時保持
+function detectTalentName(d){
+  const cands=['name','name_en','nameEn','name_jp','nameJp','displayName','title','Name','talent_name','name_th','nameTh','romanized','en'];
+  for(const k of cands){if(typeof d[k]==='string'&&d[k].trim())return d[k].trim();}
+  for(const k of Object.keys(d)){if(typeof d[k]==='string'&&d[k].trim())return d[k].trim();}
+  return '';
+}
 window.renderTalent=function(){
   const rows=TALENT_M.map(m=>`
     <tr id="tl-row-${m.id}">
@@ -1091,14 +1097,14 @@ window.renderTalent=function(){
         <button class="btn btn-del btn-sm" onclick="delMaster('talent_master','${m.id}','talent')">🗑</button>
       </div></td>
     </tr>`).join('');
-  const missing=SEED_TALENTS.filter(n=>!TALENT_M.some(m=>m.name===n));
-  const seedBar=missing.length?`
-    <div style="background:var(--pl);border:1px solid var(--purple);border-radius:8px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <span style="font-size:12px;color:var(--purple);font-weight:700">未登録の初期タレント: ${missing.join(' / ')}</span>
-      <button class="btn btn-primary btn-sm" id="seed-talent-btn" onclick="seedTalents()">＋ 一括登録（${missing.length}人）</button>
-    </div>`:'';
+  const importBar=`
+    <div id="tl-import-bar" style="background:var(--pl);border:1px solid var(--purple);border-radius:8px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:12px;color:var(--purple);font-weight:700">📥 タレント名鑑から取り込み</span>
+      <button class="btn btn-primary btn-sm" id="tl-load-btn" onclick="loadTalentDirectory()">名鑑を読み込む</button>
+      <span id="tl-import-msg" style="font-size:11px;color:var(--sub)"></span>
+    </div>`;
   setBody(`
-    ${seedBar}
+    ${importBar}
     <div class="add-form-row">
       <div class="form-group"><div class="form-label" style="font-size:10px;margin-bottom:3px">タレント名 <span class="req">*</span></div>
         <input class="mini-input" id="new-tl-name" placeholder="例: Freen" style="width:160px"></div>
@@ -1117,14 +1123,53 @@ window.renderTalent=function(){
       <tbody>${rows||'<tr><td colspan="4" style="text-align:center;color:var(--sub);padding:20px">タレントが登録されていません</td></tr>'}</tbody>
     </table>`);
 };
-window.seedTalents=async function(){
-  const btn=document.getElementById('seed-talent-btn');
-  if(btn){btn.disabled=true;btn.textContent='登録中...';}
+window.loadTalentDirectory=async function(){
+  const btn=document.getElementById('tl-load-btn');
+  const msg=document.getElementById('tl-import-msg');
+  if(btn){btn.disabled=true;btn.textContent='読込中...';}
+  if(msg)msg.textContent='';
   try{
-    const missing=SEED_TALENTS.filter(n=>!TALENT_M.some(m=>m.name===n));
-    for(const name of missing){
-      const color=autoCpColor(name);
-      const data={name,color,emoji:'⭐',light:color+'22',border:color+'88'};
+    const snap=await getDocs(collection(db,'talents'));
+    _talentDir=snap.docs.map(d=>({srcId:d.id,name:detectTalentName(d.data()),raw:d.data()}));
+    renderTalentImportPreview();
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='再試行';}
+    if(msg){msg.style.color='var(--red)';msg.textContent='読込エラー: '+e.message;}
+  }
+};
+function renderTalentImportPreview(){
+  const bar=document.getElementById('tl-import-bar');
+  if(!bar)return;
+  if(!_talentDir||!_talentDir.length){
+    bar.innerHTML='<span style="font-size:12px;color:var(--sub)">タレント名鑑（talents コレクション）にデータが見つかりませんでした。</span>';
+    return;
+  }
+  const have=new Set(TALENT_M.map(m=>m.name));
+  const named=_talentDir.filter(t=>t.name);
+  const toAdd=named.filter(t=>!have.has(t.name));
+  const keys=Object.keys(_talentDir[0].raw||{}).join(', ');
+  bar.innerHTML=`
+    <div style="width:100%">
+      <div style="font-size:12px;color:var(--purple);font-weight:700;margin-bottom:4px">📥 名鑑: ${_talentDir.length}件 ／ 取り込み対象（未登録）: ${toAdd.length}件</div>
+      <div style="font-size:11px;color:var(--sub);margin-bottom:6px">検出した名前: ${named.slice(0,40).map(t=>esc(t.name)).join(' / ')||'（名前を検出できませんでした）'}${named.length>40?' …他':''}</div>
+      <div style="font-size:10px;color:var(--sub);margin-bottom:8px">※ 名前が正しく取れていない場合は教えてください。名鑑のフィールド: ${esc(keys)}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" id="tl-import-btn" onclick="importTalentDirectory()"${toAdd.length?'':' disabled style="opacity:.5"'}>この内容で ${toAdd.length}件 取り込む</button>
+        <button class="btn btn-sm" style="background:#F3F4F6;color:var(--sub)" onclick="renderTalent()">取消</button>
+      </div>
+    </div>`;
+}
+window.importTalentDirectory=async function(){
+  const btn=document.getElementById('tl-import-btn');
+  if(btn){btn.disabled=true;btn.textContent='取り込み中...';}
+  try{
+    const have=new Set(TALENT_M.map(m=>m.name));
+    const seen=new Set();
+    for(const t of (_talentDir||[])){
+      if(!t.name||have.has(t.name)||seen.has(t.name))continue;
+      seen.add(t.name);
+      const color=autoCpColor(t.name);
+      const data={name:t.name,color,emoji:'⭐',light:color+'22',border:color+'88',src_id:t.srcId};
       const ref=await addDoc(collection(db,'talent_master'),data);
       localAddTalent(ref.id,data);
     }
