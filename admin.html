@@ -722,8 +722,8 @@ window.pubApp=async function(appId,locId){
 
 // ── Add ────────────────────────────────────────────────────────
 window.renderAdd=function(){
-  const allCps=[...new Set([...APPS.map(a=>a.cp),...CP_M.map(m=>m.name)].filter(Boolean))].sort();
   const allSeries=[...new Set([...APPS.map(a=>a.series),...SERIES_M.map(m=>m.name)].filter(Boolean))].sort();
+  const noTalents=!TALENT_M.length;
   // 下書き復元
   const draft=loadDraft();
   const draftApps=(draft&&Array.isArray(draft.apps)&&draft.apps.length)?draft.apps:[{}];
@@ -802,10 +802,10 @@ window.renderAdd=function(){
         value="${esc(draft?.memo||'')}" oninput="saveDraft()">
     </div>
 
-    <div class="form-section">出演情報（appearance・任意）</div>
+    <div class="form-section">出演情報（場所 × タレント × 作品・任意）</div>
+    ${noTalents?'<div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:8px;padding:8px 10px;margin-bottom:10px;font-size:11px;color:#92400E">⚠ タレントが未登録です。先に「🧑 タレント管理」で名鑑から取り込んでください。</div>':''}
     <div id="app-blocks">${blocksHtml}</div>
     <button class="btn" id="add-block-btn" style="background:var(--pl);color:var(--purple);margin-bottom:14px" onclick="addAppBlock()">＋ もう1件追加する</button>
-    <datalist id="a-cplist">${allCps.map(c=>`<option value="${c}">`).join('')}</datalist>
     <datalist id="a-slist">${allSeries.map(s=>`<option value="${s}">`).join('')}</datalist>
 
     <div id="add-msg" class="form-msg"></div>
@@ -817,8 +817,6 @@ window.renderAdd=function(){
   // 下書きがあれば座標プレビューを更新
   if(draft?.lat&&draft?.lng)updateCoordPreview();
   updateBlockUI();
-  // 各ブロックのCPに応じた作品候補ヒントを初期表示
-  draftApps.forEach((a,i)=>{if(a&&a.cp)onCpBlockInput(i,a.cp);});
 };
 
 // ── 出演情報ブロック（可変件数・上限なし）─────────────────────
@@ -830,13 +828,12 @@ function appBlockHTML(i,a){a=a||{};
     </div>
     <div class="form-grid" style="margin-bottom:8px">
       <div class="form-group">
-        <label class="form-label">CP名</label>
-        <input class="form-input" id="a-cp-${i}" placeholder="例: FreenBecky" list="a-cplist" value="${esc(a.cp||'')}" oninput="onCpBlockInput(${i},this.value);saveDraft()">
+        <label class="form-label">タレント</label>
+        <select class="form-select" id="a-talent-${i}" onchange="saveDraft()">${talentOptionsHtml(a.talentId||'')}</select>
       </div>
       <div class="form-group">
-        <label class="form-label">中カテゴリ（作品名 / プライベート / 〇〇年来日）</label>
+        <label class="form-label">中カテゴリ（作品名 / プライベート / 〇〇年来日・任意）</label>
         <input class="form-input" id="a-series-${i}" placeholder="例: GAP The Series / プライベート / 2024年来日" list="a-slist" value="${esc(a.series||'')}" oninput="saveDraft()">
-        <div id="a-series-hint-${i}" style="font-size:10px;color:var(--sub);margin-top:2px"></div>
       </div>
     </div>
     <div class="form-group" style="margin-bottom:8px">
@@ -861,8 +858,7 @@ window.removeAppBlock=function(i){
   const blocks=[...cont.querySelectorAll('.app-block')];
   if(blocks.length<=1){
     // 最後の1件は削除せず中身だけクリア
-    ['a-cp-','a-series-','a-scene-','a-sns-'].forEach(p=>{const el=document.getElementById(p+i);if(el)el.value='';});
-    const h=document.getElementById('a-series-hint-'+i);if(h)h.textContent='';
+    ['a-talent-','a-series-','a-scene-','a-sns-'].forEach(p=>{const el=document.getElementById(p+i);if(el)el.value='';});
   }else{
     const b=cont.querySelector('.app-block[data-i="'+i+'"]');if(b)b.remove();
   }
@@ -886,6 +882,16 @@ window.onCpBlockInput=function(i,cpVal){
 // 新規CP名に割り当てる色（手で選ばなくてよいよう名前から自動決定）
 const CP_PALETTE=['#EC4899','#9333EA','#3B82F6','#059669','#D97706','#DC2626','#0891B2','#7C3AED','#DB2777','#16A34A','#EA580C','#2563EB'];
 function autoCpColor(name){let h=0;for(let i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))>>>0;return CP_PALETTE[h%CP_PALETTE.length];}
+// タレントの安定キー（名鑑ID優先、無ければtalent_master doc id）
+function talentKey(m){return m.src_id||m.id;}
+function talentOptionsHtml(selectedKey){
+  const seen=new Set(),dup=new Set();
+  TALENT_M.forEach(m=>{if(seen.has(m.name))dup.add(m.name);seen.add(m.name);});
+  const opts=[...TALENT_M].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')))
+    .map(m=>{const k=talentKey(m);const lbl=(dup.has(m.name)&&m.real_name)?`${m.name}（${m.real_name}）`:m.name;
+      return `<option value="${esc(k)}"${k===selectedKey?' selected':''}>${esc(lbl)}</option>`;}).join('');
+  return `<option value="">（タレントを選択）</option>`+opts;
+}
 
 // ── 座標プレビュー ────────────────────────────────────────────
 window.updateCoordPreview=function(){
@@ -910,7 +916,7 @@ function collectApps(){
   return [...document.querySelectorAll('#app-blocks .app-block')].map(b=>{
     const i=b.dataset.i;
     return {
-      cp:document.getElementById('a-cp-'+i)?.value||'',
+      talentId:document.getElementById('a-talent-'+i)?.value||'',
       series:document.getElementById('a-series-'+i)?.value||'',
       scene:document.getElementById('a-scene-'+i)?.value||'',
       sns:document.getElementById('a-sns-'+i)?.value||'',
@@ -940,11 +946,12 @@ function loadDraft(){
   try{
     const r=localStorage.getItem(DRAFT_KEY);if(!r)return null;
     const d=JSON.parse(r);
-    // 旧形式（単一CP）からの移行
+    // 旧形式からの移行（CP文字列はタレント選択に引き継げないので作品/シーンのみ）
     if(d&&!Array.isArray(d.apps)){
-      const a={cp:d.cp||'',series:d.series||'',scene:d.scene||'',sns:d.sns||''};
-      d.apps=(a.cp||a.series||a.scene||a.sns)?[a]:[{}];
+      const a={talentId:'',series:d.series||'',scene:d.scene||'',sns:d.sns||''};
+      d.apps=(a.series||a.scene||a.sns)?[a]:[{}];
     }
+    if(d&&Array.isArray(d.apps))d.apps=d.apps.map(a=>({talentId:a.talentId||'',series:a.series||'',scene:a.scene||'',sns:a.sns||''}));
     return d;
   }catch(e){return null;}
 }
@@ -960,21 +967,12 @@ window.addSpot=async function(){
   const msg=document.getElementById('add-msg');
   if(!name){msg.style.color='var(--red)';msg.textContent='場所名は必須です';return;}
   if(!lat||!lng){msg.style.color='var(--red)';msg.textContent='緯度・経度を入力してください';return;}
-  // 出演情報を収集（CP・作品・シーンのどれかが入っているブロックのみ登録）
+  // 出演情報を収集（タレント・作品・シーンのどれかが入っているブロックのみ）
   const apps=collectApps()
-    .map(a=>({cp:a.cp.trim(),series:a.series.trim(),scene:a.scene.trim(),sns:a.sns.trim()}))
-    .filter(a=>a.cp||a.series||a.scene);
+    .map(a=>({talentId:a.talentId.trim(),series:a.series.trim(),scene:a.scene.trim(),sns:a.sns.trim()}))
+    .filter(a=>a.talentId||a.series||a.scene);
   msg.style.color='var(--purple)';msg.textContent='追加中...';
   try{
-    // 新規CP名を cp_master に自動登録（色は名前から自動割当・絵文字は💗）
-    const existing=new Set(CP_M.map(m=>m.name));
-    const newCps=[...new Set(apps.map(a=>a.cp).filter(c=>c&&!existing.has(c)))];
-    for(const cp of newCps){
-      const color=autoCpColor(cp);
-      const cpData={name:cp,color,emoji:'💗',light:color+'22',border:color+'88'};
-      const cref=await addDoc(collection(db,'cp_master'),cpData);
-      localAddCp(cref.id,cpData);
-    }
     // 場所を登録
     const ref=doc(collection(db,'locations'));
     const locData={name,lat,lng,
@@ -984,9 +982,13 @@ window.addSpot=async function(){
       memo:document.getElementById('a-memo').value.trim()};
     await setDoc(ref,locData);
     localAddLoc(ref.id,locData);
-    // 出演情報を登録
+    // 出演情報を登録（誰＝タレント / 作品＝series。CPは廃止）
     for(const a of apps){
-      const appData={location_id:ref.id,cp:a.cp,series:a.series,scene_desc:a.scene,sns_url:a.sns,status:'公開'};
+      const tm=TALENT_M.find(m=>talentKey(m)===a.talentId);
+      const tname=tm?tm.name:'';
+      const appData={location_id:ref.id,talent_id:a.talentId,talent:tname,
+        cp:tname,  // ※暫定: 現行の地図/一覧がまだ cp を見ているため。地図のタレント対応時に削除予定
+        series:a.series,scene_desc:a.scene,sns_url:a.sns,status:'公開'};
       const aref=await addDoc(collection(db,'appearances'),appData);
       localAddApp(aref.id,appData);
     }
@@ -994,7 +996,7 @@ window.addSpot=async function(){
     clearDraft();clearC();
     renderAdd();
     const m2=document.getElementById('add-msg');
-    if(m2){m2.style.color='var(--green)';m2.textContent='✅ 追加しました！'+(cnt?`（出演${cnt}件）`:'')+(newCps.length?` / 新規CP ${newCps.length}件をマスタ登録`:'');}
+    if(m2){m2.style.color='var(--green)';m2.textContent='✅ 追加しました！'+(cnt?`（出演${cnt}件）`:'');}
   }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
 };
 
