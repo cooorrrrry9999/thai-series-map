@@ -1309,7 +1309,8 @@ window.renderTalent=function(){
   const importBar=`
     <div id="tl-import-bar" style="background:var(--pl);border:1px solid var(--purple);border-radius:8px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <span style="font-size:12px;color:var(--purple);font-weight:700">📥 タレント名鑑から取り込み</span>
-      <button class="btn btn-primary btn-sm" id="tl-load-btn" onclick="loadTalentDirectory()">名鑑を読み込む</button>
+      <button class="btn btn-primary btn-sm" id="tl-sync-btn" onclick="syncTalentDirectory()">🔄 名鑑を再読み込み（新規のみ追加）</button>
+      <button class="btn btn-sm" style="background:#fff;color:var(--purple);border:1px solid var(--purple)" id="tl-load-btn" onclick="loadTalentDirectory()">⚙ 詳細プレビューで取り込む</button>
       ${TALENT_M.length?`<button class="btn btn-del btn-sm" onclick="resetAllTalents()">🗑 取り込み済みを全削除（${TALENT_M.length}）</button>`:''}
       ${(()=>{const g={};TALENT_M.forEach(m=>{const k=(m.name||'')+'|'+(m.real_name||'');g[k]=(g[k]||0)+1;});const d=Object.values(g).filter(c=>c>1).reduce((s,c)=>s+c-1,0);return d?`<button class="btn btn-sm" style="background:#F59E0B;color:#fff" onclick="dedupeTalents()">🔗 重複を統合（${d}件）</button>`:'';})()}
       <span id="tl-import-msg" style="font-size:11px;color:var(--sub)"></span>
@@ -1402,6 +1403,46 @@ function renderTalentImportPreview(){
       </div>
     </div>`;
 }
+// ワンクリック同期：名鑑(talents)を再読み込みし、未登録(src_id重複なし)のタレントだけ追加
+window.syncTalentDirectory=async function(){
+  const btn=document.getElementById('tl-sync-btn');
+  const msg=document.getElementById('tl-import-msg');
+  if(btn){btn.disabled=true;btn.textContent='同期中…';}
+  if(msg){msg.style.color='var(--sub)';msg.textContent='';}
+  try{
+    // 1) talent_master を最新化（重複判定を正確にするためキャッシュではなくFirestoreから）
+    const tmSnap=await getDocs(collection(db,'talent_master'));
+    TALENT_M=tmSnap.docs.map(d=>({id:d.id,...d.data()}));
+    saveAC(CACHE_KEYS.talent,TALENT_M);
+    // 2) 名鑑（talents コレクション）を読み込み
+    const snap=await getDocs(collection(db,'talents'));
+    _talentDir=snap.docs.map(d=>({srcId:d.id,raw:d.data()}));
+    const set=new Set(); _talentDir.forEach(t=>Object.keys(t.raw||{}).forEach(k=>set.add(k)));
+    _talentFields=[...set];
+    _talentNameField=bestNameField(_talentFields,_talentDir);
+    if(!_talentDir.length){renderTalent();const m=document.getElementById('tl-import-msg');if(m){m.style.color='var(--red)';m.textContent='名鑑（talents）にデータが見つかりませんでした';}return;}
+    // 3) 未登録（src_id がまだ talent_master に無い）ものだけ抽出して追加
+    const list=talentImportList();
+    let added=0;
+    for(const t of list){
+      const r=t.raw||{};
+      const color=autoCpColor(t.name);
+      const data={name:t.name,color,emoji:'⭐',light:color+'22',border:color+'88',src_id:t.srcId};
+      if(typeof r.image_url==='string'&&r.image_url)data.photo=r.image_url;
+      if(typeof r.nickname_kana==='string'&&r.nickname_kana)data.kana=r.nickname_kana;
+      if(typeof r.real_name==='string'&&r.real_name)data.real_name=r.real_name;
+      const ref=await addDoc(collection(db,'talent_master'),data);
+      localAddTalent(ref.id,data); added++;
+    }
+    clearC(); renderTalent();
+    const m=document.getElementById('tl-import-msg');
+    if(m){m.style.color='var(--green)';m.textContent=added?`✅ ${added}件を新規追加（既存はスキップ）`:'新規タレントはありませんでした（すべて取り込み済み）';}
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='再試行';}
+    const m=document.getElementById('tl-import-msg');
+    if(m){m.style.color='var(--red)';m.textContent='エラー: '+e.message;}
+  }
+};
 window.importTalentDirectory=async function(){
   try{
     for(const t of talentImportList()){
