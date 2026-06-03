@@ -517,11 +517,9 @@ function renderSpotDetail(locId){
         <div class="inline-form-title">＋ 紐付けを追加</div>
         <div class="inline-grid">
           <div><div class="form-label" style="font-size:10px;margin-bottom:3px">タレント</div>
-            <select class="inline-input" id="na-talent-${locId}">${talentOptionsHtml('')}</select></div>
+            ${comboHtml('na-talent-'+locId,'talent','','タレント名で検索…')}</div>
           <div><div class="form-label" style="font-size:10px;margin-bottom:3px">中カテゴリ（作品名 / プライベート / 〇〇年来日）</div>
-            <input class="inline-input" id="na-series-${locId}" placeholder="GAP The Series / プライベート / 2024年来日" list="na-series-list-${locId}">
-            <datalist id="na-series-list-${locId}">${allSeries.map(s=>`<option value="${s}">`).join('')}</datalist>
-            <div id="na-series-hint-${locId}" style="font-size:10px;color:var(--sub);margin-top:1px"></div></div>
+            ${comboHtml('na-series-'+locId,'series','','作品名で検索 / 自由入力')}</div>
           <div><div class="form-label" style="font-size:10px;margin-bottom:3px">シーン説明</div>
             <input class="inline-input" id="na-scene-${locId}" placeholder="どのシーンか"></div>
         </div>
@@ -673,11 +671,10 @@ window.editAppModal=function(appId,locId){
   document.getElementById('modal-title').textContent='🎬 紐付けを編集';
   document.getElementById('modal-body').innerHTML=`
     <div class="form-group" style="margin-bottom:10px"><label class="form-label">タレント（誰）</label>
-      <select class="form-select" id="ea-talent">${talentOptionsHtml(curKey)}</select>
+      ${comboHtml('ea-talent','talent',curKey,'タレント名で検索…')}
       ${(!curKey&&(a.cp||a.talent))?`<div style="font-size:10px;color:#92400E;margin-top:3px">⚠ 旧データ「${esc(a.cp||a.talent)}」。タレントを選び直してください</div>`:''}</div>
     <div class="form-group" style="margin-bottom:10px"><label class="form-label">中カテゴリ（作品名 / プライベート / 〇〇年来日）</label>
-      <input class="form-input" id="ea-series" value="${esc(a.series||'')}" list="ea-slist">
-      <datalist id="ea-slist">${allSeries.map(s=>`<option value="${s}">`).join('')}</datalist></div>
+      ${comboHtml('ea-series','series',a.series||'','作品名で検索 / 自由入力')}</div>
     <div class="form-group" style="margin-bottom:10px"><label class="form-label">シーン説明</label>
       <input class="form-input" id="ea-scene" value="${esc(a.scene_desc||'')}"></div>
     <div class="form-group" style="margin-bottom:10px"><label class="form-label">SNSリンク（任意）</label>
@@ -827,11 +824,11 @@ function appBlockHTML(i,a){a=a||{};
     <div class="form-grid" style="margin-bottom:8px">
       <div class="form-group">
         <label class="form-label">タレント</label>
-        <select class="form-select" id="a-talent-${i}" onchange="saveDraft()">${talentOptionsHtml(a.talentId||'')}</select>
+        ${comboHtml('a-talent-'+i,'talent',a.talentId||'','タレント名で検索…')}
       </div>
       <div class="form-group">
         <label class="form-label">中カテゴリ（作品名 / プライベート / 〇〇年来日・任意）</label>
-        <input class="form-input" id="a-series-${i}" placeholder="例: GAP The Series / プライベート / 2024年来日" list="a-slist" value="${esc(a.series||'')}" oninput="saveDraft()">
+        ${comboHtml('a-series-'+i,'series',a.series||'','作品名で検索 / 自由入力')}
       </div>
     </div>
     <div class="form-group" style="margin-bottom:8px">
@@ -856,7 +853,7 @@ window.removeAppBlock=function(i){
   const blocks=[...cont.querySelectorAll('.app-block')];
   if(blocks.length<=1){
     // 最後の1件は削除せず中身だけクリア
-    ['a-talent-','a-series-','a-scene-','a-sns-'].forEach(p=>{const el=document.getElementById(p+i);if(el)el.value='';});
+    ['a-talent-'+i,'a-talent-'+i+'__q','a-series-'+i,'a-scene-'+i,'a-sns-'+i].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   }else{
     const b=cont.querySelector('.app-block[data-i="'+i+'"]');if(b)b.remove();
   }
@@ -908,6 +905,65 @@ function appWhoChip(a){
   const legacy=a.talent||a.cp||'';
   return `<span class="cp-chip" style="background:#FEF3C7;color:#92400E;border:1px solid #F59E0B">⚠ ${esc(legacy||'タレント未設定')}</span>`;
 }
+
+// ── 検索できるコンボボックス（talent=選択式 / series=自由入力可）─────
+function talentLabelByKey(key){
+  if(!key)return '';
+  const m=TALENT_M.find(x=>talentKey(x)===key); if(!m)return '';
+  const dup=TALENT_M.filter(x=>x.name===m.name).length>1;
+  return dup&&m.real_name?`${m.name}（${m.real_name}）`:m.name;
+}
+function comboHtml(idBase,type,value,placeholder){
+  const display=type==='talent'?talentLabelByKey(value):(value||'');
+  const inputId=type==='talent'?idBase+'__q':idBase;
+  return `<div style="position:relative">
+    ${type==='talent'?`<input type="hidden" id="${idBase}" value="${esc(value||'')}">`:''}
+    <input class="form-input" id="${inputId}" autocomplete="off" placeholder="${esc(placeholder||'検索して選択…')}" value="${esc(display)}"
+      oninput="comboFilter('${idBase}','${type}')" onfocus="comboFilter('${idBase}','${type}')" onblur="comboBlur('${idBase}','${type}')">
+    <div id="${idBase}__list" style="display:none;position:absolute;z-index:60;left:0;right:0;max-height:220px;overflow:auto;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.14);margin-top:2px"></div>
+  </div>`;
+}
+function comboItems(type,q){
+  q=(q||'').toLowerCase().trim();
+  if(type==='talent'){
+    const dn={}; TALENT_M.forEach(m=>{dn[m.name]=(dn[m.name]||0)+1;});
+    return [...TALENT_M].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')))
+      .filter(m=>!q||String(m.name||'').toLowerCase().includes(q)||String(m.real_name||'').toLowerCase().includes(q))
+      .map(m=>({key:talentKey(m),label:dn[m.name]>1&&m.real_name?`${m.name}（${m.real_name}）`:m.name})).slice(0,80);
+  }
+  const all=[...new Set([...APPS.map(a=>a.series),...SERIES_M.map(m=>m.name)].filter(Boolean))].sort();
+  return all.filter(s=>!q||s.toLowerCase().includes(q)).map(s=>({key:s,label:s})).slice(0,80);
+}
+window.comboFilter=function(idBase,type){
+  const qEl=document.getElementById(type==='talent'?idBase+'__q':idBase);
+  const list=document.getElementById(idBase+'__list');
+  if(!qEl||!list)return;
+  const items=comboItems(type,qEl.value);
+  const rows=items.map(it=>`<div onmousedown="comboPick('${idBase}','${type}',this.dataset.k,this.dataset.l)" data-k="${esc(it.key)}" data-l="${esc(it.label)}" style="padding:7px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid #f1f1f1" onmouseover="this.style.background='#f3f0ff'" onmouseout="this.style.background='#fff'">${esc(it.label)}</div>`).join('');
+  const clearRow=type==='talent'?`<div onmousedown="comboPick('${idBase}','talent','','')" style="padding:6px 10px;cursor:pointer;font-size:12px;color:var(--sub)">（選択をクリア）</div>`:'';
+  list.innerHTML=clearRow+(rows||`<div style="padding:8px 10px;font-size:12px;color:var(--sub)">該当なし${type==='series'?'（このまま入力で新規作品）':''}</div>`);
+  list.style.display='block';
+  if(type==='series'&&idBase.startsWith('a-series-'))saveDraft();
+};
+window.comboPick=function(idBase,type,key,label){
+  if(type==='talent'){
+    const hid=document.getElementById(idBase);if(hid)hid.value=key;
+    const q=document.getElementById(idBase+'__q');if(q)q.value=label;
+  }else{
+    const el=document.getElementById(idBase);if(el)el.value=key;
+  }
+  const list=document.getElementById(idBase+'__list');if(list)list.style.display='none';
+  if(idBase.startsWith('a-talent-')||idBase.startsWith('a-series-'))saveDraft();
+};
+window.comboBlur=function(idBase,type){
+  setTimeout(()=>{
+    const list=document.getElementById(idBase+'__list');if(list)list.style.display='none';
+    if(type==='talent'){
+      const q=document.getElementById(idBase+'__q'),hid=document.getElementById(idBase);
+      if(q&&hid)q.value=talentLabelByKey(hid.value); // 表示を実際の選択に同期
+    }
+  },180);
+};
 
 // ── 移行（CP→タレント 自動分割）─────────────────────────────
 function splitCpToTalents(cp){
@@ -1211,6 +1267,7 @@ window.renderTalent=function(){
       <span style="font-size:12px;color:var(--purple);font-weight:700">📥 タレント名鑑から取り込み</span>
       <button class="btn btn-primary btn-sm" id="tl-load-btn" onclick="loadTalentDirectory()">名鑑を読み込む</button>
       ${TALENT_M.length?`<button class="btn btn-del btn-sm" onclick="resetAllTalents()">🗑 取り込み済みを全削除（${TALENT_M.length}）</button>`:''}
+      ${(()=>{const g={};TALENT_M.forEach(m=>{const k=(m.name||'')+'|'+(m.real_name||'');g[k]=(g[k]||0)+1;});const d=Object.values(g).filter(c=>c>1).reduce((s,c)=>s+c-1,0);return d?`<button class="btn btn-sm" style="background:#F59E0B;color:#fff" onclick="dedupeTalents()">🔗 重複を統合（${d}件）</button>`:'';})()}
       <span id="tl-import-msg" style="font-size:11px;color:var(--sub)"></span>
     </div>`;
   setBody(`
@@ -1308,6 +1365,30 @@ window.importTalentDirectory=async function(){
       localAddTalent(ref.id,data);
     }
     clearC(); renderTalent();
+  }catch(e){alert('エラー: '+e.message);}
+};
+window.dedupeTalents=async function(){
+  const groups={};
+  TALENT_M.forEach(m=>{const k=(m.name||'')+'|'+(m.real_name||'');(groups[k]=groups[k]||[]).push(m);});
+  const dups=Object.values(groups).filter(g=>g.length>1);
+  if(!dups.length){alert('重複は見つかりませんでした');return;}
+  const delCount=dups.reduce((s,g)=>s+g.length-1,0);
+  if(!confirm(`同一タレントの重複 ${delCount}件を統合します。\n紐付けは「残す方」へ自動で付け替えます。先にバックアップ推奨。\nよろしいですか？`))return;
+  try{
+    for(const g of dups){
+      g.sort((a,b)=>(b.src_id?1:0)-(a.src_id?1:0)); // src_id持ちを優先して残す
+      const keep=g[0],keepKey=talentKey(keep);
+      for(let i=1;i<g.length;i++){
+        const del=g[i],delKey=talentKey(del);
+        for(const a of APPS.filter(x=>x.talent_id===delKey)){
+          const u={talent_id:keepKey,talent:keep.name,cp:keep.name};
+          await updateDoc(doc(db,'appearances',a.id),u); localUpdateApp(a.id,u);
+        }
+        await deleteDoc(doc(db,'talent_master',del.id)); localDeleteTalent(del.id);
+      }
+    }
+    clearC(); renderTalent();
+    alert('重複を統合しました。');
   }catch(e){alert('エラー: '+e.message);}
 };
 window.resetAllTalents=async function(){
