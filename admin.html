@@ -180,6 +180,7 @@ html,body{height:100%;font-family:'Noto Sans JP',sans-serif;background:var(--bg)
       <div class="sb-section">マスタ設定</div>
       <button class="sb-item" onclick="showPage('cp')" id="nav-cp"><span class="icon">💗</span>CP管理</button>
       <button class="sb-item" onclick="showPage('talent')" id="nav-talent"><span class="icon">🧑</span>タレント管理</button>
+      <button class="sb-item" onclick="showPage('migrate')" id="nav-migrate"><span class="icon">🔄</span>CP→タレント移行</button>
       <button class="sb-item" onclick="showPage('series')" id="nav-series"><span class="icon">🎬</span>作品設定</button>
       <button class="sb-item" onclick="showPage('category')" id="nav-category"><span class="icon">📂</span>カテゴリー</button>
     </div>
@@ -323,13 +324,13 @@ function localAddCat(id,data){CAT_M.push({id,...data});saveAC(CACHE_KEYS.cat,CAT
 function localDeleteCat(id){CAT_M=CAT_M.filter(m=>m.id!==id);saveAC(CACHE_KEYS.cat,CAT_M);}
 
 // ── Navigation ─────────────────────────────────────────────────
-const PAGE_TITLES={dashboard:'📊 ダッシュボード',pending:'📬 承認待ち',spots:'📍 スポット一覧',add:'➕ 新規追加',cp:'💗 CP管理',talent:'🧑 タレント管理',series:'🎬 作品設定',category:'📂 カテゴリー'};
+const PAGE_TITLES={dashboard:'📊 ダッシュボード',pending:'📬 承認待ち',spots:'📍 スポット一覧',add:'➕ 新規追加',cp:'💗 CP管理',talent:'🧑 タレント管理',migrate:'🔄 CP→タレント移行',series:'🎬 作品設定',category:'📂 カテゴリー'};
 window.showPage=function(name){
   currentPage=name;
   document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
   document.getElementById('nav-'+name)?.classList.add('active');
   document.getElementById('page-title').textContent=PAGE_TITLES[name]||name;
-  ({dashboard:window.renderDashboard,pending:window.renderPending,spots:window.renderSpots,add:window.renderAdd,cp:window.renderCp,talent:window.renderTalent,series:window.renderSeries,category:window.renderCategory}[name]||(() => {}))();
+  ({dashboard:window.renderDashboard,pending:window.renderPending,spots:window.renderSpots,add:window.renderAdd,cp:window.renderCp,talent:window.renderTalent,migrate:window.renderMigrate,series:window.renderSeries,category:window.renderCategory}[name]||(() => {}))();
 };
 function setBody(html){document.getElementById('page-body').innerHTML=html;}
 
@@ -408,7 +409,7 @@ window.renderSpots=function(){
     if(fQ&&!loc.name.toLowerCase().includes(fQ))return false;
     if(fCat&&loc.category!==fCat)return false;
     const apps=APPS.filter(a=>a.location_id===loc.id);
-    if(fCp&&!apps.some(a=>a.cp===fCp))return false;
+    if(fCp&&!apps.some(a=>{const t=appTalent(a);return t&&talentKey(t)===fCp;}))return false;
     if(fSeries&&!apps.some(a=>a.series===fSeries))return false;
     if(fStatus&&!apps.some(a=>a.status===fStatus))return false;
     return true;
@@ -420,7 +421,7 @@ window.renderSpots=function(){
       <option value="">カテゴリー</option>${allCats.map(c=>`<option value="${c}"${fCat===c?' selected':''}>${c}</option>`).join('')}
     </select>
     <select class="filter-sel" id="fCp" onchange="renderSpots()">
-      <option value="">CP</option>${allCps.map(c=>`<option value="${c}"${fCp===c?' selected':''}>${c}</option>`).join('')}
+      <option value="">タレント</option>${[...TALENT_M].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''))).map(m=>{const k=talentKey(m);const dup=TALENT_M.filter(x=>x.name===m.name).length>1;const lbl=dup&&m.real_name?`${m.name}（${m.real_name}）`:m.name;return `<option value="${esc(k)}"${fCp===k?' selected':''}>${esc(lbl)}</option>`;}).join('')}
     </select>
     <select class="filter-sel" id="fSeries" onchange="renderSpots()">
       <option value="">作品</option>${allSeries.map(s=>`<option value="${s}"${fSeries===s?' selected':''}>${s}</option>`).join('')}
@@ -440,10 +441,7 @@ window.renderSpots=function(){
       const apps=APPS.filter(a=>a.location_id===loc.id);
       const cat=CAT_M.find(m=>m.name===loc.category);
       const catEmoji=cat?.emoji||getCatEmoji(loc.category);
-      const cpChips=apps.filter((a,i,arr)=>arr.findIndex(x=>x.cp===a.cp)===i).map(a=>{
-        const cp=CP_M.find(m=>m.name===a.cp);
-        return`<span class="cp-chip" style="background:${cp?.color||'#888'}22;color:${cp?.color||'#888'};border:1px solid ${cp?.color||'#888'}66">${cp?.emoji||'💗'} ${a.cp||'CP未設定'}</span>`;
-      }).join('');
+      const cpChips=apps.filter((a,i,arr)=>arr.findIndex(x=>appWhoKey(x)===appWhoKey(a))===i).map(a=>appWhoChip(a)).join('');
       return`<div class="spot-row" id="row-${loc.id}">
         <div class="spot-row-header" onclick="toggleSpot('${loc.id}')">
           <div class="spot-cat-emoji">${catEmoji}</div>
@@ -484,11 +482,11 @@ function renderSpotDetail(locId){
   const detail=document.getElementById('detail-'+locId);
 
   const appCards=apps.map(a=>{
-    const cp=CP_M.find(m=>m.name===a.cp);
-    const sc=a.status==='公開'?'badge-pub':a.status==='未承認'?'badge-pend':'badge-rej';
-    return`<div class="app-chip" style="border-left:3px solid ${cp?.color||'#888'}">
+    const t=appTalent(a);
+    const col=t?(t.color||'#888'):'#F59E0B';
+    return`<div class="app-chip" style="border-left:3px solid ${col}">
       <div class="app-chip-head">
-        <span style="color:${cp?.color||'#888'};font-size:12px">${cp?.emoji||'💗'} ${a.cp||'CP未設定'}</span>
+        ${appWhoChip(a)}
         <span style="color:var(--sub);font-weight:400">— ${a.series||'未設定'}</span>
         <span class="badge ${a.status==='公開'?'badge-pub':'badge-pend'}">${a.status}</span>
       </div>
@@ -518,10 +516,8 @@ function renderSpotDetail(locId){
       <div class="inline-form">
         <div class="inline-form-title">＋ 紐付けを追加</div>
         <div class="inline-grid">
-          <div><div class="form-label" style="font-size:10px;margin-bottom:3px">CP名</div>
-            <input class="inline-input" id="na-cp-${locId}" placeholder="FreenBecky" list="na-cp-list-${locId}"
-              oninput="updateInlineSeries(this.value,'${locId}')">
-            <datalist id="na-cp-list-${locId}">${allCps.map(c=>`<option value="${c}">`).join('')}</datalist></div>
+          <div><div class="form-label" style="font-size:10px;margin-bottom:3px">タレント</div>
+            <select class="inline-input" id="na-talent-${locId}">${talentOptionsHtml('')}</select></div>
           <div><div class="form-label" style="font-size:10px;margin-bottom:3px">中カテゴリ（作品名 / プライベート / 〇〇年来日）</div>
             <input class="inline-input" id="na-series-${locId}" placeholder="GAP The Series / プライベート / 2024年来日" list="na-series-list-${locId}">
             <datalist id="na-series-list-${locId}">${allSeries.map(s=>`<option value="${s}">`).join('')}</datalist>
@@ -537,18 +533,19 @@ function renderSpotDetail(locId){
 }
 
 window.addApp=async function(locId){
-  const cp=document.getElementById('na-cp-'+locId)?.value.trim()||'';
+  const talentId=document.getElementById('na-talent-'+locId)?.value||'';
   const series=document.getElementById('na-series-'+locId)?.value.trim()||'';
   const scene=document.getElementById('na-scene-'+locId)?.value.trim()||'';
   const sns=document.getElementById('na-sns-'+locId)?.value.trim()||'';
   const msg=document.getElementById('na-msg-'+locId);
+  const tm=TALENT_M.find(m=>talentKey(m)===talentId);const tname=tm?tm.name:'';
   msg.style.color='var(--purple)';msg.textContent='追加中...';
   try{
-    await addDoc(collection(db,'appearances'),{location_id:locId,cp,series,scene_desc:scene,sns_url:sns,status:'公開'});
+    const data={location_id:locId,talent_id:talentId,talent:tname,cp:tname,series,scene_desc:scene,sns_url:sns,status:'公開'};
+    const ref=await addDoc(collection(db,'appearances'),data);
     msg.style.color='var(--green)';msg.textContent='✅ 追加しました';
     clearC();
-    const newAppId='local_'+Date.now();
-    localAddApp(newAppId,{location_id:locId,cp,series,scene_desc:scene,sns_url:sns,status:'公開'});
+    localAddApp(ref.id,data);
     setTimeout(()=>renderSpotDetail(locId),200);
   }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
 };
@@ -671,13 +668,13 @@ window.deleteLoc=async function(locId){
 window.editAppModal=function(appId,locId){
   const a=APPS.find(x=>x.id===appId);
   if(!a)return;
-  const allCps=[...new Set([...APPS.map(x=>x.cp),...CP_M.map(m=>m.name)].filter(Boolean))].sort();
   const allSeries=[...new Set([...APPS.map(x=>x.series),...SERIES_M.map(m=>m.name)].filter(Boolean))].sort();
+  const curKey=a.talent_id||(appTalent(a)?talentKey(appTalent(a)):'');
   document.getElementById('modal-title').textContent='🎬 紐付けを編集';
   document.getElementById('modal-body').innerHTML=`
-    <div class="form-group" style="margin-bottom:10px"><label class="form-label">CP名</label>
-      <input class="form-input" id="ea-cp" value="${esc(a.cp||'')}" list="ea-cplist">
-      <datalist id="ea-cplist">${allCps.map(c=>`<option value="${c}">`).join('')}</datalist></div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">タレント（誰）</label>
+      <select class="form-select" id="ea-talent">${talentOptionsHtml(curKey)}</select>
+      ${(!curKey&&(a.cp||a.talent))?`<div style="font-size:10px;color:#92400E;margin-top:3px">⚠ 旧データ「${esc(a.cp||a.talent)}」。タレントを選び直してください</div>`:''}</div>
     <div class="form-group" style="margin-bottom:10px"><label class="form-label">中カテゴリ（作品名 / プライベート / 〇〇年来日）</label>
       <input class="form-input" id="ea-series" value="${esc(a.series||'')}" list="ea-slist">
       <datalist id="ea-slist">${allSeries.map(s=>`<option value="${s}">`).join('')}</datalist></div>
@@ -693,17 +690,18 @@ window.editAppModal=function(appId,locId){
 };
 window.saveApp=async function(appId,locId){
   const msg=document.getElementById('ea-msg');
+  const talentId=document.getElementById('ea-talent').value;
+  const tm=TALENT_M.find(m=>talentKey(m)===talentId);const tname=tm?tm.name:'';
   msg.style.color='var(--purple)';msg.textContent='保存中...';
   try{
-    await updateDoc(doc(db,'appearances',appId),{
-      cp:document.getElementById('ea-cp').value.trim(),
+    const data={talent_id:talentId,talent:tname,cp:tname,
       series:document.getElementById('ea-series').value.trim(),
       scene_desc:document.getElementById('ea-scene').value.trim(),
       sns_url:document.getElementById('ea-sns').value.trim(),
-      status:document.getElementById('ea-status').value,
-    });
+      status:document.getElementById('ea-status').value};
+    await updateDoc(doc(db,'appearances',appId),data);
     msg.style.color='var(--green)';msg.textContent='✅ 保存しました';
-    localUpdateApp(appId,{cp:document.getElementById('ea-cp').value.trim(),series:document.getElementById('ea-series').value.trim(),scene_desc:document.getElementById('ea-scene').value.trim(),sns_url:document.getElementById('ea-sns').value.trim(),status:document.getElementById('ea-status').value});
+    localUpdateApp(appId,data);
     clearC(); setTimeout(closeModal,800);
     if(locId)setTimeout(()=>renderSpotDetail(locId),900);
   }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
@@ -892,6 +890,97 @@ function talentOptionsHtml(selectedKey){
       return `<option value="${esc(k)}"${k===selectedKey?' selected':''}>${esc(lbl)}</option>`;}).join('');
   return `<option value="">（タレントを選択）</option>`+opts;
 }
+// appearanceから登録タレントを解決（talent_id優先→名前）。無ければnull
+function appTalent(a){
+  if(a&&a.talent_id){const m=TALENT_M.find(x=>talentKey(x)===a.talent_id);if(m)return m;}
+  if(a&&a.talent){const m=TALENT_M.find(x=>x.name===a.talent);if(m)return m;}
+  return null;
+}
+function appWhoKey(a){const t=appTalent(a);return t?talentKey(t):('legacy:'+(a.talent||a.cp||''));}
+function appWhoChip(a){
+  const t=appTalent(a);
+  if(t){
+    const dup=TALENT_M.filter(x=>x.name===t.name).length>1;
+    const lbl=dup&&t.real_name?`${t.name}（${t.real_name}）`:t.name;
+    const c=t.color||'#888';
+    return `<span class="cp-chip" style="background:${c}22;color:${c};border:1px solid ${c}66">${t.emoji||'⭐'} ${esc(lbl)}</span>`;
+  }
+  const legacy=a.talent||a.cp||'';
+  return `<span class="cp-chip" style="background:#FEF3C7;color:#92400E;border:1px solid #F59E0B">⚠ ${esc(legacy||'タレント未設定')}</span>`;
+}
+
+// ── 移行（CP→タレント 自動分割）─────────────────────────────
+function splitCpToTalents(cp){
+  const byName={}; TALENT_M.forEach(m=>{const k=String(m.name||'').toLowerCase();if(k)(byName[k]=byName[k]||[]).push(m);});
+  const s=String(cp||'').replace(/\s+/g,'');
+  if(!s)return null;
+  const n=s.length, dp=Array(n+1).fill(null); dp[0]=[];
+  for(let i=1;i<=n;i++){
+    for(let j=0;j<i;j++){
+      if(dp[j]){
+        const seg=s.slice(j,i).toLowerCase();
+        if(byName[seg]&&(!dp[i]||dp[i].length>dp[j].length+1))dp[i]=[...dp[j],byName[seg][0]];
+      }
+    }
+  }
+  return dp[n];
+}
+function legacyApps(){return APPS.filter(a=>!a.talent_id&&(a.cp||a.talent));}
+function downloadJson(obj,fname){
+  const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download=fname;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+window.doBackup=function(){
+  const data={exportedAt:new Date().toISOString(),locations:LOCS,appearances:APPS,cp_master:CP_M,series_master:SERIES_M,category_master:CAT_M,talent_master:TALENT_M};
+  const d=new Date(),p=x=>String(x).padStart(2,'0');
+  downloadJson(data,`tsmap_backup_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.json`);
+};
+window.renderMigrate=function(){
+  const legacy=legacyApps();
+  const byCp={}; legacy.forEach(a=>{const c=a.cp||a.talent||'';(byCp[c]=byCp[c]||[]).push(a);});
+  const rows=Object.keys(byCp).sort().map(cp=>{
+    const split=splitCpToTalents(cp);const cnt=byCp[cp].length;
+    if(split)return `<tr><td><strong>${esc(cp)}</strong></td><td><span style="color:var(--green)">✓ ${esc(split.map(t=>t.name).join(' ＋ '))}</span></td><td>${cnt}件</td></tr>`;
+    return `<tr><td><strong>${esc(cp)}</strong></td><td><span style="color:#92400E">⚠ 自動分割できません（手動で対応）</span></td><td>${cnt}件</td></tr>`;
+  }).join('');
+  const matched=Object.keys(byCp).filter(c=>splitCpToTalents(c));
+  const matchedAppCnt=matched.reduce((s,c)=>s+byCp[c].length,0);
+  setBody(`
+    <div style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#991B1B">⚠ この操作は既存データ（appearances）を書き換えます。<b>必ず先にバックアップ</b>を取ってください。元のCP名は変換後に上書きされます。</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <button class="btn btn-primary" onclick="doBackup()">💾 バックアップを書き出す（JSON）</button>
+      <button class="btn" style="background:var(--green);color:#fff" onclick="doMigrate()"${matched.length?'':' disabled style="opacity:.5"'}>🔄 自動分割を実行（${matched.length}種・${matchedAppCnt}件）</button>
+    </div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px">変換プレビュー（タレント未設定の紐付け ${legacy.length}件）</div>
+    <table class="master-table">
+      <thead><tr><th>現在のCP</th><th>変換先タレント</th><th>件数</th></tr></thead>
+      <tbody>${rows||'<tr><td colspan="3" style="text-align:center;color:var(--sub);padding:18px">変換対象（タレント未設定）はありません</td></tr>'}</tbody>
+    </table>
+    <div style="font-size:11px;color:var(--sub);margin-top:10px">※「⚠ 手動」の行は自動変換されません。実行後、スポット一覧で「⚠」が付いた紐付けを開いてタレントを選び直してください。</div>`);
+};
+window.doMigrate=async function(){
+  const targets=legacyApps().map(a=>({a,split:splitCpToTalents(a.cp||a.talent||'')})).filter(x=>x.split&&x.split.length);
+  if(!targets.length){alert('自動変換できる対象がありません');return;}
+  if(!confirm(`自動分割を実行します（${targets.length}件を変換）。\nバックアップは取りましたか？ よろしければOKを押してください。`))return;
+  try{
+    for(const {a,split} of targets){
+      const t0=split[0];
+      const u={talent_id:talentKey(t0),talent:t0.name,cp:t0.name};
+      await updateDoc(doc(db,'appearances',a.id),u);
+      localUpdateApp(a.id,u);
+      for(let i=1;i<split.length;i++){
+        const t=split[i];
+        const data={location_id:a.location_id,talent_id:talentKey(t),talent:t.name,cp:t.name,series:a.series||'',scene_desc:a.scene_desc||'',sns_url:a.sns_url||'',status:a.status||'公開'};
+        const ref=await addDoc(collection(db,'appearances'),data);
+        localAddApp(ref.id,data);
+      }
+    }
+    clearC(); renderMigrate();
+    alert('変換が完了しました。残った「⚠ 手動」分は、スポット一覧で個別に直してください。');
+  }catch(e){alert('エラー: '+e.message);}
+};
 
 // ── 座標プレビュー ────────────────────────────────────────────
 window.updateCoordPreview=function(){
