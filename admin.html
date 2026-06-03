@@ -812,6 +812,10 @@ window.renderAdd=function(){
   // 下書きがあれば座標プレビューを更新
   if(draft?.lat&&draft?.lng)updateCoordPreview();
   updateBlockUI();
+  // 各出演ブロックで、作品が入っていればタレント候補を表示
+  [...document.querySelectorAll('#app-blocks .app-block')].forEach(b=>{
+    const i=b.dataset.i; if(i!=null&&window.refreshTalentCandidates)refreshTalentCandidates(i);
+  });
 };
 
 // ── 出演情報ブロック（可変件数・上限なし）─────────────────────
@@ -825,6 +829,7 @@ function appBlockHTML(i,a){a=a||{};
       <div class="form-group">
         <label class="form-label">タレント</label>
         ${comboHtml('a-talent-'+i,'talent',a.talentId||'','タレント名で検索…')}
+        <div id="a-talent-cand-${i}" style="display:none;margin-top:5px"></div>
       </div>
       <div class="form-group">
         <label class="form-label">中カテゴリ（作品名 / プライベート / 〇〇年来日・任意）</label>
@@ -954,6 +959,22 @@ window.comboPick=function(idBase,type,key,label){
   }
   const list=document.getElementById(idBase+'__list');if(list)list.style.display='none';
   if(idBase.startsWith('a-talent-')||idBase.startsWith('a-series-'))saveDraft();
+  if(idBase.startsWith('a-series-'))refreshTalentCandidates(idBase.slice('a-series-'.length));
+};
+// 作品を選ぶと、その作品に紐付くタレントを候補チップとして表示（タップで選択）
+window.refreshTalentCandidates=function(i){
+  const box=document.getElementById('a-talent-cand-'+i); if(!box)return;
+  const seriesVal=(document.getElementById('a-series-'+i)?.value||'').trim();
+  const s=seriesByName(seriesVal);
+  const keys=(s?seriesTalentKeys(s):[]).filter(k=>talentByKey(k));
+  if(!keys.length){box.style.display='none';box.innerHTML='';return;}
+  // タレント欄が空で候補が1人だけなら自動入力
+  const hid=document.getElementById('a-talent-'+i);
+  if(hid&&!hid.value&&keys.length===1){comboPick('a-talent-'+i,'talent',keys[0],talentLabelByKey(keys[0]));}
+  box.style.display='block';
+  box.innerHTML=`<div style="font-size:10px;color:var(--sub);margin-bottom:3px">💡 ${esc(seriesVal)} の出演タレント（タップで選択）</div>`+
+    keys.map(k=>{const m=talentByKey(k);const c=m.color||'#888';
+      return `<button type="button" onclick="comboPick('a-talent-${i}','talent','${esc(k)}','${esc(talentLabelByKey(k))}')" style="background:${c}1a;color:${c};border:1px solid ${c}55;border-radius:12px;padding:3px 10px;font-size:12px;font-weight:700;margin:0 4px 4px 0;cursor:pointer">${m.emoji||'⭐'} ${esc(m.name)}</button>`;}).join('');
 };
 window.comboBlur=function(idBase,type){
   setTimeout(()=>{
@@ -982,6 +1003,26 @@ function splitCpToTalents(cp){
   return dp[n];
 }
 function legacyApps(){return APPS.filter(a=>!a.talent_id&&(a.cp||a.talent));}
+
+// ── 作品⇄タレント 紐付け（正データは series_master.talents[]。逆引きは派生）──
+function seriesTalentKeys(series){return Array.isArray(series&&series.talents)?series.talents:[];}
+function seriesByName(name){return SERIES_M.find(s=>s.name===name)||null;}
+function talentByKey(key){return TALENT_M.find(x=>talentKey(x)===key)||null;}
+// タレント→出演作品（series_master側を逆引き）
+function talentSeriesNames(m){const k=talentKey(m);return SERIES_M.filter(s=>seriesTalentKeys(s).includes(k)).map(s=>s.name);}
+// タレントチップ（紐付け表示用）
+function talentChipHtml(key,removable,onRemoveJs){
+  const m=talentByKey(key);
+  const dup=m?TALENT_M.filter(x=>x.name===m.name).length>1:false;
+  const name=m?((dup&&m.real_name)?`${m.name}（${m.real_name}）`:m.name):key;
+  const c=(m&&m.color)||'#888';
+  return `<span style="background:${c}1a;color:${c};border:1px solid ${c}55;border-radius:12px;padding:2px 8px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:4px;margin:2px 3px 2px 0">${(m&&m.emoji)||'⭐'} ${esc(name)}${removable?` <span style="cursor:pointer;font-weight:900" onclick="${onRemoveJs}">✕</span>`:''}</span>`;
+}
+// 作品チップ（タレント側の出演作品表示用）
+function seriesChipHtml(name){
+  const s=seriesByName(name); const c=(s&&s.color)||'#9333EA';
+  return `<span style="background:${c}14;color:${c};border:1px solid ${c}44;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;margin:2px 3px 2px 0;display:inline-block">🎬 ${esc(name)}</span>`;
+}
 function downloadJson(obj,fname){
   const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
@@ -1247,13 +1288,16 @@ function bestNameField(fields,dir){
   return best;
 }
 window.renderTalent=function(){
-  const rows=TALENT_M.map(m=>`
+  const rows=TALENT_M.map(m=>{
+    const sNames=talentSeriesNames(m);
+    const sChips=sNames.length?`<div style="margin-top:4px">${sNames.map(seriesChipHtml).join('')}</div>`:'';
+    return `
     <tr id="tl-row-${m.id}">
       <td>
         <div style="display:flex;align-items:center;gap:8px">
           <span style="width:12px;height:12px;border-radius:50%;background:${m.color||'#888'};display:inline-block;flex-shrink:0"></span>
           <strong>${m.name}</strong>${m.real_name?`<span style="font-size:10px;color:var(--sub)">${esc(m.real_name)}</span>`:''}
-        </div>
+        </div>${sChips}
       </td>
       <td style="font-family:monospace;color:var(--sub)">${m.color||'未設定'}</td>
       <td style="font-size:18px">${m.emoji||'⭐'}</td>
@@ -1261,7 +1305,7 @@ window.renderTalent=function(){
         <button class="btn btn-edit btn-sm" onclick="inlineEditTalent('${m.id}')">✏ 編集</button>
         <button class="btn btn-del btn-sm" onclick="delMaster('talent_master','${m.id}','talent')">🗑</button>
       </div></td>
-    </tr>`).join('');
+    </tr>`;}).join('');
   const importBar=`
     <div id="tl-import-bar" style="background:var(--pl);border:1px solid var(--purple);border-radius:8px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <span style="font-size:12px;color:var(--purple);font-weight:700">📥 タレント名鑑から取り込み</span>
@@ -1274,7 +1318,13 @@ window.renderTalent=function(){
     ${importBar}
     <div class="add-form-row">
       <div class="form-group"><div class="form-label" style="font-size:10px;margin-bottom:3px">タレント名 <span class="req">*</span></div>
-        <input class="mini-input" id="new-tl-name" placeholder="例: Freen" style="width:160px"></div>
+        <input class="mini-input" id="new-tl-name" placeholder="例: Freen" style="width:140px"></div>
+      <div class="form-group"><div class="form-label" style="font-size:10px;margin-bottom:3px">かな（任意）</div>
+        <input class="mini-input" id="new-tl-kana" placeholder="例: フリーン" style="width:110px"></div>
+      <div class="form-group"><div class="form-label" style="font-size:10px;margin-bottom:3px">本名（任意）</div>
+        <input class="mini-input" id="new-tl-real" placeholder="例: Sarocha C." style="width:140px"></div>
+      <div class="form-group"><div class="form-label" style="font-size:10px;margin-bottom:3px">写真URL（任意）</div>
+        <input class="mini-input" id="new-tl-photo" placeholder="https://..." style="width:160px;font-family:monospace"></div>
       <div class="form-group"><div class="form-label" style="font-size:10px;margin-bottom:3px">カラー</div>
         <div class="color-picker-wrap">
           <input type="color" id="new-tl-picker" value="#9333EA" oninput="document.getElementById('new-tl-color').value=this.value">
@@ -1286,7 +1336,7 @@ window.renderTalent=function(){
       <div id="new-tl-msg" style="font-size:11px;align-self:center;color:var(--green)"></div>
     </div>
     <table class="master-table">
-      <thead><tr><th>タレント名</th><th>カラー</th><th>絵文字</th><th>操作</th></tr></thead>
+      <thead><tr><th>タレント名・出演作品</th><th>カラー</th><th>絵文字</th><th>操作</th></tr></thead>
       <tbody>${rows||'<tr><td colspan="4" style="text-align:center;color:var(--sub);padding:20px">タレントが登録されていません</td></tr>'}</tbody>
     </table>`);
 };
@@ -1384,6 +1434,11 @@ window.dedupeTalents=async function(){
           const u={talent_id:keepKey,talent:keep.name,cp:keep.name};
           await updateDoc(doc(db,'appearances',a.id),u); localUpdateApp(a.id,u);
         }
+        // 作品側の紐付け（series_master.talents）も残す方のキーへ付け替え
+        for(const s of SERIES_M.filter(x=>seriesTalentKeys(x).includes(delKey))){
+          const merged=[...new Set(seriesTalentKeys(s).map(k=>k===delKey?keepKey:k))];
+          await updateDoc(doc(db,'series_master',s.id),{talents:merged}); localUpdateSeries(s.id,{talents:merged});
+        }
         await deleteDoc(doc(db,'talent_master',del.id)); localDeleteTalent(del.id);
       }
     }
@@ -1404,12 +1459,18 @@ window.addTalent=async function(){
   const name=document.getElementById('new-tl-name').value.trim();
   const color=document.getElementById('new-tl-color').value;
   const emoji=document.getElementById('new-tl-emoji').value;
+  const kana=document.getElementById('new-tl-kana')?.value.trim()||'';
+  const real=document.getElementById('new-tl-real')?.value.trim()||'';
+  const photo=document.getElementById('new-tl-photo')?.value.trim()||'';
   const msg=document.getElementById('new-tl-msg');
   if(!name){msg.style.color='var(--red)';msg.textContent='タレント名を入力してください';return;}
-  if(TALENT_M.some(m=>m.name===name)){msg.style.color='var(--red)';msg.textContent='同名のタレントが既にあります';return;}
+  if(TALENT_M.some(m=>m.name===name&&(!real||m.real_name===real))){msg.style.color='var(--red)';msg.textContent='同名（同一人物）のタレントが既にあります';return;}
   msg.style.color='var(--purple)';msg.textContent='追加中...';
   try{
     const data={name,color,emoji,light:color+'22',border:color+'88'};
+    if(kana)data.kana=kana;
+    if(real)data.real_name=real;
+    if(photo)data.photo=photo;
     const ref=await addDoc(collection(db,'talent_master'),data);
     localAddTalent(ref.id,data);
     clearC(); renderTalent();
@@ -1446,18 +1507,26 @@ window.saveTalent=async function(id){
 };
 window.renderSeries=function(){
   const GL='https://thai-gl-works-2c835.web.app/index.html';
-  const rows=SERIES_M.map(m=>`
+  const nameCount={}; SERIES_M.forEach(m=>{nameCount[m.name]=(nameCount[m.name]||0)+1;});
+  const dupTotal=Object.values(nameCount).filter(c=>c>1).reduce((a,c)=>a+c-1,0);
+  const rows=SERIES_M.map(m=>{
+    const tks=seriesTalentKeys(m);
+    const chips=tks.length?`<div style="margin-top:4px">${tks.map(k=>talentChipHtml(k,false,'')).join('')}</div>`:'<div style="margin-top:3px;font-size:11px;color:var(--sub)">タレント未紐付け</div>';
+    const dup=nameCount[m.name]>1?'<span style="font-size:10px;font-weight:700;color:#92400E;background:#FEF3C7;border:1px solid #F59E0B;border-radius:6px;padding:1px 6px;margin-left:6px">⚠ 重複</span>':'';
+    return `
     <tr id="sr-row-${m.id}">
-      <td><strong>${m.name}</strong></td>
+      <td><strong>${esc(m.name)}</strong>${dup}${chips}</td>
       <td style="font-family:monospace;color:var(--sub)">${m.drama_id||'—'}</td>
       <td>${m.drama_id?`<a href="${GL}?drama=${m.drama_id}" target="_blank" style="color:var(--purple);font-size:12px">確認 ↗</a>`:'—'}</td>
       <td><div style="display:flex;gap:5px">
         <button class="btn btn-edit btn-sm" onclick="inlineEditSeries('${m.id}')">✏ 編集</button>
         <button class="btn btn-del btn-sm" onclick="delMaster('series_master','${m.id}','series')">🗑</button>
       </div></td>
-    </tr>`).join('');
+    </tr>`;}).join('');
+  const cleanupBar=dupTotal?`<div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:8px;padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:#92400E">⚠ 同名の重複が ${dupTotal} 件あります。<button class="btn btn-sm" style="background:#F59E0B;color:#fff" onclick="dedupeSeries()">🧹 重複を1件にまとめる</button></div>`:'';
   setBody(`
-    <div style="font-size:12px;color:var(--sub);margin-bottom:10px">来日の時期（例：2024年秋来日）も作品と同じ扱いで追加できます</div>
+    ${cleanupBar}
+    <div style="font-size:12px;color:var(--sub);margin-bottom:10px">来日の時期（例：2024年秋来日）も作品と同じ扱いで追加できます。編集で「出演タレント」を紐付けると、新規追加フォームで自動候補になります。</div>
     <div class="add-form-row">
       <div class="form-group"><div class="form-label" style="font-size:10px;margin-bottom:3px">作品名 / 時期 <span class="req">*</span></div>
         <input class="mini-input" id="new-sr-name" placeholder="例: GAP The Series / 2024年秋来日" style="width:260px"></div>
@@ -1467,9 +1536,31 @@ window.renderSeries=function(){
       <div id="new-sr-msg" style="font-size:11px;align-self:center;color:var(--green)"></div>
     </div>
     <table class="master-table">
-      <thead><tr><th>作品名 / 時期</th><th>ドラマID</th><th>Thai GL Works</th><th>操作</th></tr></thead>
+      <thead><tr><th>作品名 / 時期・出演タレント</th><th>ドラマID</th><th>Thai GL Works</th><th>操作</th></tr></thead>
       <tbody>${rows||'<tr><td colspan="4" style="text-align:center;color:var(--sub);padding:20px">作品が登録されていません</td></tr>'}</tbody>
     </table>`);
+};
+window.dedupeSeries=async function(){
+  const groups={}; SERIES_M.forEach(m=>{(groups[m.name]=groups[m.name]||[]).push(m);});
+  const dups=Object.values(groups).filter(g=>g.length>1);
+  if(!dups.length){alert('重複は見つかりませんでした');return;}
+  const delCount=dups.reduce((s,g)=>s+g.length-1,0);
+  if(!confirm(`同じ作品名の重複 ${delCount}件を1件にまとめます。\n色・ドラマID・タレント紐付けが充実している方を残し、紐付けは統合します。\n（出演情報は作品「名」で紐付いているため影響しません）\nよろしいですか？`))return;
+  const score=m=>(m.color?2:0)+(m.drama_id?1:0)+(seriesTalentKeys(m).length?1:0);
+  try{
+    for(const g of dups){
+      g.sort((a,b)=>score(b)-score(a));
+      const keep=g[0];
+      const merged=new Set(seriesTalentKeys(keep));
+      for(let i=1;i<g.length;i++)seriesTalentKeys(g[i]).forEach(k=>merged.add(k));
+      const dramaId=keep.drama_id||(g.find(x=>x.drama_id)||{}).drama_id||'';
+      const u={talents:[...merged],drama_id:dramaId};
+      await updateDoc(doc(db,'series_master',keep.id),u); localUpdateSeries(keep.id,u);
+      for(let i=1;i<g.length;i++){await deleteDoc(doc(db,'series_master',g[i].id)); localDeleteSeries(g[i].id);}
+    }
+    clearC(); renderSeries();
+    alert('重複を整理しました。');
+  }catch(e){alert('エラー: '+e.message);}
 };
 window.addSeries=async function(){
   const name=document.getElementById('new-sr-name').value.trim();
@@ -1482,26 +1573,69 @@ window.addSeries=async function(){
     clearC(); renderSeries();
   }catch(e){msg.style.color='var(--red)';msg.textContent='エラー: '+e.message;}
 };
+let _srEditTalents=[]; // 編集中の作品に紐付くタレントキー
 window.inlineEditSeries=function(id){
   const m=SERIES_M.find(x=>x.id===id);
   if(!m)return;
+  _srEditTalents=[...seriesTalentKeys(m)];
   const row=document.getElementById('sr-row-'+id);
   row.classList.add('editing');
   row.innerHTML=`
-    <td><input class="mini-input" id="esr-name-${id}" value="${esc(m.name)}" style="width:220px"></td>
-    <td><input class="mini-input" id="esr-drama-${id}" value="${esc(m.drama_id||'')}" style="width:160px;font-family:monospace" placeholder="例: GAP"></td>
-    <td>—</td>
-    <td><div style="display:flex;gap:5px">
-      <button class="btn btn-primary btn-sm" onclick="saveSeries('${id}')">💾 保存</button>
-      <button class="btn btn-sm" style="background:#F3F4F6;color:var(--sub)" onclick="renderSeries()">取消</button>
-    </div></td>`;
+    <td colspan="4">
+      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
+        <div><div class="form-label" style="font-size:10px;margin-bottom:3px">作品名 / 時期</div>
+          <input class="mini-input" id="esr-name-${id}" value="${esc(m.name)}" style="width:220px"></div>
+        <div><div class="form-label" style="font-size:10px;margin-bottom:3px">ドラマID</div>
+          <input class="mini-input" id="esr-drama-${id}" value="${esc(m.drama_id||'')}" style="width:160px;font-family:monospace" placeholder="例: GAP"></div>
+      </div>
+      <div style="margin-top:12px">
+        <div class="form-label" style="font-size:10px;margin-bottom:3px">この作品に出演するタレント（新規追加フォームで自動候補になります）</div>
+        <div id="esr-tl-chips-${id}" style="margin:4px 0">${_srEditTalents.map((k,i)=>talentChipHtml(k,true,`removeSeriesTalent('${id}',${i})`)).join('')||'<span style="font-size:11px;color:var(--sub)">まだ紐付けていません</span>'}</div>
+        <div style="position:relative;max-width:340px">
+          <input class="mini-input" id="esr-tl-q-${id}" placeholder="タレント名で検索して追加…" autocomplete="off" style="width:100%"
+            oninput="seriesTalentSearch('${id}')" onfocus="seriesTalentSearch('${id}')"
+            onblur="setTimeout(()=>{const l=document.getElementById('esr-tl-list-${id}');if(l)l.style.display='none';},180)">
+          <div id="esr-tl-list-${id}" style="display:none;position:absolute;z-index:60;left:0;right:0;max-height:200px;overflow:auto;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.14);margin-top:2px"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:5px;margin-top:12px">
+        <button class="btn btn-primary btn-sm" onclick="saveSeries('${id}')">💾 保存</button>
+        <button class="btn btn-sm" style="background:#F3F4F6;color:var(--sub)" onclick="renderSeries()">取消</button>
+      </div>
+    </td>`;
 };
+function refreshSeriesTalentChips(id){
+  const box=document.getElementById('esr-tl-chips-'+id); if(!box)return;
+  box.innerHTML=_srEditTalents.map((k,i)=>talentChipHtml(k,true,`removeSeriesTalent('${id}',${i})`)).join('')||'<span style="font-size:11px;color:var(--sub)">まだ紐付けていません</span>';
+}
+window.seriesTalentSearch=function(id){
+  const q=(document.getElementById('esr-tl-q-'+id)?.value||'').toLowerCase().trim();
+  const list=document.getElementById('esr-tl-list-'+id); if(!list)return;
+  const dn={}; TALENT_M.forEach(m=>{dn[m.name]=(dn[m.name]||0)+1;});
+  const items=[...TALENT_M].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')))
+    .filter(m=>!_srEditTalents.includes(talentKey(m)))
+    .filter(m=>!q||String(m.name||'').toLowerCase().includes(q)||String(m.real_name||'').toLowerCase().includes(q))
+    .slice(0,60);
+  list.innerHTML=items.map(m=>{const k=talentKey(m);const lbl=(dn[m.name]>1&&m.real_name)?`${m.name}（${m.real_name}）`:m.name;
+    return `<div onmousedown="addSeriesTalent('${id}','${esc(k)}')" style="padding:7px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid #f1f1f1" onmouseover="this.style.background='#f3f0ff'" onmouseout="this.style.background='#fff'">${(m.emoji||'⭐')} ${esc(lbl)}</div>`;}).join('')
+    ||'<div style="padding:8px 10px;font-size:12px;color:var(--sub)">該当なし（先に「🧑 タレント管理」で追加してください）</div>';
+  list.style.display='block';
+};
+window.addSeriesTalent=function(id,key){
+  if(!_srEditTalents.includes(key))_srEditTalents.push(key);
+  refreshSeriesTalentChips(id);
+  const q=document.getElementById('esr-tl-q-'+id); if(q){q.value='';q.focus();}
+  const list=document.getElementById('esr-tl-list-'+id); if(list)list.style.display='none';
+};
+window.removeSeriesTalent=function(id,i){_srEditTalents.splice(i,1);refreshSeriesTalentChips(id);};
 window.saveSeries=async function(id){
   const name=document.getElementById('esr-name-'+id)?.value.trim();
   const drama=document.getElementById('esr-drama-'+id)?.value.trim();
   if(!name)return;
   try{
-    await updateDoc(doc(db,'series_master',id),{name,drama_id:drama||''});
+    const data={name,drama_id:drama||'',talents:[..._srEditTalents]};
+    await updateDoc(doc(db,'series_master',id),data);
+    localUpdateSeries(id,data);
     clearC(); renderSeries();
   }catch(e){alert('エラー: '+e.message);}
 };

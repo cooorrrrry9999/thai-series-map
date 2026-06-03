@@ -540,6 +540,10 @@ function autoCpColor(cp){
   return autoCpMap[cp];
 }
 const FB={color:"#888780",light:"#F1EFE8",border:"#B4B2A9",emoji:"📍"};
+// おすすめスポット（作品・タレントに紐付かない場所）用の色とタグ
+const REC_CFG={color:"#E0A106",light:"#FCF4DD",border:"#EBCB78",emoji:"⭐"};
+const REC_TAG="⭐ おすすめ";
+const isRecSpot=loc=>locApps(loc.id).length===0; // 出演情報ゼロ＝おすすめスポット
 
 // CPの設定を取得（未登録は自動割り当て）
 function cpCfg(cpName){return CP_MAP[cpName]||(cpName?autoCpColor(cpName):FB);}
@@ -577,16 +581,23 @@ function getVisibleTags(){
 }
 
 function getFiltered(){
+  const recActive=activeTypes.has(REC_TAG);
+  const realTypes=new Set([...activeTypes].filter(t=>t!==REC_TAG));
   return LOCS.filter(loc=>{
     const apps=locApps(loc.id);
-    if(!apps.length)return false;
-    // CPフィルター
-    if(activeCps.size>0&&!apps.some(a=>activeCps.has(a.cp)))return false;
-    // 中カテゴリフィルター
-    if(activeTypes.size>0&&!apps.some(a=>activeTypes.has(a.series)))return false;
+    const isRec=apps.length===0; // 作品・タレント未設定のおすすめスポット
+    // CPフィルター：おすすめスポットはCPに属さないので、CP絞り込み中は隠す
+    if(activeCps.size>0){ if(isRec||!apps.some(a=>activeCps.has(a.cp)))return false; }
+    // 中カテゴリ（作品）フィルター ＋ おすすめタグ
+    if(realTypes.size>0||recActive){
+      const hitType=apps.some(a=>realTypes.has(a.series));
+      const hitRec=recActive&&isRec;
+      if(!hitType&&!hitRec)return false;
+    }
     if(searchQ){
       const q=searchQ.toLowerCase();
       const hit=loc.name.toLowerCase().includes(q)||
+        (loc.memo||'').toLowerCase().includes(q)||
         apps.some(a=>(a.series||'').toLowerCase().includes(q)||(a.cp||'').toLowerCase().includes(q)||(a.scene_desc||'').toLowerCase().includes(q));
       if(!hit)return false;
     }
@@ -729,9 +740,11 @@ function renderMarkers(){
   const filteredIds=new Set(getFiltered().map(l=>l.id));
   LOCS.forEach(loc=>{
     if(!loc.lat||!loc.lng)return;
-    const apps=locApps(loc.id); if(!apps.length)return;
-    if(apps.every(a=>!COMMON_TAGS.has(a.series)&&(a.series||'').includes('来日')))return;
-    const cfg=primaryCfg(loc.id), n=apps.length, inF=filteredIds.has(loc.id), isSel=loc.id===selId;
+    const apps=locApps(loc.id);
+    const isRec=apps.length===0;
+    // 来日のみのスポットは地図から隠す（おすすめスポットは対象外）
+    if(apps.length&&apps.every(a=>!COMMON_TAGS.has(a.series)&&(a.series||'').includes('来日')))return;
+    const cfg=isRec?REC_CFG:primaryCfg(loc.id), n=apps.length, inF=filteredIds.has(loc.id), isSel=loc.id===selId;
     // フィルター対象外は非表示
     const scale=isSel?1.35:1;
     // ピン形SVG + ラベル
@@ -796,13 +809,17 @@ function renderFilterDrawerBody(){
     </button>`;
   }).join('');
 
-  // 中カテゴリ ボタン群（CPで絞り込まれた作品タグ＋共通タグ）
-  const tagPills=(['すべて',...visibleTags]).map(t=>{
+  // 中カテゴリ ボタン群（CPで絞り込まれた作品タグ＋共通タグ）＋おすすめ
+  const tagList=['すべて',...visibleTags];
+  // おすすめスポットはCPに紐付かないので、CP未選択時のみ候補に出す
+  if(activeCps.size===0&&LOCS.some(isRecSpot))tagList.push(REC_TAG);
+  const tagPills=tagList.map(t=>{
     const isAll=t==='すべて';
     const isActive=isAll?(activeTypes.size===0):activeTypes.has(t);
     const isCommon=COMMON_TAGS.has(t);
+    const isRec=t===REC_TAG;
     return`<button class="filter-pill${isActive?' active':''}"
-      style="${isCommon&&!isAll?'border-style:dashed':''}"
+      style="${isCommon&&!isAll?'border-style:dashed':''}${isRec&&isActive?`background:${REC_CFG.color};border-color:${REC_CFG.color};`:''}"
       onclick="window._setType('${t.replace(/'/g,"\\'")}')">
       ${isCommon&&!isAll?'🌐 ':''}${t}
     </button>`;
@@ -860,12 +877,12 @@ function renderDrawer(){
     return;
   }
   el.innerHTML=filtered.map(loc=>{
-    const apps=locApps(loc.id),a0=apps[0],cfg=a0&&a0.cp?cpCfg(a0.cp):FB,isSel=loc.id===selId;
+    const apps=locApps(loc.id),a0=apps[0],isRec=apps.length===0,cfg=isRec?REC_CFG:(a0&&a0.cp?cpCfg(a0.cp):FB),isSel=loc.id===selId;
     return`<div class="drawer-card${isSel?' selected':''}" style="${isSel?`border-color:${cfg.color};box-shadow:0 2px 12px ${cfg.border};`:''}" onclick="window._sel('${loc.id}')">
       <div class="drawer-card-icon">${catEmoji(loc.category)}</div>
-      <span class="drawer-card-series" style="background:${cfg.light};color:${cfg.color};border-color:${cfg.border}">${a0?.series||''}</span>
+      <span class="drawer-card-series" style="background:${cfg.light};color:${cfg.color};border-color:${cfg.border}">${isRec?REC_TAG:(a0?.series||'')}</span>
       <div class="drawer-card-name">${loc.name}</div>
-      <div class="drawer-card-desc">${a0?.scene_desc||''}</div>
+      <div class="drawer-card-desc">${isRec?(loc.memo||''):(a0?.scene_desc||'')}</div>
       ${apps.length>1?`<div class="drawer-card-multi">📌 ${apps.length}作品に登場</div>`:''}
     </div>`;
   }).join('');
@@ -879,15 +896,17 @@ window._sel=function(locId){
   if(!selId){closeDetailDirect();return;}
   const loc=LOCS.find(l=>l.id===locId);
   const apps=locApps(locId);
-  // 色はCPで決まる
+  const isRec=apps.length===0;
+  // 色はCPで決まる（おすすめスポットは金色）
   const primaryCp=apps[0]?.cp||'';
-  const cfg=primaryCp?cpCfg(primaryCp):FB;
+  const cfg=isRec?REC_CFG:(primaryCp?cpCfg(primaryCp):FB);
   if(loc.lat&&loc.lng&&map){
     const offsetLat=loc.lat-0.003;
     map.setView([offsetLat,loc.lng],15,{animate:true});
   }
   document.getElementById('detail-accent').style.background=`linear-gradient(90deg,${cfg.border},${cfg.color})`;
   document.getElementById('detail-tags').innerHTML=
+    (isRec?`<span class="detail-tag" style="background:${REC_CFG.light};color:${REC_CFG.color};border-color:${REC_CFG.border}">${REC_TAG}</span>`:'')+
     [...new Set(apps.map(a=>a.series))].map(s=>`<span class="detail-tag" style="background:#F3F4F6;color:#555;border-color:#E5E7EB">${s}</span>`).join('')+
     `<span class="detail-tag" style="background:${cfg.light};color:${cfg.color};border-color:${cfg.border}">${catEmoji(loc.category)} ${loc.category}</span>`;
   document.getElementById('detail-name').textContent=loc.name;
