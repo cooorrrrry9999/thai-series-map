@@ -1036,6 +1036,12 @@ window.doBackup=function(){
   const d=new Date(),p=x=>String(x).padStart(2,'0');
   downloadJson(data,`tsmap_backup_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.json`);
 };
+// 公開用：そのまま index.html の隣に置く data.json を書き出す
+window.doPublish=function(){
+  const data={exportedAt:new Date().toISOString(),locations:LOCS,appearances:APPS,cp_master:CP_M,series_master:SERIES_M,category_master:CAT_M,talent_master:TALENT_M};
+  downloadJson(data,'data.json');
+  alert('data.json を書き出しました。\nこのファイルを index.html と同じフォルダに置き換えて、deploy.sh でデプロイすると公開サイトに反映されます。');
+};
 window.renderMigrate=function(){
   const legacy=legacyApps();
   const byCp={}; legacy.forEach(a=>{const c=a.cp||a.talent||'';(byCp[c]=byCp[c]||[]).push(a);});
@@ -1050,6 +1056,7 @@ window.renderMigrate=function(){
     <div style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#991B1B">⚠ この操作は既存データ（appearances）を書き換えます。<b>必ず先にバックアップ</b>を取ってください。元のCP名は変換後に上書きされます。</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
       <button class="btn btn-primary" onclick="doBackup()">💾 バックアップを書き出す（JSON）</button>
+      <button class="btn" style="background:#E0A106;color:#fff" onclick="doPublish()">📤 公開用 data.json を書き出す</button>
       <button class="btn" style="background:var(--green);color:#fff" onclick="doMigrate()"${matched.length?'':' disabled style="opacity:.5"'}>🔄 自動分割を実行（${matched.length}種・${matchedAppCnt}件）</button>
     </div>
     <div style="font-size:13px;font-weight:700;margin-bottom:8px">変換プレビュー（タレント未設定の紐付け ${legacy.length}件）</div>

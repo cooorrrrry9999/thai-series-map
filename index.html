@@ -678,7 +678,22 @@ function updateDrawerVar(){
 }
 
 // ── Data ──────────────────────────────────────────────────────
-async function loadAll(){
+// マスタ4種を各MAPに反映（data.json／Firestore 両方の経路で共通利用）
+function applyMasters(sMaster,cpMaster,tMaster,catMaster){
+  // series_master（drama_id）
+  (sMaster||[]).forEach(m=>{if(m.name){SERIES_MAP[m.name]={drama_id:m.drama_id||''}}});
+  // cp_master（CP色）
+  (cpMaster||[]).forEach(m=>{if(m.name){CP_MAP[m.name]={color:m.color||'#888',light:(m.color||'#888')+'22',border:(m.color||'#888')+'88',emoji:m.emoji||'💗'}}});
+  // talent_master（タレント色・投稿フォーム用）※マーカー色の基準
+  TALENTS=(tMaster||[]).filter(m=>m.name).map(m=>({name:m.name,real_name:m.real_name||'',color:m.color||'#888',emoji:m.emoji||'⭐'}))
+    .sort((a,b)=>a.name.localeCompare(b.name));
+  (tMaster||[]).forEach(m=>{if(m.name){CP_MAP[m.name]={color:m.color||'#888',light:(m.color||'#888')+'22',border:(m.color||'#888')+'88',emoji:m.emoji||'⭐'}}});
+  // category_master（カテゴリー絵文字）
+  (catMaster||[]).forEach(m=>{if(m.name&&m.emoji)CAT_MAP[m.name]=m.emoji;});
+}
+
+// 従来どおりFirestoreから読む（data.jsonが無いときのフォールバック専用）
+async function loadFromFirestore(){
   const cl=lc(CL), ca=lc(CA), cs=lc(CS), cc=lc(CC), ck=lc(CK), ctl=lc(CT);
   if(cl&&ca){LOCS=cl;APPS=ca;}
   else{
@@ -687,20 +702,31 @@ async function loadAll(){
     APPS=as.docs.map(d=>({id:d.id,...d.data()}));
     sc(CL,LOCS); sc(CA,APPS);
   }
-  // series_master（drama_id）
   const sMaster=cs||await getDocs(collection(db,'series_master')).then(s=>{const d=s.docs.map(x=>({id:x.id,...x.data()}));sc(CS,d);return d;}).catch(()=>[]);
-  sMaster.forEach(m=>{if(m.name){SERIES_MAP[m.name]={drama_id:m.drama_id||''}}});
-  // cp_master（CP色）
   const cpMaster=cc||await getDocs(collection(db,'cp_master')).then(s=>{const d=s.docs.map(x=>({id:x.id,...x.data()}));sc(CC,d);return d;}).catch(()=>[]);
-  cpMaster.forEach(m=>{if(m.name){CP_MAP[m.name]={color:m.color||'#888',light:(m.color||'#888')+'22',border:(m.color||'#888')+'88',emoji:m.emoji||'💗'}}});
-  // talent_master（タレント色・投稿フォーム用）※移行後はこちらがマーカー色の基準
   const tMaster=ctl||await getDocs(collection(db,'talent_master')).then(s=>{const d=s.docs.map(x=>({id:x.id,...x.data()}));sc(CT,d);return d;}).catch(()=>[]);
-  TALENTS=tMaster.filter(m=>m.name).map(m=>({name:m.name,real_name:m.real_name||'',color:m.color||'#888',emoji:m.emoji||'⭐'}))
-    .sort((a,b)=>a.name.localeCompare(b.name));
-  tMaster.forEach(m=>{if(m.name){CP_MAP[m.name]={color:m.color||'#888',light:(m.color||'#888')+'22',border:(m.color||'#888')+'88',emoji:m.emoji||'⭐'}}});
-  // category_master（カテゴリー絵文字）
   const catMaster=ck||await getDocs(collection(db,'category_master')).then(s=>{const d=s.docs.map(x=>({id:x.id,...x.data()}));sc(CK,d);return d;}).catch(()=>[]);
-  catMaster.forEach(m=>{if(m.name&&m.emoji)CAT_MAP[m.name]=m.emoji;});
+  applyMasters(sMaster,cpMaster,tMaster,catMaster);
+}
+
+async function loadAll(){
+  let ok=false;
+  // ① 静的JSON（data.json）から読み込む = Firestoreの読み取り 0回
+  try{
+    const res=await fetch('./data.json',{cache:'no-cache'}); // 更新が即反映されるよう毎回確認（304なら再DLなし）
+    if(res.ok){
+      const d=await res.json();
+      LOCS=d.locations||[];
+      APPS=d.appearances||[];
+      applyMasters(d.series_master,d.cp_master,d.talent_master,d.category_master);
+      ok=true;
+      console.log('data.json から読み込み（Firestore読み取り0回）, exportedAt =',d.exportedAt);
+    }
+  }catch(e){ console.warn('data.json 読み込み失敗。Firestoreにフォールバックします:',e); }
+
+  // ② data.jsonが無い/壊れている場合だけ、従来どおりFirestoreから読む
+  if(!ok) await loadFromFirestore();
+
   initMap(); renderFilters(); renderDrawer();
   // 投稿フォームのCP・中カテゴリをselectに反映
   populateSubmitSelects();
