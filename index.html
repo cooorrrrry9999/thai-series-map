@@ -543,7 +543,8 @@ const FB={color:"#888780",light:"#F1EFE8",border:"#B4B2A9",emoji:"📍"};
 // おすすめスポット（作品・タレントに紐付かない場所）用の色とタグ
 const REC_CFG={color:"#E0A106",light:"#FCF4DD",border:"#EBCB78",emoji:"⭐"};
 const REC_TAG="⭐ おすすめ";
-const isRecSpot=loc=>locApps(loc.id).length===0; // 出演情報ゼロ＝おすすめスポット
+// タレント（cp/talent_id）が1人も付いていないスポット＝おすすめスポット（出演ゼロも含む）
+const isRecSpot=loc=>{const a=locApps(loc.id);return a.every(x=>!x.cp&&!x.talent_id);};
 
 // CPの設定を取得（未登録は自動割り当て）
 function cpCfg(cpName){return CP_MAP[cpName]||(cpName?autoCpColor(cpName):FB);}
@@ -585,7 +586,7 @@ function getFiltered(){
   const realTypes=new Set([...activeTypes].filter(t=>t!==REC_TAG));
   return LOCS.filter(loc=>{
     const apps=locApps(loc.id);
-    const isRec=apps.length===0; // 作品・タレント未設定のおすすめスポット
+    const isRec=isRecSpot(loc); // 作品・タレント未設定のおすすめスポット
     // CPフィルター：おすすめスポットはCPに属さないので、CP絞り込み中は隠す
     if(activeCps.size>0){ if(isRec||!apps.some(a=>activeCps.has(a.cp)))return false; }
     // 中カテゴリ（作品）フィルター ＋ おすすめタグ
@@ -741,7 +742,7 @@ function renderMarkers(){
   LOCS.forEach(loc=>{
     if(!loc.lat||!loc.lng)return;
     const apps=locApps(loc.id);
-    const isRec=apps.length===0;
+    const isRec=isRecSpot(loc);
     // 来日のみのスポットは地図から隠す（おすすめスポットは対象外）
     if(apps.length&&apps.every(a=>!COMMON_TAGS.has(a.series)&&(a.series||'').includes('来日')))return;
     const cfg=isRec?REC_CFG:primaryCfg(loc.id), n=apps.length, inF=filteredIds.has(loc.id), isSel=loc.id===selId;
@@ -877,12 +878,12 @@ function renderDrawer(){
     return;
   }
   el.innerHTML=filtered.map(loc=>{
-    const apps=locApps(loc.id),a0=apps[0],isRec=apps.length===0,cfg=isRec?REC_CFG:(a0&&a0.cp?cpCfg(a0.cp):FB),isSel=loc.id===selId;
+    const apps=locApps(loc.id),a0=apps[0],isRec=isRecSpot(loc),cfg=isRec?REC_CFG:(a0&&a0.cp?cpCfg(a0.cp):FB),isSel=loc.id===selId;
     return`<div class="drawer-card${isSel?' selected':''}" style="${isSel?`border-color:${cfg.color};box-shadow:0 2px 12px ${cfg.border};`:''}" onclick="window._sel('${loc.id}')">
       <div class="drawer-card-icon">${catEmoji(loc.category)}</div>
-      <span class="drawer-card-series" style="background:${cfg.light};color:${cfg.color};border-color:${cfg.border}">${isRec?REC_TAG:(a0?.series||'')}</span>
+      <span class="drawer-card-series" style="background:${cfg.light};color:${cfg.color};border-color:${cfg.border}">${(a0&&a0.series)?a0.series:(isRec?REC_TAG:'')}</span>
       <div class="drawer-card-name">${loc.name}</div>
-      <div class="drawer-card-desc">${isRec?(loc.memo||''):(a0?.scene_desc||'')}</div>
+      <div class="drawer-card-desc">${a0?.scene_desc||loc.memo||''}</div>
       ${apps.length>1?`<div class="drawer-card-multi">📌 ${apps.length}作品に登場</div>`:''}
     </div>`;
   }).join('');
@@ -896,8 +897,8 @@ window._sel=function(locId){
   if(!selId){closeDetailDirect();return;}
   const loc=LOCS.find(l=>l.id===locId);
   const apps=locApps(locId);
-  const isRec=apps.length===0;
-  // 色はCPで決まる（おすすめスポットは金色）
+  const isRec=isRecSpot(loc);
+  // 色はCPで決まる（おすすめ＝タレント無しは金色）
   const primaryCp=apps[0]?.cp||'';
   const cfg=isRec?REC_CFG:(primaryCp?cpCfg(primaryCp):FB);
   if(loc.lat&&loc.lng&&map){
@@ -906,8 +907,8 @@ window._sel=function(locId){
   }
   document.getElementById('detail-accent').style.background=`linear-gradient(90deg,${cfg.border},${cfg.color})`;
   document.getElementById('detail-tags').innerHTML=
-    (isRec?`<span class="detail-tag" style="background:${REC_CFG.light};color:${REC_CFG.color};border-color:${REC_CFG.border}">${REC_TAG}</span>`:'')+
-    [...new Set(apps.map(a=>a.series))].map(s=>`<span class="detail-tag" style="background:#F3F4F6;color:#555;border-color:#E5E7EB">${s}</span>`).join('')+
+    (isRec&&!apps.some(a=>a.series)?`<span class="detail-tag" style="background:${REC_CFG.light};color:${REC_CFG.color};border-color:${REC_CFG.border}">${REC_TAG}</span>`:'')+
+    [...new Set(apps.map(a=>a.series).filter(Boolean))].map(s=>`<span class="detail-tag" style="background:#F3F4F6;color:#555;border-color:#E5E7EB">${s}</span>`).join('')+
     `<span class="detail-tag" style="background:${cfg.light};color:${cfg.color};border-color:${cfg.border}">${catEmoji(loc.category)} ${loc.category}</span>`;
   document.getElementById('detail-name').textContent=loc.name;
   document.getElementById('detail-address').innerHTML=loc.address?`<span>📌</span> ${loc.address}`:'';
@@ -923,9 +924,9 @@ window._sel=function(locId){
       const ac=a.cp?cpCfg(a.cp):FB;
       const dramaLink=buildDramaLink(ac,a.series);
       return`<div class="appearance-item" style="background:${ac.light};border-color:${ac.border}">
-        <div class="appearance-series" style="color:${ac.color}">${a.series}</div>
-        <div class="appearance-cp" style="color:${ac.color};opacity:.8">💗 ${a.cp}</div>
-        <div class="appearance-scene">${a.scene_desc}</div>
+        <div class="appearance-series" style="color:${ac.color}">${a.series||REC_TAG}</div>
+        ${a.cp?`<div class="appearance-cp" style="color:${ac.color};opacity:.8">💗 ${a.cp}</div>`:''}
+        <div class="appearance-scene">${a.scene_desc||''}</div>
         ${dramaLink}
         ${buildSnsLink(a)}
       </div>`;

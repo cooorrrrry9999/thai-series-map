@@ -670,9 +670,9 @@ window.editAppModal=function(appId,locId){
   const curKey=a.talent_id||(appTalent(a)?talentKey(appTalent(a)):'');
   document.getElementById('modal-title').textContent='🎬 紐付けを編集';
   document.getElementById('modal-body').innerHTML=`
-    <div class="form-group" style="margin-bottom:10px"><label class="form-label">タレント（誰）</label>
-      ${comboHtml('ea-talent','talent',curKey,'タレント名で検索…')}
-      ${(!curKey&&(a.cp||a.talent))?`<div style="font-size:10px;color:#92400E;margin-top:3px">⚠ 旧データ「${esc(a.cp||a.talent)}」。タレントを選び直してください</div>`:''}</div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">タレント（誰）<span style="font-weight:400;color:var(--sub);font-size:11px">／任意</span></label>
+      ${comboHtml('ea-talent','talent',curKey,'タレント名で検索…（おすすめ等は空でOK）')}
+      ${(!curKey&&(a.cp||a.talent))?`<div style="font-size:10px;color:#92400E;margin-top:3px">💡 タレント未設定です。作品のロケ地なら選択を。おすすめ/プライベート等なら<b>空のままでOK</b>（旧データ「${esc(a.cp||a.talent)}」は保存時にクリアされます）</div>`:`<div style="font-size:10px;color:var(--sub);margin-top:3px">💡 おすすめスポットやプライベートなど、タレントが不要なら空のままでOKです</div>`}</div>
     <div class="form-group" style="margin-bottom:10px"><label class="form-label">中カテゴリ（作品名 / プライベート / 〇〇年来日）</label>
       ${comboHtml('ea-series','series',a.series||'','作品名で検索 / 自由入力')}</div>
     <div class="form-group" style="margin-bottom:10px"><label class="form-label">シーン説明</label>
@@ -827,7 +827,7 @@ function appBlockHTML(i,a){a=a||{};
     </div>
     <div class="form-grid" style="margin-bottom:8px">
       <div class="form-group">
-        <label class="form-label">タレント</label>
+        <label class="form-label">タレント <span style="font-weight:400;color:var(--sub);font-size:11px">／任意（おすすめ等は空でOK）</span></label>
         ${comboHtml('a-talent-'+i,'talent',a.talentId||'','タレント名で検索…')}
         <div id="a-talent-cand-${i}" style="display:none;margin-top:5px"></div>
       </div>
