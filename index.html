@@ -307,9 +307,9 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
       <input class="form-input" id="f-name" placeholder="例: 99 House Studio">
     </div>
     <div class="form-group">
-      <label class="form-label">CP名 <span style="color:#DC2626">*</span></label>
+      <label class="form-label">タレント <span style="font-weight:400;color:#999;font-size:12px">／任意（おすすめ等は「なし」）</span></label>
       <select class="form-select" id="f-cp" onchange="onSubmitCpChange()">
-        <option value="">— 選択してください —</option>
+        <option value="">— なし（おすすめ・任意）—</option>
       </select>
     </div>
     <div class="form-group">
@@ -354,9 +354,9 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
     <!-- 紐付け追加タブ -->
     <div id="tab-appearance">
       <div class="form-group">
-        <label class="form-label">CP名 <span style="color:#DC2626">*</span></label>
+        <label class="form-label">タレント <span style="font-weight:400;color:#999;font-size:12px">／任意（おすすめ等は「なし」）</span></label>
         <select class="form-select" id="ai-cp" onchange="onAddInfoCpChange()">
-          <option value="">— 選択してください —</option>
+          <option value="">— なし（おすすめ・任意）—</option>
         </select>
       </div>
       <div class="form-group">
@@ -501,7 +501,8 @@ const ADMIN  = "cory92059@gmail.com";
 const GL_URL = "https://thai-gl-works-2c835.web.app/index.html";
 
 // キャッシュ（開発中30分）
-const TTL=7*24*60*60*1000, CL='tsmap_loc_v2', CA='tsmap_app_v2', CS='tsmap_series_v2', CC='tsmap_cp_v1', CK='tsmap_cat_v1'; // 7日キャッシュ（公開用）
+const TTL=7*24*60*60*1000, CL='tsmap_loc_v2', CA='tsmap_app_v2', CS='tsmap_series_v2', CC='tsmap_cp_v1', CK='tsmap_cat_v1', CT='tsmap_talent_v1'; // 7日キャッシュ（公開用）
+let TALENTS=[]; // 投稿フォーム用のタレント一覧
 const sc=(k,d)=>{try{localStorage.setItem(k,JSON.stringify({ts:Date.now(),data:d}))}catch(e){}};
 const lc=k=>{try{const r=localStorage.getItem(k);if(!r)return null;const{ts,data}=JSON.parse(r);if(Date.now()-ts>TTL){localStorage.removeItem(k);return null;}return data;}catch(e){return null;}};
 
@@ -678,7 +679,7 @@ function updateDrawerVar(){
 
 // ── Data ──────────────────────────────────────────────────────
 async function loadAll(){
-  const cl=lc(CL), ca=lc(CA), cs=lc(CS), cc=lc(CC), ck=lc(CK);
+  const cl=lc(CL), ca=lc(CA), cs=lc(CS), cc=lc(CC), ck=lc(CK), ctl=lc(CT);
   if(cl&&ca){LOCS=cl;APPS=ca;}
   else{
     const[ls,as]=await Promise.all([getDocs(collection(db,'locations')),getDocs(collection(db,'appearances'))]);
@@ -692,6 +693,11 @@ async function loadAll(){
   // cp_master（CP色）
   const cpMaster=cc||await getDocs(collection(db,'cp_master')).then(s=>{const d=s.docs.map(x=>({id:x.id,...x.data()}));sc(CC,d);return d;}).catch(()=>[]);
   cpMaster.forEach(m=>{if(m.name){CP_MAP[m.name]={color:m.color||'#888',light:(m.color||'#888')+'22',border:(m.color||'#888')+'88',emoji:m.emoji||'💗'}}});
+  // talent_master（タレント色・投稿フォーム用）※移行後はこちらがマーカー色の基準
+  const tMaster=ctl||await getDocs(collection(db,'talent_master')).then(s=>{const d=s.docs.map(x=>({id:x.id,...x.data()}));sc(CT,d);return d;}).catch(()=>[]);
+  TALENTS=tMaster.filter(m=>m.name).map(m=>({name:m.name,real_name:m.real_name||'',color:m.color||'#888',emoji:m.emoji||'⭐'}))
+    .sort((a,b)=>a.name.localeCompare(b.name));
+  tMaster.forEach(m=>{if(m.name){CP_MAP[m.name]={color:m.color||'#888',light:(m.color||'#888')+'22',border:(m.color||'#888')+'88',emoji:m.emoji||'⭐'}}});
   // category_master（カテゴリー絵文字）
   const catMaster=ck||await getDocs(collection(db,'category_master')).then(s=>{const d=s.docs.map(x=>({id:x.id,...x.data()}));sc(CK,d);return d;}).catch(()=>[]);
   catMaster.forEach(m=>{if(m.name&&m.emoji)CAT_MAP[m.name]=m.emoji;});
@@ -1012,8 +1018,9 @@ function populateSubmitSelects(){
   const cpSel=document.getElementById('f-cp');
   const aiCpSel=document.getElementById('ai-cp');
   if(!cpSel||!aiCpSel)return;
-  const cpOpts='<option value="">— 選択してください —</option>'+
-    Object.keys(CP_MAP).map(c=>`<option value="${c}">${CP_MAP[c].emoji||'💗'} ${c}</option>`).join('');
+  const list=TALENTS.length?TALENTS:Object.keys(CP_MAP).map(c=>({name:c,emoji:CP_MAP[c].emoji}));
+  const cpOpts='<option value="">— なし（おすすめ・任意）—</option>'+
+    list.map(t=>`<option value="${t.name}">${t.emoji||'⭐'} ${t.name}${t.real_name?`（${t.real_name}）`:''}</option>`).join('');
   cpSel.innerHTML=cpOpts;
   aiCpSel.innerHTML=cpOpts;
 }
@@ -1056,7 +1063,7 @@ window.submitSpot=async()=>{
   const url=document.getElementById('f-url').value.trim();
   const memo=document.getElementById('f-memo').value.trim();
   const msgEl=document.getElementById('submit-msg');
-  if(!name||!cp||!series||!scene){msgEl.style.color='#DC2626';msgEl.textContent='※ 必須項目を入力してください';return;}
+  if(!name||!series||!scene){msgEl.style.color='#DC2626';msgEl.textContent='※ 場所名・中カテゴリ・シーン説明を入力してください';return;}
   msgEl.style.color='#9333EA';msgEl.textContent='送信中...';
   try{
     await addDoc(collection(db,'location_submissions'),{
@@ -1105,7 +1112,7 @@ window.submitAddInfo=async function(){
       const series=document.getElementById('ai-series').value;
       const scene=document.getElementById('ai-scene').value.trim();
       const sns=document.getElementById('ai-sns').value.trim();
-      if(!cp||!series||!scene){msgEl.style.color='#DC2626';msgEl.textContent='※ CP・中カテゴリ・シーン説明は必須です';return;}
+      if(!series||!scene){msgEl.style.color='#DC2626';msgEl.textContent='※ 中カテゴリ・シーン説明は必須です';return;}
       await addDoc(collection(db,'location_submissions'),{
         target_location_id:addInfoTargetId,
         submission_type:'appearance_add',

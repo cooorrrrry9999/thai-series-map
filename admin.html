@@ -178,9 +178,10 @@ html,body{height:100%;font-family:'Noto Sans JP',sans-serif;background:var(--bg)
       <button class="sb-item" onclick="showPage('spots')" id="nav-spots"><span class="icon">📍</span>スポット一覧</button>
       <button class="sb-item" onclick="showPage('add')" id="nav-add"><span class="icon">➕</span>新規追加</button>
       <div class="sb-section">マスタ設定</div>
-      <button class="sb-item" onclick="showPage('cp')" id="nav-cp"><span class="icon">💗</span>CP管理</button>
+      <!-- 移行完了のため非表示（戻すには下の display:none を外す） -->
+      <button class="sb-item" onclick="showPage('cp')" id="nav-cp" style="display:none"><span class="icon">💗</span>CP管理</button>
       <button class="sb-item" onclick="showPage('talent')" id="nav-talent"><span class="icon">🧑</span>タレント管理</button>
-      <button class="sb-item" onclick="showPage('migrate')" id="nav-migrate"><span class="icon">🔄</span>CP→タレント移行</button>
+      <button class="sb-item" onclick="showPage('migrate')" id="nav-migrate" style="display:none"><span class="icon">🔄</span>CP→タレント移行</button>
       <button class="sb-item" onclick="showPage('series')" id="nav-series"><span class="icon">🎬</span>作品設定</button>
       <button class="sb-item" onclick="showPage('category')" id="nav-category"><span class="icon">📂</span>カテゴリー</button>
     </div>
@@ -483,7 +484,7 @@ function renderSpotDetail(locId){
 
   const appCards=apps.map(a=>{
     const t=appTalent(a);
-    const col=t?(t.color||'#888'):'#F59E0B';
+    const col=t?(t.color||'#888'):'#D1D5DB';
     return`<div class="app-chip" style="border-left:3px solid ${col}">
       <div class="app-chip-head">
         ${appWhoChip(a)}
@@ -908,7 +909,8 @@ function appWhoChip(a){
     return `<span class="cp-chip" style="background:${c}22;color:${c};border:1px solid ${c}66">${t.emoji||'⭐'} ${esc(lbl)}</span>`;
   }
   const legacy=a.talent||a.cp||'';
-  return `<span class="cp-chip" style="background:#FEF3C7;color:#92400E;border:1px solid #F59E0B">⚠ ${esc(legacy||'タレント未設定')}</span>`;
+  if(!legacy)return `<span class="cp-chip" style="background:#F3F4F6;color:#9CA3AF;border:1px solid #E5E7EB">⭐ おすすめ/なし</span>`;
+  return `<span class="cp-chip" style="background:#F3F4F6;color:#6B7280;border:1px solid #E5E7EB">${esc(legacy)}</span>`;
 }
 
 // ── 検索できるコンボボックス（talent=選択式 / series=自由入力可）─────
@@ -1287,16 +1289,16 @@ function bestNameField(fields,dir){
   }
   return best;
 }
-window.renderTalent=function(){
-  const rows=TALENT_M.map(m=>{
-    const sNames=talentSeriesNames(m);
-    const sChips=sNames.length?`<div style="margin-top:4px">${sNames.map(seriesChipHtml).join('')}</div>`:'';
-    return `
+let _tlQuery='',_tlSort='name';
+function talentRowHtml(m){
+  const sNames=talentSeriesNames(m);
+  const sChips=sNames.length?`<div style="margin-top:4px">${sNames.map(seriesChipHtml).join('')}</div>`:'<div style="margin-top:3px;font-size:11px;color:var(--sub)">出演作品 未紐付け</div>';
+  return `
     <tr id="tl-row-${m.id}">
       <td>
         <div style="display:flex;align-items:center;gap:8px">
           <span style="width:12px;height:12px;border-radius:50%;background:${m.color||'#888'};display:inline-block;flex-shrink:0"></span>
-          <strong>${m.name}</strong>${m.real_name?`<span style="font-size:10px;color:var(--sub)">${esc(m.real_name)}</span>`:''}
+          <strong>${esc(m.name)}</strong>${m.real_name?`<span style="font-size:10px;color:var(--sub)">${esc(m.real_name)}</span>`:''}
         </div>${sChips}
       </td>
       <td style="font-family:monospace;color:var(--sub)">${m.color||'未設定'}</td>
@@ -1305,7 +1307,22 @@ window.renderTalent=function(){
         <button class="btn btn-edit btn-sm" onclick="inlineEditTalent('${m.id}')">✏ 編集</button>
         <button class="btn btn-del btn-sm" onclick="delMaster('talent_master','${m.id}','talent')">🗑</button>
       </div></td>
-    </tr>`;}).join('');
+    </tr>`;
+}
+window.applyTalentFilter=function(){
+  const qEl=document.getElementById('tl-search'),sEl=document.getElementById('tl-sort');
+  if(qEl)_tlQuery=qEl.value;if(sEl)_tlSort=sEl.value;
+  const q=_tlQuery.toLowerCase().trim();
+  let list=TALENT_M.filter(m=>!q||String(m.name||'').toLowerCase().includes(q)||String(m.real_name||'').toLowerCase().includes(q)||String(m.kana||'').toLowerCase().includes(q));
+  const cnt=m=>talentSeriesNames(m).length;
+  if(_tlSort==='name')list.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
+  else if(_tlSort==='works')list.sort((a,b)=>cnt(b)-cnt(a)||String(a.name||'').localeCompare(String(b.name||'')));
+  else if(_tlSort==='unlinked')list.sort((a,b)=>cnt(a)-cnt(b)||String(a.name||'').localeCompare(String(b.name||'')));
+  const tb=document.getElementById('tl-tbody');
+  if(tb)tb.innerHTML=list.map(talentRowHtml).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--sub);padding:20px">該当するタレントがいません</td></tr>';
+  const c=document.getElementById('tl-count');if(c)c.textContent=`${list.length} / ${TALENT_M.length}名`;
+};
+window.renderTalent=function(){
   const importBar=`
     <div id="tl-import-bar" style="background:var(--pl);border:1px solid var(--purple);border-radius:8px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <span style="font-size:12px;color:var(--purple);font-weight:700">📥 タレント名鑑から取り込み</span>
@@ -1336,10 +1353,20 @@ window.renderTalent=function(){
       <button class="btn btn-primary" style="padding:6px 16px" onclick="addTalent()">＋ 追加</button>
       <div id="new-tl-msg" style="font-size:11px;align-self:center;color:var(--green)"></div>
     </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+      <input class="mini-input" id="tl-search" placeholder="🔍 タレント名・本名で検索…" style="width:240px" value="${esc(_tlQuery)}" oninput="applyTalentFilter()">
+      <select class="mini-input" id="tl-sort" style="width:160px" onchange="applyTalentFilter()">
+        <option value="name"${_tlSort==='name'?' selected':''}>名前順（A→Z）</option>
+        <option value="works"${_tlSort==='works'?' selected':''}>出演作品が多い順</option>
+        <option value="unlinked"${_tlSort==='unlinked'?' selected':''}>未紐付けを上に</option>
+      </select>
+      <span id="tl-count" style="font-size:11px;color:var(--sub)"></span>
+    </div>
     <table class="master-table">
       <thead><tr><th>タレント名・出演作品</th><th>カラー</th><th>絵文字</th><th>操作</th></tr></thead>
-      <tbody>${rows||'<tr><td colspan="4" style="text-align:center;color:var(--sub);padding:20px">タレントが登録されていません</td></tr>'}</tbody>
+      <tbody id="tl-tbody"></tbody>
     </table>`);
+  applyTalentFilter();
 };
 window.loadTalentDirectory=async function(){
   const btn=document.getElementById('tl-load-btn');
@@ -1546,15 +1573,13 @@ window.saveTalent=async function(id){
     clearC(); renderTalent();
   }catch(e){alert('エラー: '+e.message);}
 };
-window.renderSeries=function(){
+let _srQuery='',_srSort='name';
+function seriesRowHtml(m,nameCount){
   const GL='https://thai-gl-works-2c835.web.app/index.html';
-  const nameCount={}; SERIES_M.forEach(m=>{nameCount[m.name]=(nameCount[m.name]||0)+1;});
-  const dupTotal=Object.values(nameCount).filter(c=>c>1).reduce((a,c)=>a+c-1,0);
-  const rows=SERIES_M.map(m=>{
-    const tks=seriesTalentKeys(m);
-    const chips=tks.length?`<div style="margin-top:4px">${tks.map(k=>talentChipHtml(k,false,'')).join('')}</div>`:'<div style="margin-top:3px;font-size:11px;color:var(--sub)">タレント未紐付け</div>';
-    const dup=nameCount[m.name]>1?'<span style="font-size:10px;font-weight:700;color:#92400E;background:#FEF3C7;border:1px solid #F59E0B;border-radius:6px;padding:1px 6px;margin-left:6px">⚠ 重複</span>':'';
-    return `
+  const tks=seriesTalentKeys(m);
+  const chips=tks.length?`<div style="margin-top:4px">${tks.map(k=>talentChipHtml(k,false,'')).join('')}</div>`:'<div style="margin-top:3px;font-size:11px;color:var(--sub)">タレント未紐付け</div>';
+  const dup=nameCount[m.name]>1?'<span style="font-size:10px;font-weight:700;color:#92400E;background:#FEF3C7;border:1px solid #F59E0B;border-radius:6px;padding:1px 6px;margin-left:6px">⚠ 重複</span>':'';
+  return `
     <tr id="sr-row-${m.id}">
       <td><strong>${esc(m.name)}</strong>${dup}${chips}</td>
       <td style="font-family:monospace;color:var(--sub)">${m.drama_id||'—'}</td>
@@ -1563,7 +1588,25 @@ window.renderSeries=function(){
         <button class="btn btn-edit btn-sm" onclick="inlineEditSeries('${m.id}')">✏ 編集</button>
         <button class="btn btn-del btn-sm" onclick="delMaster('series_master','${m.id}','series')">🗑</button>
       </div></td>
-    </tr>`;}).join('');
+    </tr>`;
+}
+window.applySeriesFilter=function(){
+  const qEl=document.getElementById('sr-search'),sEl=document.getElementById('sr-sort');
+  if(qEl)_srQuery=qEl.value;if(sEl)_srSort=sEl.value;
+  const nameCount={}; SERIES_M.forEach(m=>{nameCount[m.name]=(nameCount[m.name]||0)+1;});
+  const q=_srQuery.toLowerCase().trim();
+  let list=SERIES_M.filter(m=>!q||String(m.name||'').toLowerCase().includes(q)||String(m.drama_id||'').toLowerCase().includes(q));
+  const cnt=m=>seriesTalentKeys(m).length;
+  if(_srSort==='name')list.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
+  else if(_srSort==='talents')list.sort((a,b)=>cnt(b)-cnt(a)||String(a.name||'').localeCompare(String(b.name||'')));
+  else if(_srSort==='unlinked')list.sort((a,b)=>cnt(a)-cnt(b)||String(a.name||'').localeCompare(String(b.name||'')));
+  const tb=document.getElementById('sr-tbody');
+  if(tb)tb.innerHTML=list.map(m=>seriesRowHtml(m,nameCount)).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--sub);padding:20px">該当する作品がありません</td></tr>';
+  const c=document.getElementById('sr-count');if(c)c.textContent=`${list.length} / ${SERIES_M.length}件`;
+};
+window.renderSeries=function(){
+  const nameCount={}; SERIES_M.forEach(m=>{nameCount[m.name]=(nameCount[m.name]||0)+1;});
+  const dupTotal=Object.values(nameCount).filter(c=>c>1).reduce((a,c)=>a+c-1,0);
   const cleanupBar=dupTotal?`<div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:8px;padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:#92400E">⚠ 同名の重複が ${dupTotal} 件あります。<button class="btn btn-sm" style="background:#F59E0B;color:#fff" onclick="dedupeSeries()">🧹 重複を1件にまとめる</button></div>`:'';
   setBody(`
     ${cleanupBar}
@@ -1576,10 +1619,20 @@ window.renderSeries=function(){
       <button class="btn btn-primary" style="padding:6px 16px" onclick="addSeries()">＋ 追加</button>
       <div id="new-sr-msg" style="font-size:11px;align-self:center;color:var(--green)"></div>
     </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+      <input class="mini-input" id="sr-search" placeholder="🔍 作品名・ドラマIDで検索…" style="width:240px" value="${esc(_srQuery)}" oninput="applySeriesFilter()">
+      <select class="mini-input" id="sr-sort" style="width:170px" onchange="applySeriesFilter()">
+        <option value="name"${_srSort==='name'?' selected':''}>作品名順（A→Z）</option>
+        <option value="talents"${_srSort==='talents'?' selected':''}>タレントが多い順</option>
+        <option value="unlinked"${_srSort==='unlinked'?' selected':''}>未紐付けを上に</option>
+      </select>
+      <span id="sr-count" style="font-size:11px;color:var(--sub)"></span>
+    </div>
     <table class="master-table">
       <thead><tr><th>作品名 / 時期・出演タレント</th><th>ドラマID</th><th>Thai GL Works</th><th>操作</th></tr></thead>
-      <tbody>${rows||'<tr><td colspan="4" style="text-align:center;color:var(--sub);padding:20px">作品が登録されていません</td></tr>'}</tbody>
+      <tbody id="sr-tbody"></tbody>
     </table>`);
+  applySeriesFilter();
 };
 window.dedupeSeries=async function(){
   const groups={}; SERIES_M.forEach(m=>{(groups[m.name]=groups[m.name]||[]).push(m);});
