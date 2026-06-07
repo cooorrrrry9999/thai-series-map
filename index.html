@@ -1297,5 +1297,13 @@ window.toggleDrawer=function(){
   });
 })();
 </script>
+<script>
+// PWA: Service Worker を登録（対応ブラウザのみ／失敗しても本体は動く）
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW登録失敗:', e));
+  });
+}
+</script>
 </body>
 </html>

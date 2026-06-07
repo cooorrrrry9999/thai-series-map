@@ -246,11 +246,14 @@ onAuthStateChanged(auth,async user=>{
 
 // ── Data ──────────────────────────────────────────────────────
 // ── キャッシュ設定（admin用・短め）──────────────────────────
-const ADMIN_CACHE_TTL = 5*60*1000; // 5分
+const ADMIN_CACHE_TTL = 24*60*60*1000; // 24時間（タブを開き直すたびの再読み込みを防ぐ）
 const CACHE_KEYS={locs:'adm_loc',apps:'adm_app',subs:'adm_sub',cp:'adm_cp',series:'adm_series',cat:'adm_cat',talent:'adm_talent'};
-const saveAC=(k,d)=>{try{sessionStorage.setItem(k,JSON.stringify({ts:Date.now(),data:d}));}catch(e){}};
-const loadAC=(k)=>{try{const r=sessionStorage.getItem(k);if(!r)return null;const{ts,data}=JSON.parse(r);if(Date.now()-ts>ADMIN_CACHE_TTL){sessionStorage.removeItem(k);return null;}return data;}catch(e){return null;}};
-function clearAdminCache(){Object.values(CACHE_KEYS).forEach(k=>sessionStorage.removeItem(k));}
+// localStorage に変更：別タブ・別セッションでもキャッシュが残り、Firestore読み取りを大幅削減
+const saveAC=(k,d)=>{try{localStorage.setItem(k,JSON.stringify({ts:Date.now(),data:d}));}catch(e){}};
+const loadAC=(k)=>{try{const r=localStorage.getItem(k);if(!r)return null;const{ts,data}=JSON.parse(r);if(Date.now()-ts>ADMIN_CACHE_TTL){localStorage.removeItem(k);return null;}return data;}catch(e){return null;}};
+function clearAdminCache(){Object.values(CACHE_KEYS).forEach(k=>localStorage.removeItem(k));}
+// 「Firestoreから最新を取得」：キャッシュを捨てて強制再読み込み（編集確定後やデータが古いと感じたとき用）
+window.refreshFromDB=async function(){clearAdminCache();await loadAll(true);showPage(currentPage);alert('Firestoreから最新データを再読み込みしました');};
 
 async function loadAll(forceRefresh=false){
   const cl=!forceRefresh&&loadAC(CACHE_KEYS.locs);
@@ -339,18 +342,26 @@ function setBody(html){document.getElementById('page-body').innerHTML=html;}
 window.renderDashboard=function(){
   const pending=SUBS.filter(s=>s.status==='未承認');
   const pubApps=APPS.filter(a=>a.status==='公開');
-  const cps=[...new Set(APPS.map(a=>a.cp).filter(Boolean))];
-  let html=`<div class="stat-grid">
+  // 実データ（appearances）に入っている単位＝cp（無ければtalent）で集計する。
+  // データはCP→タレントに移行済みのため、cp_master(カップル名)で数えると0件になっていた。
+  const counts={};
+  pubApps.forEach(a=>{const k=a.cp||a.talent;if(k)counts[k]=(counts[k]||0)+1;});
+  const entries=Object.entries(counts).sort((x,y)=>y[1]-x[1]); // 件数の多い順
+  // 表示メタ（色・絵文字）はCP_M→TALENT_Mの順で探し、無ければグレー
+  const metaOf=name=>CP_M.find(m=>m.name===name)||TALENT_M.find(m=>m.name===name)||{color:'#888',emoji:'💗'};
+  let html=`<div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+    <button class="btn btn-edit btn-sm" onclick="refreshFromDB()" title="キャッシュを捨ててFirestoreから取り直す">🔄 Firestoreから最新を取得</button>
+  </div>`;
+  html+=`<div class="stat-grid">
     <div class="stat-card"><div class="stat-num">${LOCS.length}</div><div class="stat-label">📍 スポット数</div></div>
     <div class="stat-card"><div class="stat-num">${pubApps.length}</div><div class="stat-label">🎬 公開紐付け</div></div>
     <div class="stat-card" style="${pending.length?'border-color:var(--pink)':''}"><div class="stat-num" style="${pending.length?'color:var(--pink)':''}">${pending.length}</div><div class="stat-label">📬 承認待ち</div></div>
-    <div class="stat-card"><div class="stat-num">${CP_M.length||cps.length}</div><div class="stat-label">💗 CP数</div></div>
+    <div class="stat-card"><div class="stat-num">${entries.length}</div><div class="stat-label">💗 CP/タレント数</div></div>
   </div>`;
-  // CP別件数
-  const cpList=CP_M.length?CP_M:cps.map(c=>({name:c,color:'#888',emoji:'💗'}));
-  html+=`<div class="stat-grid">`+cpList.map(cp=>{
-    const cnt=pubApps.filter(a=>a.cp===cp.name).length;
-    return`<div class="stat-card"><div class="stat-num" style="color:${cp.color||'#888'}">${cnt}</div><div class="stat-label">${cp.emoji||'💗'} ${cp.name}</div></div>`;
+  // CP/タレント別の公開件数（実データに存在するものだけ・多い順）
+  html+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;margin-bottom:20px">`+entries.map(([name,cnt])=>{
+    const m=metaOf(name);
+    return`<div class="stat-card"><div class="stat-num" style="color:${m.color||'#888'}">${cnt}</div><div class="stat-label">${m.emoji||'💗'} ${name}</div></div>`;
   }).join('')+'</div>';
   if(pending.length){
     html+=`<div style="font-size:13px;font-weight:700;color:var(--pink);margin:16px 0 8px">⚡ 承認待ちの投稿</div>`;
