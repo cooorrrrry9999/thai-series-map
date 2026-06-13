@@ -145,6 +145,70 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 .howto-divider{height:8px;background:#F8FAFC;border-top:1px solid #F1F5F9;border-bottom:1px solid #F1F5F9;margin:4px 0}
 .howto-section{padding:12px 20px 4px;font-size:12px;font-weight:700;color:#999;letter-spacing:.07em}
 
+/* ── 使い方ガイドモーダル（gd- 接頭辞で衝突回避） ── */
+.gd-title{font-size:18px;font-weight:900;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.gd-sub{font-size:12px;color:var(--text-sub);line-height:1.6}
+.gd-eyebrow{display:flex;align-items:center;gap:9px;padding:20px 20px 8px}
+.gd-eyebrow .gd-num{width:28px;height:28px;border-radius:9px;flex-shrink:0;background:linear-gradient(135deg,#F9A8D4,#C4B5FD);color:#fff;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(196,181,253,.4)}
+.gd-eyebrow h4{font-size:16px;font-weight:900}
+.gd-body{padding:0 20px}
+.gd-p{font-size:13px;color:var(--text-sub);line-height:1.8;margin-bottom:4px}
+.gd-p b{color:var(--text);font-weight:700}
+/* クイック3ステップ */
+.gd-quick{position:relative;padding:6px 0 2px}
+.gd-quick-line{position:absolute;left:20px;top:34px;bottom:34px;width:2.5px;background:linear-gradient(#F9A8D4,#C4B5FD);border-radius:2px}
+.gd-qstep{display:flex;gap:14px;padding:6px 0;position:relative;z-index:1}
+.gd-qdot{width:42px;height:42px;border-radius:50%;flex-shrink:0;background:#fff;border:2.5px solid #C4B5FD;display:flex;align-items:center;justify-content:center;font-size:20px}
+.gd-qt{font-weight:700;font-size:14px}
+.gd-qd{font-size:12px;color:var(--text-sub);line-height:1.6}
+/* スマホ図解 */
+.gd-phone-fig{display:flex;justify-content:center;margin:10px 0 4px}
+.gd-phone{width:168px;border-radius:22px;background:#fff;border:6px solid #2A2435;box-shadow:0 12px 28px rgba(0,0,0,.16);overflow:hidden}
+.gd-phone-top{height:112px;background:#E8EEF2;position:relative;overflow:hidden}
+.gd-mapline{position:absolute;background:#D5DEE6;height:8px;border-radius:4px}
+.gd-pin{position:absolute;width:17px;height:17px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 5px rgba(0,0,0,.25)}
+.gd-pin::after{content:"";position:absolute;inset:5px;background:#fff;border-radius:50%}
+.gd-sheet{padding:10px 11px 13px;border-top:1px solid #eee}
+.gd-stag{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px;margin-bottom:5px;background:#FCE7F3;color:#BE185D}
+.gd-stitle{font-size:13px;font-weight:900}
+.gd-srow{display:flex;align-items:center;gap:4px;font-size:9px;color:#999;margin-top:3px}
+.gd-sbtn{margin-top:8px;border-radius:9px;padding:7px;text-align:center;font-size:10px;font-weight:800;color:#fff;background:linear-gradient(135deg,#FB923C,#EC4899)}
+/* 注意・ヒント */
+.gd-note{border-radius:13px;padding:12px 14px;font-size:12px;line-height:1.7;display:flex;gap:9px;margin:10px 0 2px}
+.gd-note .gd-ni{font-size:15px;flex-shrink:0;line-height:1.5}
+.gd-note.tip{background:#FDF2F8;color:#9D174D}
+.gd-note.warn{background:#FFF7ED;color:#9A3412}
+.gd-note b{font-weight:800}
+/* KMLステップ */
+.gd-stage{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;padding:4px 12px;border-radius:20px;margin:10px 0 2px}
+.gd-stage.s1{background:#ECFDF5;color:#059669}
+.gd-stage.s2{background:#EEF2FF;color:#4F46E5}
+.gd-kstep{display:flex;gap:12px;padding:10px 0;border-bottom:1px dashed #EEF0F4}
+.gd-kstep:last-child{border-bottom:none}
+.gd-knum{width:25px;height:25px;border-radius:50%;flex-shrink:0;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;color:#fff;background:#059669}
+.gd-knum.pc{background:#6366F1}
+.gd-kt{font-weight:700;font-size:13.5px}
+.gd-kd{font-size:12px;color:var(--text-sub);line-height:1.6;margin-top:1px}
+/* 使い分け比較 */
+.gd-vs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.gd-vscard{border-radius:16px;padding:14px 12px;color:#fff}
+.gd-vscard.a{background:linear-gradient(150deg,#FB923C,#EC4899)}
+.gd-vscard.b{background:linear-gradient(150deg,#34D399,#059669)}
+.gd-vh{font-size:13px;font-weight:900;display:flex;align-items:center;gap:5px;margin-bottom:8px}
+.gd-vs ul{list-style:none;font-size:11px;line-height:1.5;margin:0;padding:0}
+.gd-vs li{display:flex;gap:5px;margin-bottom:5px}
+.gd-vs li::before{content:"●";font-size:6px;line-height:2;opacity:.85}
+.gd-vwhen{font-size:10.5px;font-weight:800;background:rgba(255,255,255,.22);border-radius:9px;padding:6px 8px;margin-top:5px;text-align:center}
+/* 機能リスト */
+.gd-feat{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid #F1F5F9}
+.gd-feat:last-child{border-bottom:none}
+.gd-fico{width:38px;height:38px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:19px;background:#F6F1FA}
+.gd-ft{font-weight:800;font-size:14px}
+.gd-fd{font-size:12px;color:var(--text-sub);line-height:1.6}
+/* PWA */
+.gd-pwa{display:flex;align-items:center;gap:11px;font-size:12.5px;margin-top:8px}
+.gd-pwa .gd-pn{width:23px;height:23px;border-radius:7px;background:linear-gradient(135deg,#F9A8D4,#C4B5FD);color:#fff;font-weight:900;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
 /* ── 投稿モーダル ── */
 .modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;animation:fadeIn .2s ease}
 .modal-card{background:var(--white);width:100%;max-width:430px;margin:0 auto;border-radius:24px 24px 0 0;padding:22px 20px 40px;animation:slideUp .3s cubic-bezier(.22,1,.36,1);max-height:90vh;overflow-y:auto}
@@ -252,6 +316,7 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
   <div class="user-menu-divider"></div>
   <a href="admin.html" class="user-menu-item" id="admin-menu-item" style="display:none">⚙ 管理者画面</a>
   <a href="https://thai-gl-works-2c835.web.app/" target="_blank" class="user-menu-item">🌺 Thai GL Works</a>
+  <button class="user-menu-item" onclick="toggleUserMenuClose();openGuideModal()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit;color:#9D174D">📖 使い方ガイド</button>
   <button class="user-menu-item" onclick="openSubmitModal()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit">📍 スポットを投稿</button>
   <button class="user-menu-item" onclick="toggleUserMenuClose();openKmlModal()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit;color:#059669">🗾 マイマップ出力（KML）</button>
   <div class="user-menu-divider"></div>
@@ -469,6 +534,129 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
         ⬇ KMLファイルをダウンロードする
       </button>
       <div id="kml-download-msg" style="font-size:12px;text-align:center;color:#059669;min-height:16px;margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 使い方ガイドモーダル -->
+<div class="howto-overlay" id="guide-overlay" style="display:none" onclick="closeGuide(event)">
+  <div class="howto-card" onclick="event.stopPropagation()">
+    <div class="howto-header">
+      <button class="howto-close" onclick="document.getElementById('guide-overlay').style.display='none'">×</button>
+      <div class="gd-title">🌸 使い方ガイド</div>
+      <div class="gd-sub">推しの作品・CPで絞って聖地を巡る。旅先ではGoogleマップでそのまま案内まで。</div>
+    </div>
+
+    <!-- 1. 3ステップ -->
+    <div class="gd-eyebrow"><div class="gd-num">1</div><h4>まずはこの3ステップ</h4></div>
+    <div class="gd-body">
+      <div class="gd-quick">
+        <div class="gd-quick-line"></div>
+        <div class="gd-qstep"><div class="gd-qdot">🔍</div><div><div class="gd-qt">推しで絞る</div><div class="gd-qd">作品やカップルを選んで、見たい聖地だけ表示。</div></div></div>
+        <div class="gd-qstep"><div class="gd-qdot">📍</div><div><div class="gd-qt">ピンをタップ</div><div class="gd-qd">地図のピンを押すと、下から詳細カードが出ます。</div></div></div>
+        <div class="gd-qstep"><div class="gd-qdot">🧭</div><div><div class="gd-qt">Googleマップで開く</div><div class="gd-qd">「行く」と決めたら、使い慣れたGoogleマップで案内。</div></div></div>
+      </div>
+    </div>
+
+    <div class="howto-divider"></div>
+    <!-- 2. フィルター -->
+    <div class="gd-eyebrow"><div class="gd-num">2</div><h4>推しで絞り込む</h4></div>
+    <div class="gd-body">
+      <div class="gd-p">画面左上の<b>フィルターボタン</b>から、<b>作品</b>（GAP・23.5・The Loyal Pin など）や<b>カップル</b>（FreenBecky・MilkLove など）で絞れます。選んだ条件は上部にチップで出て、件数も表示されます。</div>
+      <div class="gd-note tip"><span class="gd-ni">💡</span><span>作品ごとにピンの色が変わります。<b>GAPはピンク、23.5はグリーン、The Loyal Pinはゴールド</b>。色でどの作品の聖地かひと目で分かります。</span></div>
+    </div>
+
+    <div class="howto-divider"></div>
+    <!-- 3. ピンをタップ -->
+    <div class="gd-eyebrow"><div class="gd-num">3</div><h4>ピンをタップして詳細を見る</h4></div>
+    <div class="gd-body">
+      <div class="gd-phone-fig">
+        <div class="gd-phone">
+          <div class="gd-phone-top">
+            <div class="gd-mapline" style="top:22px;left:-10px;width:86px;transform:rotate(18deg)"></div>
+            <div class="gd-mapline" style="top:64px;left:58px;width:110px;transform:rotate(-12deg)"></div>
+            <div class="gd-mapline" style="top:90px;left:8px;width:66px;transform:rotate(8deg)"></div>
+            <div class="gd-pin" style="top:30px;left:62px;background:#EC4899"></div>
+            <div class="gd-pin" style="top:54px;left:104px;background:#10B981"></div>
+            <div class="gd-pin" style="top:72px;left:36px;background:#F59E0B"></div>
+          </div>
+          <div class="gd-sheet">
+            <span class="gd-stag">🍰 カフェ</span>
+            <div class="gd-stitle">Agalico</div>
+            <div class="gd-srow">📍 Sukhumvit 51, Bangkok</div>
+            <div class="gd-sbtn">🧭 Googleマップで開く</div>
+          </div>
+        </div>
+      </div>
+      <div class="gd-p" style="margin-top:8px">ピンをタップすると下から<b>詳細カード</b>がスライドアップ。名前・住所・登場作品・カップルが分かります。「<b>このスポットに情報を追加する</b>」から、みんなで情報を足していくこともできます。</div>
+    </div>
+
+    <div class="howto-divider"></div>
+    <!-- 4. 旅先ナビ -->
+    <div class="gd-eyebrow"><div class="gd-num">4</div><h4>旅先でナビとして使う</h4></div>
+    <div class="gd-body">
+      <div class="gd-p">詳細カードの<b>「Googleマップで開く」</b>を押すと、スマホの<b>本物のGoogleマップアプリ</b>がそのスポットで立ち上がります。あとは普段どおり経路案内するだけ。見慣れた地図でそのまま歩けるのが一番おすすめの使い方です。</div>
+      <div class="gd-note tip"><span class="gd-ni">📲</span><span>事前の書き出しや保存は不要。<b>その場でタップ1回</b>でGoogleマップに飛べます。</span></div>
+    </div>
+
+    <div class="howto-divider"></div>
+    <!-- 5. マイマップ -->
+    <div class="gd-eyebrow"><div class="gd-num">5</div><h4>マイマップに丸ごと取り込む</h4></div>
+    <div class="gd-body">
+      <div class="gd-p">絞り込んだ聖地を<b>まとめて1枚の地図</b>にしたいときに。右上メニューの「マイマップ出力（KML）」から地図データ（KML）を書き出せます。出発前に全体像をながめたい人向けです。</div>
+      <div class="gd-stage s1">🟢 STEP 1 ・ スマホでもPCでもOK</div>
+      <div class="gd-kstep"><div class="gd-knum">1</div><div><div class="gd-kt">見たい作品・CPで絞り込む</div><div class="gd-kd">地図に入れたい聖地だけフィルターで表示します。</div></div></div>
+      <div class="gd-kstep"><div class="gd-knum">2</div><div><div class="gd-kt">「マイマップ出力」をタップ</div><div class="gd-kd">KMLファイルがダウンロードされます。</div></div></div>
+      <div class="gd-stage s2" style="margin-top:12px">🔵 STEP 2 ・ ここはPCがおすすめ</div>
+      <div class="gd-kstep"><div class="gd-knum pc">3</div><div><div class="gd-kt">mymaps.google.com を開く</div><div class="gd-kd">PCのブラウザで開き「新しい地図を作成」をクリック。</div></div></div>
+      <div class="gd-kstep"><div class="gd-knum pc">4</div><div><div class="gd-kt">KMLをインポート</div><div class="gd-kd">「インポート」→ さっき保存したKMLを選択。聖地が一気にピン表示されます。</div></div></div>
+      <div class="gd-kstep"><div class="gd-knum pc">5</div><div><div class="gd-kt">名前をつけて保存</div><div class="gd-kd">「GAP ロケ地マップ」など分かりやすい名前に。自動保存されます。</div></div></div>
+      <div class="gd-kstep"><div class="gd-knum pc">6</div><div><div class="gd-kt">スマホのGoogleマップで開く</div><div class="gd-kd">「保存済み」→「マップ」タブから、作った地図を表示できます。</div></div></div>
+      <div class="gd-note warn"><span class="gd-ni">⚠️</span><span><b>取り込みはスマホ単体ではできません。</b>スマホのマイマップは閲覧専用のため、インポートはPCが必要です。取り込んだピンはGoogleマップの検索には出ず、直接の経路案内もできません（一度タップして店名で再検索が必要）。</span></div>
+    </div>
+
+    <div class="howto-divider"></div>
+    <!-- 6. 使い分け -->
+    <div class="gd-eyebrow"><div class="gd-num">6</div><h4>どっちを使う？</h4></div>
+    <div class="gd-body">
+      <div class="gd-p" style="margin-bottom:2px">同じ「Googleマップで見る」でも、目的でおすすめが変わります。</div>
+      <div class="gd-vs">
+        <div class="gd-vscard a">
+          <div class="gd-vh">🧭 アプリで開く</div>
+          <ul><li>タップ1回で即ナビ</li><li>書き出し・保存ナシ</li><li>常に最新の情報</li><li>1か所ずつ案内</li></ul>
+          <div class="gd-vwhen">現地で動く人に</div>
+        </div>
+        <div class="gd-vscard b">
+          <div class="gd-vh">🗾 マイマップ</div>
+          <ul><li>全部を1枚に表示</li><li>PCで作る手間あり</li><li>作った時点の情報</li><li>全体像をながめる</li></ul>
+          <div class="gd-vwhen">出発前に計画する人に</div>
+        </div>
+      </div>
+      <div class="gd-note tip"><span class="gd-ni">🌸</span><span>迷ったら<b>「アプリで開く」</b>でOK。旅先での使いやすさはこちらが上です。マイマップは「全部まとめて眺めたい」ときの予備くらいの位置づけが気楽です。</span></div>
+    </div>
+
+    <div class="howto-divider"></div>
+    <!-- 7. その他 -->
+    <div class="gd-eyebrow"><div class="gd-num">7</div><h4>そのほかの便利機能</h4></div>
+    <div class="gd-body">
+      <div class="gd-feat"><div class="gd-fico">🔎</div><div><div class="gd-ft">検索</div><div class="gd-fd">上部の検索バーで、場所・作品・カップル名から探せます。</div></div></div>
+      <div class="gd-feat"><div class="gd-fico">📍</div><div><div class="gd-ft">現在地</div><div class="gd-fd">いまいる場所を地図に表示。近くの聖地が分かります。</div></div></div>
+      <div class="gd-feat"><div class="gd-fico">＋</div><div><div class="gd-ft">スポットを投稿</div><div class="gd-fd">まだ載っていない聖地を自分で追加。Googleマップに出てこない隠れロケ地もここに。</div></div></div>
+    </div>
+
+    <div class="howto-divider"></div>
+    <!-- 8. PWA -->
+    <div class="gd-eyebrow"><div class="gd-num">8</div><h4>アプリのように使う</h4></div>
+    <div class="gd-body">
+      <div class="gd-p">ブラウザのメニューから<b>「ホーム画面に追加」</b>を選ぶと、アプリのアイコンが追加され、毎回ブラウザを開かずにサッと起動できます。</div>
+      <div class="gd-pwa"><span class="gd-pn">i</span><span><b>iPhone</b>：共有ボタン →「ホーム画面に追加」</span></div>
+      <div class="gd-pwa"><span class="gd-pn">A</span><span><b>Android</b>：メニュー（︙）→「ホーム画面に追加」</span></div>
+    </div>
+
+    <div style="padding:20px 20px 0">
+      <button onclick="document.getElementById('guide-overlay').style.display='none'" style="width:100%;padding:13px;border-radius:12px;font-weight:800;font-size:15px;border:none;cursor:pointer;font-family:inherit;color:white;background:linear-gradient(135deg,#F9A8D4,#C4B5FD)">
+        🌸 ガイドを閉じて地図を見る
+      </button>
     </div>
   </div>
 </div>
@@ -1212,6 +1400,15 @@ window.openKmlModal=function(){
 window.closeHowto=function(e){
   if(e.target===document.getElementById('howto-overlay'))
     document.getElementById('howto-overlay').style.display='none';
+};
+window.openGuideModal=function(){
+  document.getElementById('guide-overlay').style.display='flex';
+  document.querySelector('#guide-overlay .howto-card').scrollTop=0;
+  toggleUserMenuClose();
+};
+window.closeGuide=function(e){
+  if(e.target===document.getElementById('guide-overlay'))
+    document.getElementById('guide-overlay').style.display='none';
 };
 
 window.exportKML=function(){
