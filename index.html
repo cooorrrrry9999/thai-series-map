@@ -834,6 +834,9 @@ onAuthStateChanged(auth,async user=>{
   }
 });
 
+// PC幅（768px以上）かどうかの判定。CSSの @media(min-width:768px) と揃える
+function isPC(){return window.matchMedia('(min-width:768px)').matches;}
+
 function showUI(){
   ['top-bar','active-filters','map-overlay-info','spot-count','locate-btn','drawer','fab'].forEach(id=>{
     document.getElementById(id).style.display='';
