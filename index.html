@@ -968,7 +968,7 @@ function renderMarkers(){
     const isRec=isRecSpot(loc);
     // 来日のみのスポットは地図から隠す（おすすめスポットは対象外）
     if(apps.length&&apps.every(a=>!COMMON_TAGS.has(a.series)&&(a.series||'').includes('来日')))return;
-    const cfg=isRec?REC_CFG:primaryCfg(loc.id), n=apps.length, inF=filteredIds.has(loc.id), isSel=loc.id===selId;
+    const cfg=isRec?REC_CFG:primaryCfg(loc.id), n=new Set(apps.map(a=>a.series||REC_TAG)).size, inF=filteredIds.has(loc.id), isSel=loc.id===selId;
     // フィルター対象外は非表示
     const scale=isSel?1.35:1;
     // ピン形SVG + ラベル
@@ -1101,13 +1101,13 @@ function renderDrawer(){
     return;
   }
   el.innerHTML=filtered.map(loc=>{
-    const apps=locApps(loc.id),a0=apps[0],isRec=isRecSpot(loc),cfg=isRec?REC_CFG:(a0&&a0.cp?cpCfg(a0.cp):FB),isSel=loc.id===selId;
+    const apps=locApps(loc.id),a0=apps[0],isRec=isRecSpot(loc),cfg=isRec?REC_CFG:(a0&&a0.cp?cpCfg(a0.cp):FB),isSel=loc.id===selId,worksN=new Set(apps.map(a=>a.series||REC_TAG)).size;
     return`<div class="drawer-card${isSel?' selected':''}" style="${isSel?`border-color:${cfg.color};box-shadow:0 2px 12px ${cfg.border};`:''}" onclick="window._sel('${loc.id}')">
       <div class="drawer-card-icon">${catEmoji(loc.category)}</div>
       <span class="drawer-card-series" style="background:${cfg.light};color:${cfg.color};border-color:${cfg.border}">${(a0&&a0.series)?a0.series:(isRec?REC_TAG:'')}</span>
       <div class="drawer-card-name">${loc.name}</div>
       <div class="drawer-card-desc">${a0?.scene_desc||loc.memo||''}</div>
-      ${apps.length>1?`<div class="drawer-card-multi">📌 ${apps.length}作品に登場</div>`:''}
+      ${worksN>1?`<div class="drawer-card-multi">📌 ${worksN}作品に登場</div>`:''}
     </div>`;
   }).join('');
   setTimeout(()=>{updateDrawerVar();},50);
