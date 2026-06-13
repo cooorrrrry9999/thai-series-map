@@ -1351,7 +1351,7 @@ window.renderTalent=function(){
   const importBar=`
     <div id="tl-import-bar" style="background:var(--pl);border:1px solid var(--purple);border-radius:8px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <span style="font-size:12px;color:var(--purple);font-weight:700">📥 タレント名鑑から取り込み</span>
-      <button class="btn btn-primary btn-sm" id="tl-sync-btn" onclick="syncTalentDirectory()">🔄 名鑑を再読み込み（新規のみ追加）</button>
+      <button class="btn btn-primary btn-sm" id="tl-sync-btn" onclick="syncTalentDirectory()">🔄 名鑑と同期（新規追加＋既存更新）</button>
       <button class="btn btn-sm" style="background:#fff;color:var(--purple);border:1px solid var(--purple)" id="tl-load-btn" onclick="loadTalentDirectory()">⚙ 詳細プレビューで取り込む</button>
       ${TALENT_M.length?`<button class="btn btn-del btn-sm" onclick="resetAllTalents()">🗑 取り込み済みを全削除（${TALENT_M.length}）</button>`:''}
       ${(()=>{const g={};TALENT_M.forEach(m=>{const k=(m.name||'')+'|'+(m.real_name||'');g[k]=(g[k]||0)+1;});const d=Object.values(g).filter(c=>c>1).reduce((s,c)=>s+c-1,0);return d?`<button class="btn btn-sm" style="background:#F59E0B;color:#fff" onclick="dedupeTalents()">🔗 重複を統合（${d}件）</button>`:'';})()}
@@ -1473,28 +1473,114 @@ window.syncTalentDirectory=async function(){
     _talentFields=[...set];
     _talentNameField=bestNameField(_talentFields,_talentDir);
     if(!_talentDir.length){renderTalent();const m=document.getElementById('tl-import-msg');if(m){m.style.color='var(--red)';m.textContent='名鑑（talents）にデータが見つかりませんでした';}return;}
-    // 3) 未登録（src_id がまだ talent_master に無い）ものだけ抽出して追加
-    const list=talentImportList();
-    let added=0;
-    for(const t of list){
+    // 3) 名鑑の全件を走査：未登録は新規追加、登録済みは名鑑由来の情報だけ更新
+    //    （色・絵文字など聖地サイト側で設定した値は上書きしない）
+    const bySrc=new Map(TALENT_M.filter(m=>m.src_id).map(m=>[m.src_id,m]));
+    let added=0,updated=0;
+    for(const t of (_talentDir||[])){
       const r=t.raw||{};
-      const color=autoCpColor(t.name);
-      const data={name:t.name,color,emoji:'⭐',light:color+'22',border:color+'88',src_id:t.srcId};
-      if(typeof r.image_url==='string'&&r.image_url)data.photo=r.image_url;
-      if(typeof r.nickname_kana==='string'&&r.nickname_kana)data.kana=r.nickname_kana;
-      if(typeof r.real_name==='string'&&r.real_name)data.real_name=r.real_name;
-      const ref=await addDoc(collection(db,'talent_master'),data);
-      localAddTalent(ref.id,data); added++;
+      const name=String(r[_talentNameField]??'').trim();
+      if(!name)continue; // 名前が取れないものはスキップ
+      // 名鑑由来のフィールドだけまとめる
+      const src={name};
+      if(typeof r.image_url==='string'&&r.image_url)src.photo=r.image_url;
+      if(typeof r.nickname_kana==='string'&&r.nickname_kana)src.kana=r.nickname_kana;
+      if(typeof r.real_name==='string'&&r.real_name)src.real_name=r.real_name;
+      const exist=bySrc.get(t.srcId);
+      if(exist){
+        // 既存：名鑑由来の項目に変化があるときだけ更新（色・絵文字は保持）
+        const diff={};
+        for(const k of Object.keys(src)){if(exist[k]!==src[k])diff[k]=src[k];}
+        if(Object.keys(diff).length){
+          await updateDoc(doc(db,'talent_master',exist.id),diff);
+          localUpdateTalent(exist.id,diff); updated++;
+        }
+      }else{
+        // 新規：色・絵文字を自動付与して追加
+        const color=autoCpColor(name);
+        const data={...src,color,emoji:'⭐',light:color+'22',border:color+'88',src_id:t.srcId};
+        const ref=await addDoc(collection(db,'talent_master'),data);
+        localAddTalent(ref.id,data); added++;
+      }
     }
     clearC(); renderTalent();
     const m=document.getElementById('tl-import-msg');
-    if(m){m.style.color='var(--green)';m.textContent=added?`✅ ${added}件を新規追加（既存はスキップ）`:'新規タレントはありませんでした（すべて取り込み済み）';}
+    if(m){m.style.color='var(--green)';m.textContent=(added||updated)?`✅ 新規 ${added}件・更新 ${updated}件`:'変更はありませんでした（すべて最新です）';}
   }catch(e){
     if(btn){btn.disabled=false;btn.textContent='再試行';}
     const m=document.getElementById('tl-import-msg');
     if(m){m.style.color='var(--red)';m.textContent='エラー: '+e.message;}
   }
 };
+// ── 作品名鑑（dramas）と同期 ──────────────────────────────────
+// 新規作品は丸ごと追加。既存作品は「出演タレントの紐付け(talents)」だけ最新化。
+// 作品名・色・絵文字など聖地サイト側で設定した値は上書きしない。
+// dramas の各ドキュメント: id=ドラマID / title=作品名 / cps[]=カップル配列
+//   cps[].talent_id_top, cps[].talent_id_bottom が talent_master.src_id と同形式。
+function dramaTalentKeys(raw){
+  const out=[];const seen=new Set();
+  const cps=Array.isArray(raw&&raw.cps)?raw.cps:[];
+  for(const c of cps){
+    for(const k of [c&&c.talent_id_top,c&&c.talent_id_bottom]){
+      const id=String(k||'').trim();
+      if(id&&!seen.has(id)){seen.add(id);out.push(id);}
+    }
+  }
+  return out;
+}
+function sameKeys(a,b){
+  if(!Array.isArray(a)||!Array.isArray(b)||a.length!==b.length)return false;
+  for(let i=0;i<a.length;i++)if(a[i]!==b[i])return false;
+  return true;
+}
+window.syncSeriesDirectory=async function(){
+  const btn=document.getElementById('sr-sync-btn');
+  const msg=document.getElementById('sr-import-msg');
+  if(btn){btn.disabled=true;btn.textContent='同期中…';}
+  if(msg){msg.style.color='var(--sub)';msg.textContent='';}
+  try{
+    // 1) series_master を最新化（照合を正確にするためFirestoreから）
+    const smSnap=await getDocs(collection(db,'series_master'));
+    SERIES_M=smSnap.docs.map(d=>({id:d.id,...d.data()}));
+    saveAC(CACHE_KEYS.series,SERIES_M);
+    // 2) 作品名鑑（dramas コレクション）を読み込み
+    const snap=await getDocs(collection(db,'dramas'));
+    if(!snap.docs.length){if(msg){msg.style.color='var(--red)';msg.textContent='作品名鑑（dramas）にデータが見つかりませんでした';}if(btn){btn.disabled=false;btn.textContent='再試行';}return;}
+    // 3) drama_id で照合：未登録は新規追加、登録済みは talents だけ更新
+    const byDid=new Map(SERIES_M.filter(s=>s.drama_id).map(s=>[s.drama_id,s]));
+    let added=0,updated=0;
+    for(const d of snap.docs){
+      const raw=d.data()||{};
+      const dramaId=d.id;
+      const title=String(raw.title??raw.name??'').trim();
+      const talents=dramaTalentKeys(raw);
+      const exist=byDid_get(byDid,dramaId);
+      if(exist){
+        // 既存：紐付け(talents)が変わっていれば上書き（名前・色などは保持）
+        if(!sameKeys(seriesTalentKeys(exist),talents)){
+          await updateDoc(doc(db,'series_master',exist.id),{talents});
+          localUpdateSeries(exist.id,{talents}); updated++;
+        }
+      }else{
+        // 新規：作品名・ドラマID・紐付け・色を付けて追加
+        if(!title)continue; // 名前が取れない作品はスキップ
+        const color=autoCpColor(title);
+        const data={name:title,drama_id:dramaId,talents,color,light:color+'22',border:color+'88'};
+        const ref=await addDoc(collection(db,'series_master'),data);
+        localAddSeries(ref.id,data); added++;
+      }
+    }
+    clearC(); renderSeries();
+    const m=document.getElementById('sr-import-msg');
+    if(m){m.style.color='var(--green)';m.textContent=(added||updated)?`✅ 新規 ${added}作品・紐付け更新 ${updated}作品`:'変更はありませんでした（すべて最新です）';}
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='再試行';}
+    const m=document.getElementById('sr-import-msg');
+    if(m){m.style.color='var(--red)';m.textContent='エラー: '+e.message;}
+  }
+};
+function byDid_get(map,id){return map.get(id)||null;}
+
 window.importTalentDirectory=async function(){
   try{
     for(const t of talentImportList()){
@@ -1633,8 +1719,16 @@ window.renderSeries=function(){
   const nameCount={}; SERIES_M.forEach(m=>{nameCount[m.name]=(nameCount[m.name]||0)+1;});
   const dupTotal=Object.values(nameCount).filter(c=>c>1).reduce((a,c)=>a+c-1,0);
   const cleanupBar=dupTotal?`<div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:8px;padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:#92400E">⚠ 同名の重複が ${dupTotal} 件あります。<button class="btn btn-sm" style="background:#F59E0B;color:#fff" onclick="dedupeSeries()">🧹 重複を1件にまとめる</button></div>`:'';
+  const srImportBar=`
+    <div style="background:var(--pl);border:1px solid var(--purple);border-radius:8px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:12px;color:var(--purple);font-weight:700">🎬 作品名鑑（Thai GL Works）から同期</span>
+      <button class="btn btn-primary btn-sm" id="sr-sync-btn" onclick="syncSeriesDirectory()">🔄 作品名鑑と同期（新規追加＋紐付け更新）</button>
+      <span id="sr-import-msg" style="font-size:11px;color:var(--sub)"></span>
+      <span style="font-size:10px;color:var(--sub);width:100%">作品まとめサイトの作品と出演者(CP)を取り込みます。新規作品は追加、既存作品は出演タレントの紐付けだけ最新化します（色・絵文字は保持）。</span>
+    </div>`;
   setBody(`
     ${cleanupBar}
+    ${srImportBar}
     <div style="font-size:12px;color:var(--sub);margin-bottom:10px">来日の時期（例：2024年秋来日）も作品と同じ扱いで追加できます。編集で「出演タレント」を紐付けると、新規追加フォームで自動候補になります。</div>
     <div class="add-form-row">
       <div class="form-group"><div class="form-label" style="font-size:10px;margin-bottom:3px">作品名 / 時期 <span class="req">*</span></div>
