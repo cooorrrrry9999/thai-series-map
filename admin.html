@@ -349,8 +349,15 @@ window.renderDashboard=function(){
   const entries=Object.entries(counts).sort((x,y)=>y[1]-x[1]); // 件数の多い順
   // 表示メタ（色・絵文字）はCP_M→TALENT_Mの順で探し、無ければグレー
   const metaOf=name=>CP_M.find(m=>m.name===name)||TALENT_M.find(m=>m.name===name)||{color:'#888',emoji:'💗'};
-  let html=`<div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+  let html=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="doPublish()" title="公開用 data.json を書き出す（このあと deploy.sh で公開）">📤 公開用 data.json を書き出す</button>
+      <button class="btn btn-edit btn-sm" onclick="doBackup()" title="今のデータをバックアップ(JSON)として保存">💾 バックアップを保存</button>
+    </div>
     <button class="btn btn-edit btn-sm" onclick="refreshFromDB()" title="キャッシュを捨ててFirestoreから取り直す">🔄 Firestoreから最新を取得</button>
+  </div>
+  <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:11px;color:#92400E;line-height:1.6">
+    💡 データを直したら <b>「📤 公開用 data.json を書き出す」</b> → ダウンロードされた data.json を index.html と同じフォルダに置き換え → <b>deploy.sh</b> を実行すると公開サイトに反映されます。心配なときは先に <b>「💾 バックアップを保存」</b>。
   </div>`;
   html+=`<div class="stat-grid">
     <div class="stat-card"><div class="stat-num">${LOCS.length}</div><div class="stat-label">📍 スポット数</div></div>
