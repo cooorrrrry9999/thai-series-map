@@ -1140,15 +1140,33 @@ window._sel=function(locId){
   const appsEl=document.getElementById('detail-apps');
   if(apps.length){
     titleEl.style.display='block';
-    appsEl.innerHTML=apps.map(a=>{
-      const ac=a.cp?cpCfg(a.cp):FB;
-      const dramaLink=buildDramaLink(ac,a.series);
+    // 作品（series）ごとにまとめる：同じ作品なら人物（cp）が複数あっても1枚のカードに統合
+    const groups=[],gmap={};
+    apps.forEach(a=>{
+      const key=a.series||REC_TAG;
+      if(!gmap[key]){gmap[key]={series:a.series,items:[]};groups.push(gmap[key]);}
+      gmap[key].items.push(a);
+    });
+    appsEl.innerHTML=groups.map(g=>{
+      // カードの枠色は最初の人物の推し色
+      const first=g.items.find(x=>x.cp)||g.items[0];
+      const ac=first&&first.cp?cpCfg(first.cp):FB;
+      // 人物一覧（重複除去）：それぞれ自分の推し色で表示
+      const people=[...new Set(g.items.map(x=>x.cp).filter(Boolean))];
+      const peopleHtml=people.map(cp=>{const c=cpCfg(cp);return`<span style="color:${c.color};opacity:.85;margin-right:10px;white-space:nowrap">${c.emoji||'💗'} ${cp}</span>`;}).join('');
+      // シーン説明（重複除去）
+      const scenes=[...new Set(g.items.map(x=>x.scene_desc).filter(Boolean))];
+      const scenesHtml=scenes.map(s=>`<div class="appearance-scene">${s}</div>`).join('');
+      // SNSリンク（同じURLは1つだけ）
+      const seen=new Set();
+      const snsHtml=g.items.map(x=>{if(!x.sns_url||seen.has(x.sns_url))return'';seen.add(x.sns_url);return buildSnsLink(x);}).filter(Boolean).join('');
+      const dramaLink=buildDramaLink(ac,g.series);
       return`<div class="appearance-item" style="background:${ac.light};border-color:${ac.border}">
-        <div class="appearance-series" style="color:${ac.color}">${a.series||REC_TAG}</div>
-        ${a.cp?`<div class="appearance-cp" style="color:${ac.color};opacity:.8">💗 ${a.cp}</div>`:''}
-        <div class="appearance-scene">${a.scene_desc||''}</div>
+        <div class="appearance-series" style="color:${ac.color}">${g.series||REC_TAG}</div>
+        ${peopleHtml?`<div class="appearance-cp">${peopleHtml}</div>`:''}
+        ${scenesHtml}
         ${dramaLink}
-        ${buildSnsLink(a)}
+        ${snsHtml}
       </div>`;
     }).join('');
   }else{titleEl.style.display='none';appsEl.innerHTML='';}
