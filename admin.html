@@ -831,9 +831,12 @@ window.renderAdd=function(){
   // 下書きがあれば座標プレビューを更新
   if(draft?.lat&&draft?.lng)updateCoordPreview();
   updateBlockUI();
-  // 各出演ブロックで、作品が入っていればタレント候補を表示
+  // 各出演ブロックを初期化（選択済みタレント・作品候補・作品絞り込みを反映）
   [...document.querySelectorAll('#app-blocks .app-block')].forEach(b=>{
-    const i=b.dataset.i; if(i!=null&&window.refreshTalentCandidates)refreshTalentCandidates(i);
+    const i=b.dataset.i; if(i==null)return;
+    renderBlockTalentChips(i);
+    refreshSeriesNarrow(i);
+    if(window.refreshTalentCandidates)refreshTalentCandidates(i);
   });
 };
 
@@ -846,15 +849,22 @@ function appBlockHTML(i,a){a=a||{};
     </div>
     <div class="form-grid" style="margin-bottom:8px">
       <div class="form-group">
-        <label class="form-label">タレント <span style="font-weight:400;color:var(--sub);font-size:11px">／任意（おすすめ等は空でOK）</span></label>
-        ${comboHtml('a-talent-'+i,'talent',a.talentId||'','タレント名で検索…')}
-        <div id="a-talent-cand-${i}" style="display:none;margin-top:5px"></div>
+        <label class="form-label">タレント <span style="font-weight:400;color:var(--sub);font-size:11px">／複数選択OK・任意（おすすめ等は空でOK）</span></label>
+        <input type="hidden" id="a-talents-${i}" value="${esc(JSON.stringify(Array.isArray(a.talentIds)?a.talentIds:(a.talentId?[a.talentId]:[])))}">
+        <div id="a-talent-sel-${i}" style="margin-bottom:5px"></div>
+        <div style="position:relative">
+          <input class="form-input" id="a-talent-${i}__q" autocomplete="off" placeholder="タレント名で検索して追加…"
+            oninput="talentAddFilter(${i})" onfocus="talentAddFilter(${i})" onblur="talentAddBlur(${i})">
+          <div id="a-talent-${i}__list" style="display:none;position:absolute;z-index:60;left:0;right:0;max-height:220px;overflow:auto;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.14);margin-top:2px"></div>
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">中カテゴリ（作品名 / プライベート / 〇〇年来日・任意）</label>
         ${comboHtml('a-series-'+i,'series',a.series||'','作品名で検索 / 自由入力')}
+        <div id="a-series-hint-${i}" class="form-hint"></div>
       </div>
     </div>
+    <div id="a-talent-cand-${i}" style="display:none;margin-bottom:8px"></div>
     <div class="form-group" style="margin-bottom:8px">
       <label class="form-label">シーン説明</label>
       <input class="form-input" id="a-scene-${i}" placeholder="例: Monの家として使用されたスタジオ" value="${esc(a.scene||'')}" oninput="saveDraft()">
@@ -870,6 +880,7 @@ window.addAppBlock=function(){
   const blocks=[...cont.querySelectorAll('.app-block')];
   const nextI=blocks.reduce((m,b)=>Math.max(m,parseInt(b.dataset.i,10)),-1)+1;
   cont.insertAdjacentHTML('beforeend',appBlockHTML(nextI,{}));
+  renderBlockTalentChips(nextI);refreshSeriesNarrow(nextI);
   updateBlockUI();saveDraft();
 };
 window.removeAppBlock=function(i){
@@ -877,7 +888,10 @@ window.removeAppBlock=function(i){
   const blocks=[...cont.querySelectorAll('.app-block')];
   if(blocks.length<=1){
     // 最後の1件は削除せず中身だけクリア
-    ['a-talent-'+i,'a-talent-'+i+'__q','a-series-'+i,'a-scene-'+i,'a-sns-'+i].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    const h=document.getElementById('a-talents-'+i);if(h)h.value='[]';
+    renderBlockTalentChips(i);refreshSeriesNarrow(i);
+    if(window.refreshTalentCandidates)refreshTalentCandidates(i);
+    ['a-talent-'+i+'__q','a-series-'+i,'a-scene-'+i,'a-sns-'+i].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   }else{
     const b=cont.querySelector('.app-block[data-i="'+i+'"]');if(b)b.remove();
   }
@@ -948,7 +962,7 @@ function comboHtml(idBase,type,value,placeholder){
     <div id="${idBase}__list" style="display:none;position:absolute;z-index:60;left:0;right:0;max-height:220px;overflow:auto;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.14);margin-top:2px"></div>
   </div>`;
 }
-function comboItems(type,q){
+function comboItems(type,q,idBase){
   q=(q||'').toLowerCase().trim();
   if(type==='talent'){
     const dn={}; TALENT_M.forEach(m=>{dn[m.name]=(dn[m.name]||0)+1;});
@@ -956,14 +970,24 @@ function comboItems(type,q){
       .filter(m=>!q||String(m.name||'').toLowerCase().includes(q)||String(m.real_name||'').toLowerCase().includes(q))
       .map(m=>({key:talentKey(m),label:dn[m.name]>1&&m.real_name?`${m.name}（${m.real_name}）`:m.name})).slice(0,80);
   }
-  const all=[...new Set([...APPS.map(a=>a.series),...SERIES_M.map(m=>m.name)].filter(Boolean))].sort();
+  let all=[...new Set([...APPS.map(a=>a.series),...SERIES_M.map(m=>m.name)].filter(Boolean))].sort();
+  // 新規追加フォームの作品欄では、選択中タレントの出演作品だけに絞る
+  if(idBase&&idBase.indexOf('a-series-')===0){
+    const i=idBase.slice('a-series-'.length);
+    const sel=blockTalentIds(i);
+    if(sel.length){
+      const allowed=new Set();
+      sel.forEach(k=>{const m=talentByKey(k);if(m)talentSeriesNames(m).forEach(n=>allowed.add(n));});
+      if(allowed.size)all=all.filter(s=>allowed.has(s));
+    }
+  }
   return all.filter(s=>!q||s.toLowerCase().includes(q)).map(s=>({key:s,label:s})).slice(0,80);
 }
 window.comboFilter=function(idBase,type){
   const qEl=document.getElementById(type==='talent'?idBase+'__q':idBase);
   const list=document.getElementById(idBase+'__list');
   if(!qEl||!list)return;
-  const items=comboItems(type,qEl.value);
+  const items=comboItems(type,qEl.value,idBase);
   const rows=items.map(it=>`<div onmousedown="comboPick('${idBase}','${type}',this.dataset.k,this.dataset.l)" data-k="${esc(it.key)}" data-l="${esc(it.label)}" style="padding:7px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid #f1f1f1" onmouseover="this.style.background='#f3f0ff'" onmouseout="this.style.background='#fff'">${esc(it.label)}</div>`).join('');
   const clearRow=type==='talent'?`<div onmousedown="comboPick('${idBase}','talent','','')" style="padding:6px 10px;cursor:pointer;font-size:12px;color:var(--sub)">（選択をクリア）</div>`:'';
   list.innerHTML=clearRow+(rows||`<div style="padding:8px 10px;font-size:12px;color:var(--sub)">該当なし${type==='series'?'（このまま入力で新規作品）':''}</div>`);
@@ -981,20 +1005,81 @@ window.comboPick=function(idBase,type,key,label){
   if(idBase.startsWith('a-talent-')||idBase.startsWith('a-series-'))saveDraft();
   if(idBase.startsWith('a-series-'))refreshTalentCandidates(idBase.slice('a-series-'.length));
 };
-// 作品を選ぶと、その作品に紐付くタレントを候補チップとして表示（タップで選択）
+// 作品を選ぶと、その作品に紐付くタレントを候補チップとして表示（タップで追加/解除）
 window.refreshTalentCandidates=function(i){
   const box=document.getElementById('a-talent-cand-'+i); if(!box)return;
   const seriesVal=(document.getElementById('a-series-'+i)?.value||'').trim();
   const s=seriesByName(seriesVal);
   const keys=(s?seriesTalentKeys(s):[]).filter(k=>talentByKey(k));
   if(!keys.length){box.style.display='none';box.innerHTML='';return;}
-  // タレント欄が空で候補が1人だけなら自動入力
-  const hid=document.getElementById('a-talent-'+i);
-  if(hid&&!hid.value&&keys.length===1){comboPick('a-talent-'+i,'talent',keys[0],talentLabelByKey(keys[0]));}
+  const sel=blockTalentIds(i);
   box.style.display='block';
-  box.innerHTML=`<div style="font-size:10px;color:var(--sub);margin-bottom:3px">💡 ${esc(seriesVal)} の出演タレント（タップで選択）</div>`+
-    keys.map(k=>{const m=talentByKey(k);const c=m.color||'#888';
-      return `<button type="button" onclick="comboPick('a-talent-${i}','talent','${esc(k)}','${esc(talentLabelByKey(k))}')" style="background:${c}1a;color:${c};border:1px solid ${c}55;border-radius:12px;padding:3px 10px;font-size:12px;font-weight:700;margin:0 4px 4px 0;cursor:pointer">${m.emoji||'⭐'} ${esc(m.name)}</button>`;}).join('');
+  box.innerHTML=`<div style="font-size:10px;color:var(--sub);margin-bottom:4px">💡 ${esc(seriesVal)} の出演タレント（タップで追加/解除）</div>`+
+    keys.map(k=>{const m=talentByKey(k);const c=m.color||'#888';const on=sel.includes(k);
+      return `<button type="button" onclick="toggleBlockTalent(${i},'${esc(k)}')" style="background:${on?c:c+'1a'};color:${on?'#fff':c};border:1px solid ${c}55;border-radius:12px;padding:3px 10px;font-size:12px;font-weight:700;margin:0 4px 4px 0;cursor:pointer">${on?'✓ ':''}${m.emoji||'⭐'} ${esc(m.name)}</button>`;}).join('');
+};
+
+// ── 1ブロック複数タレント選択（talentIdsの配列をhidden inputで保持）─────
+function blockTalentIds(i){
+  try{const v=document.getElementById('a-talents-'+i)?.value;return v?(JSON.parse(v)||[]):[];}catch(e){return [];}
+}
+function setBlockTalentIds(i,arr){
+  const el=document.getElementById('a-talents-'+i);
+  if(el)el.value=JSON.stringify([...new Set(arr)]);
+  renderBlockTalentChips(i);   // 選択済みチップを更新
+  refreshSeriesNarrow(i);      // タレント→作品の絞り込みヒントを更新
+  saveDraft();
+}
+// 選択済みタレントのチップ（✕で解除）
+function renderBlockTalentChips(i){
+  const box=document.getElementById('a-talent-sel-'+i); if(!box)return;
+  const arr=blockTalentIds(i);
+  if(!arr.length){box.innerHTML='<span style="font-size:11px;color:var(--sub)">未選択（おすすめ/プライベート等ならこのままでOK）</span>';return;}
+  box.innerHTML=arr.map(k=>talentChipHtml(k,true,`removeBlockTalent(${i},'${esc(k)}')`)).join('');
+}
+window.addBlockTalent=function(i,key){
+  if(!key)return;
+  const arr=blockTalentIds(i); if(!arr.includes(key))arr.push(key);
+  setBlockTalentIds(i,arr);
+  const q=document.getElementById('a-talent-'+i+'__q'); if(q)q.value='';
+  const list=document.getElementById('a-talent-'+i+'__list'); if(list)list.style.display='none';
+  if(window.refreshTalentCandidates)refreshTalentCandidates(i);
+};
+window.removeBlockTalent=function(i,key){
+  setBlockTalentIds(i,blockTalentIds(i).filter(k=>k!==key));
+  if(window.refreshTalentCandidates)refreshTalentCandidates(i);
+};
+window.toggleBlockTalent=function(i,key){
+  const arr=blockTalentIds(i);
+  setBlockTalentIds(i, arr.includes(key)?arr.filter(k=>k!==key):[...arr,key]);
+  refreshTalentCandidates(i);  // 候補チップの選択状態(✓)を更新
+};
+// 選択中タレントの出演作品を作品欄ヒントに表示（作品の絞り込み）
+function refreshSeriesNarrow(i){
+  const hint=document.getElementById('a-series-hint-'+i); if(!hint)return;
+  const sel=blockTalentIds(i);
+  if(!sel.length){hint.textContent='';return;}
+  const allowed=new Set();
+  sel.forEach(k=>{const m=talentByKey(k);if(m)talentSeriesNames(m).forEach(n=>allowed.add(n));});
+  const names=[...allowed].sort();
+  hint.textContent=names.length
+    ? '💡 選択タレントの出演作品: '+names.join(' / ')+'（作品欄をタップすると候補が絞られます）'
+    : '💡 このタレントに紐づく作品は未登録です（作品名は自由入力でOK）';
+}
+// タレント追加用の検索ドロップダウン
+window.talentAddFilter=function(i){
+  const q=document.getElementById('a-talent-'+i+'__q');
+  const list=document.getElementById('a-talent-'+i+'__list');
+  if(!q||!list)return;
+  const sel=blockTalentIds(i);
+  const items=comboItems('talent',q.value).filter(it=>!sel.includes(it.key));
+  list.innerHTML=items.length
+    ? items.map(it=>`<div onmousedown="addBlockTalent(${i},this.dataset.k)" data-k="${esc(it.key)}" style="padding:7px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid #f1f1f1" onmouseover="this.style.background='#f3f0ff'" onmouseout="this.style.background='#fff'">${esc(it.label)}</div>`).join('')
+    : '<div style="padding:8px 10px;font-size:12px;color:var(--sub)">該当なし</div>';
+  list.style.display='block';
+};
+window.talentAddBlur=function(i){
+  setTimeout(()=>{const list=document.getElementById('a-talent-'+i+'__list');if(list)list.style.display='none';},180);
 };
 window.comboBlur=function(idBase,type){
   setTimeout(()=>{
@@ -1129,7 +1214,7 @@ function collectApps(){
   return [...document.querySelectorAll('#app-blocks .app-block')].map(b=>{
     const i=b.dataset.i;
     return {
-      talentId:document.getElementById('a-talent-'+i)?.value||'',
+      talentIds:blockTalentIds(i),
       series:document.getElementById('a-series-'+i)?.value||'',
       scene:document.getElementById('a-scene-'+i)?.value||'',
       sns:document.getElementById('a-sns-'+i)?.value||'',
@@ -1161,10 +1246,12 @@ function loadDraft(){
     const d=JSON.parse(r);
     // 旧形式からの移行（CP文字列はタレント選択に引き継げないので作品/シーンのみ）
     if(d&&!Array.isArray(d.apps)){
-      const a={talentId:'',series:d.series||'',scene:d.scene||'',sns:d.sns||''};
+      const a={talentIds:[],series:d.series||'',scene:d.scene||'',sns:d.sns||''};
       d.apps=(a.series||a.scene||a.sns)?[a]:[{}];
     }
-    if(d&&Array.isArray(d.apps))d.apps=d.apps.map(a=>({talentId:a.talentId||'',series:a.series||'',scene:a.scene||'',sns:a.sns||''}));
+    if(d&&Array.isArray(d.apps))d.apps=d.apps.map(a=>({
+      talentIds:Array.isArray(a.talentIds)?a.talentIds:(a.talentId?[a.talentId]:[]),
+      series:a.series||'',scene:a.scene||'',sns:a.sns||''}));
     return d;
   }catch(e){return null;}
 }
@@ -1182,8 +1269,8 @@ window.addSpot=async function(){
   if(!lat||!lng){msg.style.color='var(--red)';msg.textContent='緯度・経度を入力してください';return;}
   // 出演情報を収集（タレント・作品・シーンのどれかが入っているブロックのみ）
   const apps=collectApps()
-    .map(a=>({talentId:a.talentId.trim(),series:a.series.trim(),scene:a.scene.trim(),sns:a.sns.trim()}))
-    .filter(a=>a.talentId||a.series||a.scene);
+    .map(a=>({talentIds:(a.talentIds||[]).filter(Boolean),series:a.series.trim(),scene:a.scene.trim(),sns:a.sns.trim()}))
+    .filter(a=>a.talentIds.length||a.series||a.scene);
   msg.style.color='var(--purple)';msg.textContent='追加中...';
   try{
     // 場所を登録
@@ -1195,17 +1282,21 @@ window.addSpot=async function(){
       memo:document.getElementById('a-memo').value.trim()};
     await setDoc(ref,locData);
     localAddLoc(ref.id,locData);
-    // 出演情報を登録（誰＝タレント / 作品＝series。CPは廃止）
+    // 出演情報を登録（1ブロックの複数タレントは「タレント1人＝1レコード」で展開）
+    let cnt=0;
     for(const a of apps){
-      const tm=TALENT_M.find(m=>talentKey(m)===a.talentId);
-      const tname=tm?tm.name:'';
-      const appData={location_id:ref.id,talent_id:a.talentId,talent:tname,
-        cp:tname,  // ※暫定: 現行の地図/一覧がまだ cp を見ているため。地図のタレント対応時に削除予定
-        series:a.series,scene_desc:a.scene,sns_url:a.sns,status:'公開'};
-      const aref=await addDoc(collection(db,'appearances'),appData);
-      localAddApp(aref.id,appData);
+      const ids=a.talentIds.length?a.talentIds:['']; // タレント未選択でも作品/シーンがあれば1件登録
+      for(const tid of ids){
+        const tm=TALENT_M.find(m=>talentKey(m)===tid);
+        const tname=tm?tm.name:'';
+        const appData={location_id:ref.id,talent_id:tid,talent:tname,
+          cp:tname,  // ※暫定: 現行の地図/一覧がまだ cp を見ているため。地図のタレント対応時に削除予定
+          series:a.series,scene_desc:a.scene,sns_url:a.sns,status:'公開'};
+        const aref=await addDoc(collection(db,'appearances'),appData);
+        localAddApp(aref.id,appData);
+        cnt++;
+      }
     }
-    const cnt=apps.length;
     clearDraft();clearC();
     renderAdd();
     const m2=document.getElementById('add-msg');
