@@ -1005,7 +1005,7 @@ window.comboPick=function(idBase,type,key,label){
   if(idBase.startsWith('a-talent-')||idBase.startsWith('a-series-'))saveDraft();
   if(idBase.startsWith('a-series-'))refreshTalentCandidates(idBase.slice('a-series-'.length));
 };
-// 作品を選ぶと、その作品に紐付くタレントを候補チップとして表示（タップで追加/解除）
+// 作品を選ぶと、その作品の出演者をパネル表示（全員一括追加＋1人ずつタップ追加/解除）
 window.refreshTalentCandidates=function(i){
   const box=document.getElementById('a-talent-cand-'+i); if(!box)return;
   const seriesVal=(document.getElementById('a-series-'+i)?.value||'').trim();
@@ -1013,10 +1013,40 @@ window.refreshTalentCandidates=function(i){
   const keys=(s?seriesTalentKeys(s):[]).filter(k=>talentByKey(k));
   if(!keys.length){box.style.display='none';box.innerHTML='';return;}
   const sel=blockTalentIds(i);
+  const selSet=new Set(sel);
+  const remaining=keys.filter(k=>!selSet.has(k)).length; // まだ追加していない人数
+  const allAdded=remaining===0;
   box.style.display='block';
-  box.innerHTML=`<div style="font-size:10px;color:var(--sub);margin-bottom:4px">💡 ${esc(seriesVal)} の出演タレント（タップで追加/解除）</div>`+
-    keys.map(k=>{const m=talentByKey(k);const c=m.color||'#888';const on=sel.includes(k);
-      return `<button type="button" onclick="toggleBlockTalent(${i},'${esc(k)}')" style="background:${on?c:c+'1a'};color:${on?'#fff':c};border:1px solid ${c}55;border-radius:12px;padding:3px 10px;font-size:12px;font-weight:700;margin:0 4px 4px 0;cursor:pointer">${on?'✓ ':''}${m.emoji||'⭐'} ${esc(m.name)}</button>`;}).join('');
+  box.innerHTML=`
+    <div style="border:1.5px solid var(--pb);background:var(--pl);border-radius:10px;padding:10px 12px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <span style="font-size:12px;font-weight:700;color:var(--purple)">🎬 ${esc(seriesVal)} の出演者（${keys.length}人）</span>
+        <button type="button" onclick="addAllSeriesTalents(${i})" ${allAdded?'disabled':''}
+          style="margin-left:auto;background:${allAdded?'#E5E7EB':'var(--purple)'};color:${allAdded?'#9CA3AF':'#fff'};border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:${allAdded?'default':'pointer'}">
+          ${allAdded?'✓ 全員追加済み':`✓ 全員を追加（${remaining}人）`}</button>
+        ${sel.some(k=>selSet.has(k)&&keys.includes(k))?`<button type="button" onclick="clearSeriesTalents(${i})" style="background:#fff;color:var(--sub);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer">この作品の選択を外す</button>`:''}
+      </div>
+      <div style="font-size:10px;color:var(--sub);margin-bottom:6px">タップで1人ずつ追加 / 解除できます</div>
+      <div>${keys.map(k=>{const m=talentByKey(k);const c=m.color||'#888';const on=selSet.has(k);
+        return `<button type="button" onclick="toggleBlockTalent(${i},'${esc(k)}')"
+          style="background:${on?c:'#fff'};color:${on?'#fff':c};border:1.5px solid ${on?c:c+'66'};border-radius:14px;padding:5px 12px;font-size:13px;font-weight:700;margin:0 5px 5px 0;cursor:pointer;line-height:1.3">${on?'✓ ':''}${m.emoji||'⭐'} ${esc(m.name)}</button>`;}).join('')}</div>
+    </div>`;
+};
+// この作品の出演者を全員、選択に追加（既存の選択はそのまま）
+window.addAllSeriesTalents=function(i){
+  const seriesVal=(document.getElementById('a-series-'+i)?.value||'').trim();
+  const s=seriesByName(seriesVal); if(!s)return;
+  const keys=seriesTalentKeys(s).filter(k=>talentByKey(k));
+  setBlockTalentIds(i,[...blockTalentIds(i),...keys]);
+  refreshTalentCandidates(i);
+};
+// この作品の出演者だけを選択から外す（手動で足した他の人は残す）
+window.clearSeriesTalents=function(i){
+  const seriesVal=(document.getElementById('a-series-'+i)?.value||'').trim();
+  const s=seriesByName(seriesVal); if(!s)return;
+  const drop=new Set(seriesTalentKeys(s));
+  setBlockTalentIds(i,blockTalentIds(i).filter(k=>!drop.has(k)));
+  refreshTalentCandidates(i);
 };
 
 // ── 1ブロック複数タレント選択（talentIdsの配列をhidden inputで保持）─────
