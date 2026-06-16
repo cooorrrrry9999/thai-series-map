@@ -967,7 +967,7 @@ function renderMarkers(){
     const apps=locApps(loc.id);
     const isRec=isRecSpot(loc);
     // 来日のみのスポットは地図から隠す（おすすめスポットは対象外）
-    if(apps.length&&apps.every(a=>!COMMON_TAGS.has(a.series)&&(a.series||'').includes('来日')))return;
+    //if(apps.length&&apps.every(a=>!COMMON_TAGS.has(a.series)&&(a.series||'').includes('来日')))return;
     const cfg=isRec?REC_CFG:primaryCfg(loc.id), n=new Set(apps.map(a=>a.series||REC_TAG)).size, inF=filteredIds.has(loc.id), isSel=loc.id===selId;
     // フィルター対象外は非表示
     const scale=isSel?1.35:1;
