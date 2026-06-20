@@ -269,6 +269,22 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
   .drawer.pc-hidden{transform:translateX(-100%);pointer-events:none}
   #map.drawer-open{left:300px;transition:left .3s}
   #map.drawer-closed{left:0;transition:left .3s}
+  /* PC: スポット一覧を「下から出る浮きパネル」ではなく、左側の縦並び固定サイドバーにする
+     （地図を300pxずらしている分の空白をこの一覧で埋める） */
+  .drawer{
+    top:0; bottom:auto; left:0; right:auto;
+    width:300px; max-width:300px; min-width:300px; margin:0;
+    height:100vh; border-radius:0;
+    box-shadow:2px 0 24px rgba(0,0,0,.10);
+    flex-direction:column;
+    padding-top:96px; /* 上部の検索バー・フィルターボタンの下から始める */
+  }
+  .drawer.collapsed{transform:none} /* PCではドラッグ折りたたみは無効 */
+  .drawer-handle-wrap{display:none} /* PCではドラッグ用ハンドル不要 */
+  .drawer-header{padding:2px 16px 10px}
+  .drawer-list{flex:1;flex-direction:column;overflow-y:auto;overflow-x:hidden;padding:4px 14px 20px}
+  .drawer-card{width:auto} /* 横スクロール用の固定幅を解除して縦並びで全幅に */
+  .locate-btn{left:314px} /* サイドバーに重ならないよう右へ寄せる */
 }
 </style>
 </head>
@@ -859,7 +875,7 @@ function showUI(){
   document.getElementById('top-bar').style.display='flex';
   document.getElementById('active-filters').style.display='flex';
   document.getElementById('map-overlay-info').style.display='flex';
-  document.getElementById('drawer').style.display='block';
+  document.getElementById('drawer').style.display=isPC()?'flex':'block';
   document.getElementById('fab').style.display='flex';
   document.getElementById('filter-btn').style.display='flex';
   document.getElementById('spot-count').style.display='block';
@@ -879,6 +895,8 @@ function hideUI(){
 function updateDrawerVar(){
   const el=document.getElementById('drawer');
   if(!el)return;
+  // PCではドロワーは左サイドバー（全高）なので、下部オーバーレイの基準は0にする
+  if(isPC()){document.documentElement.style.setProperty('--drawer-h','0px');return;}
   const h=drawerCollapsed?parseInt(getComputedStyle(document.documentElement).getPropertyValue('--drawer-peek'))||64:el.offsetHeight;
   document.documentElement.style.setProperty('--drawer-h',h+'px');
 }
