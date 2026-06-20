@@ -57,6 +57,19 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 .filter-pill{display:flex;align-items:center;justify-content:center;padding:9px 10px;border-radius:10px;border:1.5px solid #EEE;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s;background:white;color:#555}
 .filter-pill:hover{background:#F8FAFC;border-color:#ddd}
 .filter-pill.active{background:#111;color:#fff;border-color:#111;font-weight:700}
+/* 入力式・複数選択ドロップダウン（タレント/作品） */
+.ms-search{width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;font-family:inherit;outline:none;background:white;color:var(--text);margin-bottom:6px}
+.ms-search:focus{border-color:#9333EA}
+.ms-search::placeholder{color:#bbb}
+.ms-list{max-height:200px;overflow-y:auto;border:1.5px solid #F1F5F9;border-radius:10px;background:#fff}
+.ms-row{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:9px 11px;border:none;border-bottom:1px solid #F5F5F5;background:white;font-size:13px;font-weight:600;color:#555;cursor:pointer;font-family:inherit}
+.ms-row:last-child{border-bottom:none}
+.ms-row:hover{background:#F8FAFC}
+.ms-row.on{background:#F3F0FF;color:#111}
+.ms-check{width:16px;flex-shrink:0;color:#9333EA;font-weight:900}
+.ms-empty{padding:12px;color:#bbb;font-size:13px;text-align:center}
+.ms-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.ms-chip{padding:5px 11px;border-radius:16px;border:none;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;box-shadow:0 1px 4px rgba(0,0,0,.12)}
 /* CPボタン：コンパクト */
 .cp-pill{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:10px;border:1.5px solid #EEE;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s;background:white;color:#555;margin-bottom:4px;width:100%;text-align:left}
 .cp-pill:hover{background:#F8FAFC}
@@ -749,6 +762,8 @@ function seriesDramaId(s){return(SERIES_MAP[s]||{}).drama_id||'';}
 let LOCS=[], APPS=[], map=null, markers={};
 // フィルターは複数選択可能（Set使用）
 let activeTypes=new Set(), activeCps=new Set(), searchQ="", selId=null, currentUser=null;
+// フィルタードロワーの「頭文字検索」入力値（再描画でも保持する）
+let cpSearchQ="", seriesSearchQ="";
 // 全CPに共通で常に表示するタグ
 const COMMON_TAGS=new Set(['プライベート']);
 let drawerOpen=true;
@@ -967,7 +982,7 @@ function renderMarkers(){
     const apps=locApps(loc.id);
     const isRec=isRecSpot(loc);
     // 来日のみのスポットは地図から隠す（おすすめスポットは対象外）
-    //if(apps.length&&apps.every(a=>!COMMON_TAGS.has(a.series)&&(a.series||'').includes('来日')))return;
+    if(apps.length&&apps.every(a=>!COMMON_TAGS.has(a.series)&&(a.series||'').includes('来日')))return;
     const cfg=isRec?REC_CFG:primaryCfg(loc.id), n=new Set(apps.map(a=>a.series||REC_TAG)).size, inF=filteredIds.has(loc.id), isSel=loc.id===selId;
     // フィルター対象外は非表示
     const scale=isSel?1.35:1;
@@ -993,6 +1008,7 @@ function renderMarkers(){
 }
 
 // ── Filters ───────────────────────────────────────────────────
+function escAttr(s){return(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 // ── フィルタードロワー ────────────────────────────────────────
 function renderFilters(){
   renderActiveFilterBar();
@@ -1017,51 +1033,74 @@ function renderActiveFilterBar(){
   document.getElementById('active-filters').innerHTML=chips.join('');
 }
 
+// 骨組み（検索入力＋空のコンテナ）を一度だけ作り、中身は軽い再描画関数で更新する
 function renderFilterDrawerBody(){
-  const allCps=getUniqueCPs();
-  const visibleTags=getVisibleTags();
-
-  // CP ボタン群
-  const cpPills=allCps.map(cp=>{
-    const cfg=cpCfg(cp);
-    const isActive=activeCps.has(cp);
-    return`<button class="cp-pill${isActive?' active':''}"
-      style="${isActive?`background:${cfg.color}18;border-color:${cfg.color};color:${cfg.color}`:''}"
-      onclick="window._setCp('${cp.replace(/'/g,"\\'")}')">
-      <span class="cp-dot" style="background:${cfg.color||'#888'}"></span>
-      <span>${cfg.emoji||'💗'} ${cp}</span>
-    </button>`;
-  }).join('');
-
-  // 中カテゴリ ボタン群（CPで絞り込まれた作品タグ＋共通タグ）＋おすすめ
-  const tagList=['すべて',...visibleTags];
-  // おすすめスポットはCPに紐付かないので、CP未選択時のみ候補に出す
-  if(activeCps.size===0&&LOCS.some(isRecSpot))tagList.push(REC_TAG);
-  const tagPills=tagList.map(t=>{
-    const isAll=t==='すべて';
-    const isActive=isAll?(activeTypes.size===0):activeTypes.has(t);
-    const isCommon=COMMON_TAGS.has(t);
-    const isRec=t===REC_TAG;
-    return`<button class="filter-pill${isActive?' active':''}"
-      style="${isCommon&&!isAll?'border-style:dashed':''}${isRec&&isActive?`background:${REC_CFG.color};border-color:${REC_CFG.color};`:''}"
-      onclick="window._setType('${t.replace(/'/g,"\\'")}')">
-      ${isCommon&&!isAll?'🌐 ':''}${t}
-    </button>`;
-  }).join('');
-
-  const cpHint=activeCps.size>0
-    ?`<div style="font-size:10px;color:#bbb;margin-bottom:6px">💡 プライベートは全CPで共通表示</div>`:'';
-
   document.getElementById('filter-drawer-body').innerHTML=`
     <div class="filter-section">
-      <div class="filter-section-title">CP</div>
-      ${cpPills||'<div style="color:#bbb;font-size:13px">CPが登録されていません</div>'}
+      <div class="filter-section-title">タレント（複数選択OK）</div>
+      <div class="ms-chips" id="cp-chips"></div>
+      <input class="ms-search" id="cp-search" autocomplete="off" placeholder="頭文字で検索…（例: f → Freen）"
+        value="${escAttr(cpSearchQ)}" oninput="cpSearchQ=this.value;renderCpList()">
+      <div class="ms-list" id="cp-list"></div>
     </div>
     <div class="filter-section">
-      <div class="filter-section-title">中カテゴリ</div>
-      ${cpHint}
-      <div class="type-grid">${tagPills}</div>
+      <div class="filter-section-title">作品（複数選択OK）</div>
+      <div class="ms-chips" id="series-chips"></div>
+      <input class="ms-search" id="series-search" autocomplete="off" placeholder="頭文字で検索…（例: g → GAP）"
+        value="${escAttr(seriesSearchQ)}" oninput="seriesSearchQ=this.value;renderSeriesList()">
+      <div class="ms-list" id="series-list"></div>
+    </div>
+    <div class="filter-section">
+      <div class="filter-section-title">オススメ・その他</div>
+      <div class="type-grid" id="other-pills"></div>
     </div>`;
+  refreshFilterSelections();
+}
+
+// 選択チップ・候補リスト・オススメボタンだけを更新（検索入力欄は作り直さない＝入力中もフォーカスが外れない）
+function refreshFilterSelections(){ renderCpChips(); renderSeriesChips(); renderCpList(); renderSeriesList(); renderOtherPills(); }
+
+function renderCpChips(){
+  const box=document.getElementById('cp-chips'); if(!box)return;
+  box.innerHTML=[...activeCps].map(cp=>{const cfg=cpCfg(cp);
+    return`<button class="ms-chip" style="background:${cfg.color};color:#fff" onclick="window._setCp('${cp.replace(/'/g,"\\'")}')">${cfg.emoji||'💗'} ${cp} ✕</button>`;}).join('');
+}
+function renderSeriesChips(){
+  const box=document.getElementById('series-chips'); if(!box)return;
+  box.innerHTML=[...activeTypes].filter(t=>!COMMON_TAGS.has(t)&&t!==REC_TAG).map(t=>
+    `<button class="ms-chip" style="background:#111;color:#fff" onclick="window._setType('${t.replace(/'/g,"\\'")}')">${t} ✕</button>`).join('');
+}
+function renderCpList(){
+  const box=document.getElementById('cp-list'); if(!box)return;
+  const q=cpSearchQ.toLowerCase().trim();
+  const items=getUniqueCPs().filter(cp=>!q||cp.toLowerCase().includes(q));
+  if(!items.length){box.innerHTML='<div class="ms-empty">該当なし</div>';return;}
+  box.innerHTML=items.map(cp=>{const cfg=cpCfg(cp);const on=activeCps.has(cp);
+    return`<button class="ms-row${on?' on':''}" onclick="window._setCp('${cp.replace(/'/g,"\\'")}')">
+      <span class="ms-check">${on?'✓':''}</span>
+      <span class="cp-dot" style="background:${cfg.color||'#888'}"></span>
+      <span>${cfg.emoji||'💗'} ${cp}</span></button>`;}).join('');
+}
+function renderSeriesList(){
+  const box=document.getElementById('series-list'); if(!box)return;
+  const q=seriesSearchQ.toLowerCase().trim();
+  const works=getVisibleTags().filter(t=>!COMMON_TAGS.has(t)&&t!==REC_TAG);
+  const items=works.filter(s=>!q||s.toLowerCase().includes(q));
+  if(!items.length){box.innerHTML='<div class="ms-empty">該当なし</div>';return;}
+  box.innerHTML=items.map(s=>{const on=activeTypes.has(s);
+    return`<button class="ms-row${on?' on':''}" onclick="window._setType('${s.replace(/'/g,"\\'")}')">
+      <span class="ms-check">${on?'✓':''}</span><span>${s}</span></button>`;}).join('');
+}
+function renderOtherPills(){
+  const box=document.getElementById('other-pills'); if(!box)return;
+  const commons=getVisibleTags().filter(t=>COMMON_TAGS.has(t));
+  const recAvail=activeCps.size===0&&LOCS.some(isRecSpot);
+  let html=`<button class="filter-pill${activeTypes.size===0?' active':''}" onclick="window._clearTypes()">すべて</button>`;
+  if(recAvail){const on=activeTypes.has(REC_TAG);
+    html+=`<button class="filter-pill${on?' active':''}" style="${on?`background:${REC_CFG.color};border-color:${REC_CFG.color};color:#fff`:''}" onclick="window._setType('${REC_TAG.replace(/'/g,"\\'")}')">${REC_TAG}</button>`;}
+  commons.forEach(t=>{const on=activeTypes.has(t);
+    html+=`<button class="filter-pill${on?' active':''}" style="border-style:dashed" onclick="window._setType('${t.replace(/'/g,"\\'")}')">🌐 ${t}</button>`;});
+  box.innerHTML=html;
 }
 
 function renderMapOverlayInfo(){
@@ -1086,6 +1125,7 @@ window.closeFilterDrawer=function(){
 };
 window.resetFilters=function(){
   activeTypes.clear();activeCps.clear();
+  cpSearchQ='';seriesSearchQ='';
   renderFilters();renderMarkers();renderDrawer();
 };
 
@@ -1195,12 +1235,21 @@ window.closeDetailDirect=()=>{
 };
 
 // ── Filter actions ────────────────────────────────────────────
+// 選択変更を反映（検索入力欄は作り直さない＝入力中もフォーカス維持）
+function applyFilterChange(){
+  renderActiveFilterBar();
+  renderMapOverlayInfo();
+  refreshFilterSelections();
+  renderMarkers();
+  renderDrawer();
+}
 window._setType=t=>{
-  if(t==='すべて'){activeTypes.clear();}
-  else if(activeTypes.has(t)){activeTypes.delete(t);}
+  if(activeTypes.has(t)){activeTypes.delete(t);}
   else{activeTypes.add(t);}
-  renderFilters();renderMarkers();renderDrawer();
+  applyFilterChange();
 };
+// 「すべて」＝作品/おすすめの選択をクリア（タレント選択は残す）
+window._clearTypes=()=>{ activeTypes.clear(); applyFilterChange(); };
 window._setCp=cp=>{
   if(activeCps.has(cp)){
     activeCps.delete(cp);
@@ -1222,10 +1271,19 @@ window._setCp=cp=>{
       }
     });
   }
-  renderFilters();renderMarkers();renderDrawer();
+  applyFilterChange();
+};
+// 上部の検索窓（場所・作品・CP名で絞り込み）
+window.onSearch=function(v){
+  searchQ=(v||'').trim();
+  renderActiveFilterBar();
+  renderMapOverlayInfo();
+  renderMarkers();
+  renderDrawer();
 };
 window.resetFilters=function(){
   activeTypes.clear();activeCps.clear();
+  cpSearchQ='';seriesSearchQ='';
   renderFilters();renderMarkers();renderDrawer();
 };
 

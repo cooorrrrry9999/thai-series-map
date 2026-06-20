@@ -414,75 +414,120 @@ window.rejectSub=async function(id){
 };
 
 // ── Spots（場所＋紐付けまとめ） ─────────────────────────────────
-window.renderSpots=function(){
-  const fQ=(document.getElementById('fQ')?.value||'').toLowerCase();
-  const fCat=document.getElementById('fCat')?.value||'';
-  const fCp=document.getElementById('fCp')?.value||'';
-  const fSeries=document.getElementById('fSeries')?.value||'';
-  const fStatus=document.getElementById('fStatus')?.value||'';
-  const allCats=[...new Set(LOCS.map(l=>l.category).filter(Boolean))].sort();
-  const allCps=[...new Set([...APPS.map(a=>a.cp),...CP_M.map(m=>m.name)].filter(Boolean))].sort();
-  const allSeries=[...new Set([...APPS.map(a=>a.series),...SERIES_M.map(m=>m.name)].filter(Boolean))].sort();
+// スポット一覧の絞り込み状態（一覧だけ再描画してもツールバーの入力欄は作り直さない＝入力中にフォーカスが外れないようにする）
+let spotFilter={q:'',cat:'',cp:'',cpLabel:'',series:'',status:''};
 
+window.renderSpots=function(){
+  const sf=spotFilter;
+  const allCats=[...new Set(LOCS.map(l=>l.category).filter(Boolean))].sort();
+  const html=`<div class="toolbar">
+    <input class="search-input" id="fQ" placeholder="🔍 場所名で検索..." autocomplete="off"
+      value="${esc(sf.q)}" oninput="spotFilter.q=this.value;renderSpotList()">
+    <select class="filter-sel" id="fCat" onchange="spotFilter.cat=this.value;renderSpotList()">
+      <option value="">カテゴリー</option>${allCats.map(c=>`<option value="${esc(c)}"${sf.cat===c?' selected':''}>${esc(c)}</option>`).join('')}
+    </select>
+    ${sfComboHtml('talent','タレントで絞り込み…')}
+    ${sfComboHtml('series','作品で絞り込み…')}
+    <select class="filter-sel" id="fStatus" onchange="spotFilter.status=this.value;renderSpotList()">
+      <option value="">状態</option>
+      <option value="公開"${sf.status==='公開'?' selected':''}>公開</option>
+      <option value="未承認"${sf.status==='未承認'?' selected':''}>未承認</option>
+    </select>
+    <span class="result-count" id="fCount"></span>
+    <button class="btn btn-primary" onclick="showPage('add')" style="margin-left:8px">➕ 新規追加</button>
+  </div>
+  <div id="spot-list"></div>`;
+  setBody(html);
+  renderSpotList();
+};
+
+// 一覧部分だけを再描画（ツールバーには触れない）
+window.renderSpotList=function(){
+  const sf=spotFilter;
+  const fQ=(sf.q||'').toLowerCase();
   const filtered=LOCS.filter(loc=>{
     if(fQ&&!loc.name.toLowerCase().includes(fQ))return false;
-    if(fCat&&loc.category!==fCat)return false;
+    if(sf.cat&&loc.category!==sf.cat)return false;
     const apps=APPS.filter(a=>a.location_id===loc.id);
-    if(fCp&&!apps.some(a=>{const t=appTalent(a);return t&&talentKey(t)===fCp;}))return false;
-    if(fSeries&&!apps.some(a=>a.series===fSeries))return false;
-    if(fStatus&&!apps.some(a=>a.status===fStatus))return false;
+    if(sf.cp&&!apps.some(a=>{const t=appTalent(a);return t&&talentKey(t)===sf.cp;}))return false;
+    if(sf.series&&!apps.some(a=>a.series===sf.series))return false;
+    if(sf.status&&!apps.some(a=>a.status===sf.status))return false;
     return true;
   });
-
-  let html=`<div class="toolbar">
-    <input class="search-input" id="fQ" placeholder="🔍 場所名で検索..." oninput="renderSpots()" value="${esc(fQ)}">
-    <select class="filter-sel" id="fCat" onchange="renderSpots()">
-      <option value="">カテゴリー</option>${allCats.map(c=>`<option value="${c}"${fCat===c?' selected':''}>${c}</option>`).join('')}
-    </select>
-    <select class="filter-sel" id="fCp" onchange="renderSpots()">
-      <option value="">タレント</option>${[...TALENT_M].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''))).map(m=>{const k=talentKey(m);const dup=TALENT_M.filter(x=>x.name===m.name).length>1;const lbl=dup&&m.real_name?`${m.name}（${m.real_name}）`:m.name;return `<option value="${esc(k)}"${fCp===k?' selected':''}>${esc(lbl)}</option>`;}).join('')}
-    </select>
-    <select class="filter-sel" id="fSeries" onchange="renderSpots()">
-      <option value="">作品</option>${allSeries.map(s=>`<option value="${s}"${fSeries===s?' selected':''}>${s}</option>`).join('')}
-    </select>
-    <select class="filter-sel" id="fStatus" onchange="renderSpots()">
-      <option value="">状態</option>
-      <option value="公開"${fStatus==='公開'?' selected':''}>公開</option>
-      <option value="未承認"${fStatus==='未承認'?' selected':''}>未承認</option>
-    </select>
-    <span class="result-count">${filtered.length}件</span>
-    <button class="btn btn-primary" onclick="showPage('add')" style="margin-left:auto">➕ 新規追加</button>
-  </div>`;
-
-  if(!filtered.length){html+='<div style="text-align:center;color:var(--sub);padding:40px">該当するスポットがありません</div>';}
-  else {
-    html+=filtered.map(loc=>{
-      const apps=APPS.filter(a=>a.location_id===loc.id);
-      const cat=CAT_M.find(m=>m.name===loc.category);
-      const catEmoji=cat?.emoji||getCatEmoji(loc.category);
-      const cpChips=apps.filter((a,i,arr)=>arr.findIndex(x=>appWhoKey(x)===appWhoKey(a))===i).map(a=>appWhoChip(a)).join('');
-      return`<div class="spot-row" id="row-${loc.id}">
-        <div class="spot-row-header" onclick="toggleSpot('${loc.id}')">
-          <div class="spot-cat-emoji">${catEmoji}</div>
-          <div class="spot-info">
-            <div class="spot-name">${loc.name}</div>
-            <div class="spot-meta">
-              <span style="color:var(--sub)">${loc.category||''}</span>
-              ${cpChips}
-              <span style="color:var(--sub)">${apps.length}件の紐付け</span>
-            </div>
+  const cnt=document.getElementById('fCount'); if(cnt)cnt.textContent=`${filtered.length}件`;
+  const box=document.getElementById('spot-list'); if(!box)return;
+  if(!filtered.length){box.innerHTML='<div style="text-align:center;color:var(--sub);padding:40px">該当するスポットがありません</div>';return;}
+  box.innerHTML=filtered.map(loc=>{
+    const apps=APPS.filter(a=>a.location_id===loc.id);
+    const cat=CAT_M.find(m=>m.name===loc.category);
+    const catEmoji=cat?.emoji||getCatEmoji(loc.category);
+    const cpChips=apps.filter((a,i,arr)=>arr.findIndex(x=>appWhoKey(x)===appWhoKey(a))===i).map(a=>appWhoChip(a)).join('');
+    return`<div class="spot-row" id="row-${loc.id}">
+      <div class="spot-row-header" onclick="toggleSpot('${loc.id}')">
+        <div class="spot-cat-emoji">${catEmoji}</div>
+        <div class="spot-info">
+          <div class="spot-name">${loc.name}</div>
+          <div class="spot-meta">
+            <span style="color:var(--sub)">${loc.category||''}</span>
+            ${cpChips}
+            <span style="color:var(--sub)">${apps.length}件の紐付け</span>
           </div>
-          <div class="spot-actions" onclick="event.stopPropagation()">
-            <button class="btn btn-edit btn-sm" onclick="editLocModal('${loc.id}')">✏ 編集</button>
-            <button class="btn btn-del btn-sm" onclick="deleteLoc('${loc.id}')">🗑</button>
-          </div>
-          <div class="spot-toggle" id="toggle-${loc.id}">▼</div>
         </div>
-        <div class="spot-detail" id="detail-${loc.id}"></div>
-      </div>`;
-    }).join('');
+        <div class="spot-actions" onclick="event.stopPropagation()">
+          <button class="btn btn-edit btn-sm" onclick="editLocModal('${loc.id}')">✏ 編集</button>
+          <button class="btn btn-del btn-sm" onclick="deleteLoc('${loc.id}')">🗑</button>
+        </div>
+        <div class="spot-toggle" id="toggle-${loc.id}">▼</div>
+      </div>
+      <div class="spot-detail" id="detail-${loc.id}"></div>
+    </div>`;
+  }).join('');
+};
+
+// ── スポット一覧ツールバー用：入力して頭文字から絞るドロップダウン（タレント / 作品）─────
+function sfComboHtml(type,ph){
+  const val=type==='talent'?spotFilter.cpLabel:spotFilter.series;
+  return `<div style="position:relative;display:inline-block">
+    <input class="search-input" id="sf-${type}-q" autocomplete="off" placeholder="${esc(ph)}" value="${esc(val||'')}" style="min-width:150px"
+      oninput="sfFilter('${type}')" onfocus="sfFilter('${type}')" onblur="sfBlur('${type}')">
+    <div id="sf-${type}-list" style="display:none;position:absolute;z-index:60;left:0;right:0;min-width:200px;max-height:240px;overflow:auto;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.14);margin-top:2px"></div>
+  </div>`;
+}
+function sfItems(type,q){
+  q=(q||'').toLowerCase().trim();
+  if(type==='talent'){
+    const dn={}; TALENT_M.forEach(m=>{dn[m.name]=(dn[m.name]||0)+1;});
+    return [...TALENT_M].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')))
+      .filter(m=>!q||String(m.name||'').toLowerCase().includes(q)||String(m.real_name||'').toLowerCase().includes(q))
+      .map(m=>({key:talentKey(m),label:dn[m.name]>1&&m.real_name?`${m.name}（${m.real_name}）`:m.name})).slice(0,80);
   }
-  setBody(html);
+  const all=[...new Set([...APPS.map(a=>a.series),...SERIES_M.map(m=>m.name)].filter(Boolean))].sort();
+  return all.filter(s=>!q||s.toLowerCase().includes(q)).map(s=>({key:s,label:s})).slice(0,80);
+}
+window.sfFilter=function(type){
+  const q=document.getElementById('sf-'+type+'-q');
+  const list=document.getElementById('sf-'+type+'-list');
+  if(!q||!list)return;
+  const items=sfItems(type,q.value);
+  const clear=`<div onmousedown="sfPick('${type}','','')" style="padding:6px 10px;cursor:pointer;font-size:12px;color:var(--sub);border-bottom:1px solid #f1f1f1">（すべて表示）</div>`;
+  const rows=items.map(it=>`<div onmousedown="sfPick('${type}',this.dataset.k,this.dataset.l)" data-k="${esc(it.key)}" data-l="${esc(it.label)}" style="padding:7px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid #f1f1f1" onmouseover="this.style.background='#f3f0ff'" onmouseout="this.style.background='#fff'">${esc(it.label)}</div>`).join('');
+  list.innerHTML=clear+(rows||'<div style="padding:8px 10px;font-size:12px;color:var(--sub)">該当なし</div>');
+  list.style.display='block';
+};
+window.sfPick=function(type,key,label){
+  if(type==='talent'){spotFilter.cp=key;spotFilter.cpLabel=label;}
+  else{spotFilter.series=key;}
+  const q=document.getElementById('sf-'+type+'-q'); if(q)q.value=label;
+  const list=document.getElementById('sf-'+type+'-list'); if(list)list.style.display='none';
+  renderSpotList();
+};
+window.sfBlur=function(type){
+  setTimeout(()=>{
+    const list=document.getElementById('sf-'+type+'-list'); if(list)list.style.display='none';
+    // 候補から選ばずに入力だけ残った場合は、実際の選択状態に表示を合わせる
+    const q=document.getElementById('sf-'+type+'-q'); if(!q)return;
+    q.value=type==='talent'?spotFilter.cpLabel:spotFilter.series;
+  },150);
 };
 
 window.toggleSpot=function(locId){
