@@ -401,15 +401,15 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
       <input class="form-input" id="f-name" placeholder="例: 99 House Studio">
     </div>
     <div class="form-group">
-      <label class="form-label">タレント <span style="font-weight:400;color:#999;font-size:12px">／任意（おすすめ等は「なし」）</span></label>
-      <select class="form-select" id="f-cp" onchange="onSubmitCpChange()">
-        <option value="">— なし（おすすめ・任意）—</option>
+      <label class="form-label">中カテゴリ（作品）<span style="color:#DC2626">*</span></label>
+      <select class="form-select" id="f-series" onchange="onSubmitSeriesChange()">
+        <option value="プライベート">プライベート</option>
       </select>
     </div>
     <div class="form-group">
-      <label class="form-label">中カテゴリ <span style="color:#DC2626">*</span></label>
-      <select class="form-select" id="f-series">
-        <option value="プライベート">プライベート</option>
+      <label class="form-label">タレント <span style="font-weight:400;color:#999;font-size:12px">／任意（おすすめ等は「なし」）</span></label>
+      <select class="form-select" id="f-cp">
+        <option value="">— なし（おすすめ・任意）—</option>
       </select>
     </div>
     <div class="form-group">
@@ -1354,9 +1354,30 @@ function buildSeriesOpts(cp, defaultSeries='プライベート'){
   return ordered.map(s=>`<option value="${s}"${s===defaultSeries?' selected':''}>${s}</option>`).join('');
 }
 
-window.onSubmitCpChange=function(){
-  const cp=document.getElementById('f-cp').value;
-  document.getElementById('f-series').innerHTML=buildSeriesOpts(cp,'プライベート');
+// 作品（中カテゴリ）の選択肢：プライベートを先頭に全作品
+function buildSeriesOptsAll(defaultSeries='プライベート'){
+  const all=getUniqueSeries();
+  const ordered=['プライベート',...all.filter(s=>s!=='プライベート')];
+  return ordered.map(s=>`<option value="${s}"${s===defaultSeries?' selected':''}>${s}</option>`).join('');
+}
+// その作品に出演しているタレント（なしを先頭に）。該当が無ければ全タレントを出す。
+function getSeriesTalents(series){return[...new Set(APPS.filter(a=>a.series===series).map(a=>a.cp).filter(Boolean))];}
+function buildCpOptsForSeries(series){
+  const master=TALENTS.length?TALENTS:Object.keys(CP_MAP).map(c=>({name:c,emoji:CP_MAP[c].emoji,real_name:''}));
+  const cast=series?getSeriesTalents(series):[];
+  const castSet=new Set(cast);
+  const opt=t=>`<option value="${t.name}">${t.emoji||'⭐'} ${t.name}${t.real_name?`（${t.real_name}）`:''}</option>`;
+  const castRows=cast.map(nm=>{const t=master.find(x=>x.name===nm)||{name:nm,emoji:'⭐',real_name:''};return opt(t);}).join('');
+  const otherRows=master.filter(t=>!castSet.has(t.name)).map(opt).join('');
+  let html='<option value="">— なし（おすすめ・任意）—</option>';
+  if(castRows)html+=`<optgroup label="この作品の出演タレント">${castRows}</optgroup>`;
+  html+=`<optgroup label="${castRows?'その他のタレント':'タレント'}">${otherRows}</optgroup>`;
+  return html;
+}
+
+window.onSubmitSeriesChange=function(){
+  const series=document.getElementById('f-series').value;
+  document.getElementById('f-cp').innerHTML=buildCpOptsForSeries(series);
 };
 window.onAddInfoCpChange=function(){
   const cp=document.getElementById('ai-cp').value;
@@ -1365,8 +1386,9 @@ window.onAddInfoCpChange=function(){
 
 window.openSubmitModal=()=>{
   ['f-name','f-scene','f-sns','f-url','f-memo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  document.getElementById('f-cp').value='';
-  document.getElementById('f-series').innerHTML=buildSeriesOpts('','プライベート');
+  // 作品（中カテゴリ）を先に組み立て → 既定「プライベート」→ それに応じたタレント候補
+  document.getElementById('f-series').innerHTML=buildSeriesOptsAll('プライベート');
+  document.getElementById('f-cp').innerHTML=buildCpOptsForSeries('プライベート');
   document.getElementById('submit-msg').textContent='';
   document.getElementById('submit-modal').style.display='flex';
   toggleUserMenuClose();
@@ -1603,9 +1625,20 @@ window.toggleDrawer=function(){
 </script>
 <script>
 // PWA: Service Worker を登録（対応ブラウザのみ／失敗しても本体は動く）
+// ＋ 新しいバージョンを検知したら自動でリロードして最新化する（携帯で古いまま残るのを防ぐ）
 if ('serviceWorker' in navigator) {
+  let _reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (_reloaded) return;       // 二重リロード防止
+    _reloaded = true;
+    location.reload();
+  });
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW登録失敗:', e));
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      reg.update();              // 起動時に更新チェック
+      // 30分ごとにも更新チェック（長時間開きっぱなし対策）
+      setInterval(() => reg.update(), 30 * 60 * 1000);
+    }).catch(e => console.warn('SW登録失敗:', e));
   });
 }
 </script>

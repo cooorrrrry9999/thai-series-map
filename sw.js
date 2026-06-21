@@ -3,7 +3,7 @@
 // 注意：data.json はネットワーク優先（常に最新を取りに行き、オフライン時だけキャッシュを使う）。
 //       これはFirestore読み取りとは無関係（data.jsonは静的ファイル）だが、通信量と表示速度を改善する。
 
-const CACHE = 'tglmap-v1';                 // ★中身を更新したらここの番号を上げる（v2, v3…）= 古いキャッシュを捨てる合図
+const CACHE = 'tglmap-v3';                 // ★中身を更新したらここの番号を上げる（v2, v3…）= 古いキャッシュを捨てる合図
 const SHELL = [
   './',
   './index.html',
@@ -53,7 +53,28 @@ self.addEventListener('fetch', (e) => {
   // ② 地図タイル（cartocdn / openstreetmap）はキャッシュしない＝容量肥大を防ぐ
   if (/basemaps\.cartocdn\.com|tile\.openstreetmap\.org/.test(url.hostname)) return;
 
-  // ③ それ以外（アプリ本体・ライブラリ）はキャッシュ優先＋裏で更新（stale-while-revalidate）
+  // ③ HTMLページ（index.html / admin.html など画面本体）はネットワーク優先。
+  //    ＝ファイルを更新したら、オンラインなら必ず最新が表示される（古いキャッシュが出続けない）。
+  //      オフラインのときだけキャッシュを使う。
+  const isHTML = req.mode === 'navigate'
+    || url.pathname.endsWith('.html')
+    || url.pathname.endsWith('/');
+  if (isHTML) {
+    e.respondWith(
+      fetch(req)
+        .then(res => {
+          if (res && res.status === 200) {
+            const copy = res.clone();
+            caches.open(CACHE).then(c => c.put(req, copy));
+          }
+          return res;
+        })
+        .catch(() => caches.match(req).then(c => c || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // ④ それ以外（Leaflet などのライブラリ）はキャッシュ優先＋裏で更新（stale-while-revalidate）
   e.respondWith(
     caches.match(req).then(cached => {
       const network = fetch(req).then(res => {
