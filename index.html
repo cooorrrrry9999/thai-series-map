@@ -1056,14 +1056,14 @@ function renderFilterDrawerBody(){
       <div class="filter-section-title">タレント（複数選択OK）</div>
       <div class="ms-chips" id="cp-chips"></div>
       <input class="ms-search" id="cp-search" autocomplete="off" placeholder="頭文字で検索…（例: f → Freen）"
-        value="${escAttr(cpSearchQ)}" oninput="cpSearchQ=this.value;renderCpList()">
+        value="${escAttr(cpSearchQ)}" oninput="_cpSearch(this.value)">
       <div class="ms-list" id="cp-list"></div>
     </div>
     <div class="filter-section">
       <div class="filter-section-title">作品（複数選択OK）</div>
       <div class="ms-chips" id="series-chips"></div>
       <input class="ms-search" id="series-search" autocomplete="off" placeholder="頭文字で検索…（例: g → GAP）"
-        value="${escAttr(seriesSearchQ)}" oninput="seriesSearchQ=this.value;renderSeriesList()">
+        value="${escAttr(seriesSearchQ)}" oninput="_seriesSearch(this.value)">
       <div class="ms-list" id="series-list"></div>
     </div>
     <div class="filter-section">
@@ -1086,10 +1086,23 @@ function renderSeriesChips(){
   box.innerHTML=[...activeTypes].filter(t=>!COMMON_TAGS.has(t)&&t!==REC_TAG).map(t=>
     `<button class="ms-chip" style="background:#111;color:#fff" onclick="window._setType('${t.replace(/'/g,"\\'")}')">${t} ✕</button>`).join('');
 }
+// 頭文字（前方一致）を優先し、その後に部分一致を並べる
+function msMatch(list,q){
+  q=(q||'').toLowerCase().trim();
+  if(!q)return list;
+  const starts=[],contains=[];
+  list.forEach(s=>{const l=String(s).toLowerCase();
+    if(l.startsWith(q))starts.push(s);
+    else if(l.includes(q))contains.push(s);});
+  return [...starts,...contains];
+}
+// インラインハンドラ（module外）から呼べるように window に登録
+window._cpSearch=function(v){cpSearchQ=v;renderCpList();};
+window._seriesSearch=function(v){seriesSearchQ=v;renderSeriesList();};
+
 function renderCpList(){
   const box=document.getElementById('cp-list'); if(!box)return;
-  const q=cpSearchQ.toLowerCase().trim();
-  const items=getUniqueCPs().filter(cp=>!q||cp.toLowerCase().includes(q));
+  const items=msMatch(getUniqueCPs(),cpSearchQ);
   if(!items.length){box.innerHTML='<div class="ms-empty">該当なし</div>';return;}
   box.innerHTML=items.map(cp=>{const cfg=cpCfg(cp);const on=activeCps.has(cp);
     return`<button class="ms-row${on?' on':''}" onclick="window._setCp('${cp.replace(/'/g,"\\'")}')">
@@ -1099,9 +1112,8 @@ function renderCpList(){
 }
 function renderSeriesList(){
   const box=document.getElementById('series-list'); if(!box)return;
-  const q=seriesSearchQ.toLowerCase().trim();
   const works=getVisibleTags().filter(t=>!COMMON_TAGS.has(t)&&t!==REC_TAG);
-  const items=works.filter(s=>!q||s.toLowerCase().includes(q));
+  const items=msMatch(works,seriesSearchQ);
   if(!items.length){box.innerHTML='<div class="ms-empty">該当なし</div>';return;}
   box.innerHTML=items.map(s=>{const on=activeTypes.has(s);
     return`<button class="ms-row${on?' on':''}" onclick="window._setType('${s.replace(/'/g,"\\'")}')">

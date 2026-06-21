@@ -422,13 +422,13 @@ window.renderSpots=function(){
   const allCats=[...new Set(LOCS.map(l=>l.category).filter(Boolean))].sort();
   const html=`<div class="toolbar">
     <input class="search-input" id="fQ" placeholder="🔍 場所名で検索..." autocomplete="off"
-      value="${esc(sf.q)}" oninput="spotFilter.q=this.value;renderSpotList()">
-    <select class="filter-sel" id="fCat" onchange="spotFilter.cat=this.value;renderSpotList()">
+      value="${esc(sf.q)}" oninput="sfSet('q',this.value)">
+    <select class="filter-sel" id="fCat" onchange="sfSet('cat',this.value)">
       <option value="">カテゴリー</option>${allCats.map(c=>`<option value="${esc(c)}"${sf.cat===c?' selected':''}>${esc(c)}</option>`).join('')}
     </select>
     ${sfComboHtml('talent','タレントで絞り込み…')}
     ${sfComboHtml('series','作品で絞り込み…')}
-    <select class="filter-sel" id="fStatus" onchange="spotFilter.status=this.value;renderSpotList()">
+    <select class="filter-sel" id="fStatus" onchange="sfSet('status',this.value)">
       <option value="">状態</option>
       <option value="公開"${sf.status==='公開'?' selected':''}>公開</option>
       <option value="未承認"${sf.status==='未承認'?' selected':''}>未承認</option>
@@ -493,16 +493,28 @@ function sfComboHtml(type,ph){
     <div id="sf-${type}-list" style="display:none;position:absolute;z-index:60;left:0;right:0;min-width:200px;max-height:240px;overflow:auto;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.14);margin-top:2px"></div>
   </div>`;
 }
+// インラインハンドラ（module外）から呼べるように window に登録
+window.sfSet=function(field,val){spotFilter[field]=val;renderSpotList();};
+
 function sfItems(type,q){
   q=(q||'').toLowerCase().trim();
+  // 頭文字（前方一致）を優先し、その後に部分一致を並べる
+  const rank=t=>{ if(!q)return 1; if(t.startsWith(q))return 0; if(t.includes(q))return 1; return -1; };
   if(type==='talent'){
     const dn={}; TALENT_M.forEach(m=>{dn[m.name]=(dn[m.name]||0)+1;});
-    return [...TALENT_M].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')))
-      .filter(m=>!q||String(m.name||'').toLowerCase().includes(q)||String(m.real_name||'').toLowerCase().includes(q))
-      .map(m=>({key:talentKey(m),label:dn[m.name]>1&&m.real_name?`${m.name}（${m.real_name}）`:m.name})).slice(0,80);
+    return [...TALENT_M]
+      .map(m=>({m,nm:String(m.name||'').toLowerCase(),rn:String(m.real_name||'').toLowerCase()}))
+      .map(x=>({...x,r:Math.max(rank(x.nm),rank(x.rn))}))
+      .filter(x=>x.r>=0)
+      .sort((a,b)=>a.r-b.r||a.nm.localeCompare(b.nm))
+      .map(x=>({key:talentKey(x.m),label:dn[x.m.name]>1&&x.m.real_name?`${x.m.name}（${x.m.real_name}）`:x.m.name}))
+      .slice(0,80);
   }
-  const all=[...new Set([...APPS.map(a=>a.series),...SERIES_M.map(m=>m.name)].filter(Boolean))].sort();
-  return all.filter(s=>!q||s.toLowerCase().includes(q)).map(s=>({key:s,label:s})).slice(0,80);
+  const all=[...new Set([...APPS.map(a=>a.series),...SERIES_M.map(m=>m.name)].filter(Boolean))];
+  return all.map(s=>({s,l:s.toLowerCase(),r:rank(s.toLowerCase())}))
+    .filter(x=>x.r>=0)
+    .sort((a,b)=>a.r-b.r||a.l.localeCompare(b.l))
+    .map(x=>({key:x.s,label:x.s})).slice(0,80);
 }
 window.sfFilter=function(type){
   const q=document.getElementById('sf-'+type+'-q');
@@ -1509,6 +1521,9 @@ window.applyTalentFilter=function(){
   if(_tlSort==='name')list.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
   else if(_tlSort==='works')list.sort((a,b)=>cnt(b)-cnt(a)||String(a.name||'').localeCompare(String(b.name||'')));
   else if(_tlSort==='unlinked')list.sort((a,b)=>cnt(a)-cnt(b)||String(a.name||'').localeCompare(String(b.name||'')));
+  // 頭文字（前方一致）を優先（安定ソートなので各グループ内は上の並び順を維持）
+  if(q){const pre=m=>String(m.name||'').toLowerCase().startsWith(q)||String(m.real_name||'').toLowerCase().startsWith(q)||String(m.kana||'').toLowerCase().startsWith(q);
+    list.sort((a,b)=>(pre(a)?0:1)-(pre(b)?0:1));}
   const tb=document.getElementById('tl-tbody');
   if(tb)tb.innerHTML=list.map(talentRowHtml).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--sub);padding:20px">該当するタレントがいません</td></tr>';
   const c=document.getElementById('tl-count');if(c)c.textContent=`${list.length} / ${TALENT_M.length}名`;
@@ -1877,6 +1892,9 @@ window.applySeriesFilter=function(){
   if(_srSort==='name')list.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
   else if(_srSort==='talents')list.sort((a,b)=>cnt(b)-cnt(a)||String(a.name||'').localeCompare(String(b.name||'')));
   else if(_srSort==='unlinked')list.sort((a,b)=>cnt(a)-cnt(b)||String(a.name||'').localeCompare(String(b.name||'')));
+  // 頭文字（前方一致）を優先（安定ソートなので各グループ内は上の並び順を維持）
+  if(q){const pre=m=>String(m.name||'').toLowerCase().startsWith(q)||String(m.drama_id||'').toLowerCase().startsWith(q);
+    list.sort((a,b)=>(pre(a)?0:1)-(pre(b)?0:1));}
   const tb=document.getElementById('sr-tbody');
   if(tb)tb.innerHTML=list.map(m=>seriesRowHtml(m,nameCount)).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--sub);padding:20px">該当する作品がありません</td></tr>';
   const c=document.getElementById('sr-count');if(c)c.textContent=`${list.length} / ${SERIES_M.length}件`;
