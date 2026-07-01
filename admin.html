@@ -152,6 +152,13 @@ html,body{height:100%;font-family:'Noto Sans JP',sans-serif;background:var(--bg)
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes scaleIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
 </style>
+<!-- Leaflet CSS for admin coordinate picker -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-sA+e2j6kLw3w8nE2b5YwQb0p2h0h6v3Qxj3tP0u5r3s=" crossorigin=""/>
+<style>
+  /* small map in edit modal */
+  #el-map{width:100%;height:220px;border-radius:8px;border:1px solid var(--border);margin-top:8px}
+  .el-map-note{font-size:11px;color:var(--sub);margin-top:6px}
+</style>
 </head>
 <body>
 
@@ -669,6 +676,8 @@ window.editLocModal=function(locId){
       </div>
     </div>
     <div id="el-coord-status" style="margin-bottom:10px">${coordStatus}</div>
+    <div id="el-map"></div>
+    <div class="el-map-note">地図をクリックして座標を設定。マーカーをドラッグして微調整できます。</div>
 
     <div class="form-group" style="margin-bottom:10px">
       <label class="form-label">カテゴリー</label>
@@ -690,6 +699,8 @@ window.editLocModal=function(locId){
     <div id="el-msg" class="form-msg"></div>
     <button class="btn btn-primary" style="width:100%" onclick="saveLoc('${locId}')">💾 保存</button>`;
   document.getElementById('modal').style.display='flex';
+  // initialize the small Leaflet map for coordinate picking
+  try{ initAdminEditMap(loc.lat,loc.lng,'el-map'); }catch(e){}
 };
 
 // 編集モーダルの座標ステータスをリアルタイム更新
@@ -2219,6 +2230,39 @@ window.updateCpListForSeries=function(seriesVal){
   const related=[...new Set(APPS.filter(a=>a.series===s).map(a=>a.cp).filter(Boolean))].sort();
   if(related.length)dl.innerHTML=related.map(c=>`<option value="${c}">`).join('');
 };
+// --- Admin edit modal: small Leaflet picker for clicking/draggable marker ---
+let adminEditMap=null, adminEditMarker=null;
+window.initAdminEditMap=function(lat,lng,elId){
+  // wait for Leaflet to be available
+  if(typeof window.L==='undefined'){
+    setTimeout(()=>window.initAdminEditMap(lat,lng,elId),200);
+    return;
+  }
+  const el=document.getElementById(elId||'el-map'); if(!el)return;
+  if(!adminEditMap){
+    adminEditMap=L.map(elId,{attributionControl:false}).setView([(lat||13.75), (lng||100.5)], (lat&&lng)?15:6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(adminEditMap);
+    adminEditMap.on('click',e=>{window.setAdminEditMarker(e.latlng.lat,e.latlng.lng);});
+  } else {
+    adminEditMap.invalidateSize();
+    adminEditMap.setView([(lat||13.75),(lng||100.5)], (lat&&lng)?15:6);
+  }
+  if(lat&&lng)window.setAdminEditMarker(lat,lng);
+};
+window.setAdminEditMarker=function(lat,lng){
+  if(!adminEditMap)return;
+  if(adminEditMarker){
+    adminEditMarker.setLatLng([lat,lng]);
+  } else {
+    adminEditMarker=L.marker([lat,lng],{draggable:true}).addTo(adminEditMap);
+    adminEditMarker.on('dragend',e=>{const p=e.target.getLatLng();window.setAdminEditMarker(p.lat,p.lng);});
+  }
+  const latEl=document.getElementById('el-lat'); const lngEl=document.getElementById('el-lng');
+  if(latEl)latEl.value=Number(lat).toFixed(6);
+  if(lngEl)lngEl.value=Number(lng).toFixed(6);
+  if(typeof updateEditCoordStatus==='function')updateEditCoordStatus();
+};
+
 window.autoCoords=function(url,latId,lngId,msgId){
   const u=url.trim();
   if(!u){const el=document.getElementById(msgId);if(el)el.innerHTML='';return;}
@@ -2259,5 +2303,7 @@ function esc(s){return(s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function clearC(){['tsmap_loc_v2','tsmap_app_v2','tsmap_series_v2','tsmap_cp_v1','tsmap_cat_v1'].forEach(k=>localStorage.removeItem(k));clearAdminCache();}
 window.closeModal=function(){document.getElementById('modal').style.display='none';};
 </script>
+<!-- Leaflet JS for admin coordinate picker -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-o9N1j7k1bQYg3sM2gYk3k2nYq3b1Y9k3Q2Z5vYv+0HY=" crossorigin=""></script>
 </body>
 </html>
