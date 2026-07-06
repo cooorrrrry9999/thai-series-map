@@ -286,6 +286,8 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 .user-menu-item:hover{background:#F3F4F6}
 .user-menu-divider{height:1px;background:#F1F5F9;margin:4px 0}
 .user-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid #F9A8D4}
+.lang-chip{flex:1;padding:5px 0;border-radius:8px;border:1.5px solid #E5E7EB;background:#fff;font-size:11px;font-weight:700;color:#555;cursor:pointer;font-family:inherit}
+.lang-chip.on{background:#111;color:#fff;border-color:#111}
 
 /* ── マーカー ── */
 .custom-pin{position:relative;display:flex;flex-direction:column;align-items:center}
@@ -341,12 +343,12 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
   <button class="login-close" onclick="closeLoginScreen()">×</button>
   <div class="login-logo">🌸</div>
   <div class="login-title">Thai Series Map</div>
-  <div class="login-sub">スポットの投稿や、行きたい！行った！マークの<br>端末をまたいだ保存にはログインが必要です</div>
+  <div class="login-sub" data-i18n-html="login_sub">スポットの投稿や、行きたい！行った！マークの<br>端末をまたいだ保存にはログインが必要です</div>
   <button class="login-btn" onclick="doLogin()">
     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-    Googleでログイン
+    <span data-i18n="login_google">Googleでログイン</span>
   </button>
-  <button class="login-skip" onclick="closeLoginScreen()">ログインせずに地図を見る</button>
+  <button class="login-skip" onclick="closeLoginScreen()" data-i18n="login_skip">ログインせずに地図を見る</button>
 </div>
 
 <!-- 地図（フルスクリーン） -->
@@ -355,7 +357,7 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 <!-- 上部コントロールバー -->
 <div class="top-bar" id="top-bar" style="display:none">
   <div class="app-logo">🌸</div>
-  <input class="search-box" id="search-box" placeholder="場所・作品・CPを検索..." oninput="onSearch(this.value)"><button class="top-btn" onclick="openFilterDrawer()" id="filter-btn" title="フィルター" style="display:none">🔍</button>
+  <input class="search-box" id="search-box" data-i18n-ph="search_ph" placeholder="場所・作品・CPを検索..." oninput="onSearch(this.value)"><button class="top-btn" onclick="openFilterDrawer()" id="filter-btn" title="Filter" style="display:none">🔍</button>
   <button class="top-btn" id="user-btn" onclick="toggleUserMenu()" title="メニュー">👤</button>
 </div>
 
@@ -369,12 +371,12 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 <!-- 左サイドフィルタードロワー -->
 <div class="filter-drawer" id="filter-drawer">
   <div class="filter-drawer-header">
-    <div class="filter-drawer-title">🔍 絞り込み</div>
+    <div class="filter-drawer-title" data-i18n="filter_title">🔍 絞り込み</div>
     <button class="filter-drawer-close" onclick="closeFilterDrawer()">×</button>
   </div>
   <div class="filter-drawer-body" id="filter-drawer-body"></div>
   <div class="filter-drawer-footer">
-    <button class="filter-reset-btn" onclick="resetFilters()">✕ フィルターをリセット</button>
+    <button class="filter-reset-btn" onclick="resetFilters()" data-i18n="reset">✕ フィルターをリセット</button>
   </div>
 </div>
 
@@ -390,16 +392,24 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
       <div id="user-email" style="font-size:11px;color:#999"></div>
     </div>
   </div>
-  <button class="user-menu-item" id="login-menu-item" onclick="toggleUserMenuClose();doLogin()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit;color:#9333EA;font-weight:700">🔑 Googleでログイン</button>
+  <button class="user-menu-item" id="login-menu-item" onclick="toggleUserMenuClose();doLogin()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit;color:#9333EA;font-weight:700" data-i18n="menu_login">🔑 Googleでログイン</button>
   <div class="user-menu-divider"></div>
-  <a href="admin.html" class="user-menu-item" id="admin-menu-item" style="display:none">⚙ 管理者画面</a>
+  <a href="admin.html" class="user-menu-item" id="admin-menu-item" style="display:none" data-i18n="menu_admin">⚙ 管理者画面</a>
   <a href="https://thai-gl-works-2c835.web.app/" target="_blank" class="user-menu-item">🌺 Thai GL Works</a>
-  <button class="user-menu-item" onclick="toggleUserMenuClose();openGuideModal()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit;color:#9D174D">📖 使い方ガイド</button>
-  <button class="user-menu-item" onclick="openSubmitModal()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit">📍 スポットを投稿</button>
-  <button class="user-menu-item" onclick="toggleUserMenuClose();openTableView()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit">📋 スポット一覧（表）</button>
-  <button class="user-menu-item" onclick="toggleUserMenuClose();openKmlModal()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit;color:#059669">🗾 マイマップ出力（KML）</button>
+  <button class="user-menu-item" onclick="toggleUserMenuClose();openGuideModal()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit;color:#9D174D" data-i18n="menu_guide">📖 使い方ガイド</button>
+  <button class="user-menu-item" onclick="openSubmitModal()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit" data-i18n="menu_submit">📍 スポットを投稿</button>
+  <button class="user-menu-item" onclick="toggleUserMenuClose();openTableView()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit" data-i18n="menu_table">📋 スポット一覧（表）</button>
+  <button class="user-menu-item" onclick="toggleUserMenuClose();openKmlModal()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit;color:#059669" data-i18n="menu_kml">🗾 マイマップ出力（KML）</button>
   <div class="user-menu-divider"></div>
-  <button class="user-menu-item" id="logout-menu-item" onclick="doLogout()" style="display:none;border:none;background:none;width:100%;text-align:left;font-family:inherit;color:#DC2626">ログアウト</button>
+  <div style="display:flex;gap:5px;padding:6px 10px;align-items:center">
+    <span style="font-size:13px">🌐</span>
+    <button class="lang-chip" data-lang="ja" onclick="setLang('ja')">日本語</button>
+    <button class="lang-chip" data-lang="en" onclick="setLang('en')">EN</button>
+    <button class="lang-chip" data-lang="zh" onclick="setLang('zh')">繁中</button>
+    <button class="lang-chip" data-lang="th" onclick="setLang('th')">ไทย</button>
+  </div>
+  <div class="user-menu-divider"></div>
+  <button class="user-menu-item" id="logout-menu-item" onclick="doLogout()" style="display:none;border:none;background:none;width:100%;text-align:left;font-family:inherit;color:#DC2626" data-i18n="menu_logout">ログアウト</button>
 </div>
 
 <!-- スポット数バッジ -->
@@ -418,7 +428,7 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
   </div>
   <div class="drawer-header">
     <div class="drawer-title" id="drawer-title">スポット一覧</div>
-    <button class="table-open-btn" onclick="openTableView()">📋 表で見る</button>
+    <button class="table-open-btn" onclick="openTableView()" data-i18n="btn_table">📋 表で見る</button>
   </div>
   <div class="drawer-list" id="drawer-list"></div>
 </div>
@@ -426,19 +436,19 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 <!-- スポット一覧（表形式ビュー） -->
 <div class="table-overlay" id="table-overlay" style="display:none">
   <div class="table-head">
-    <div class="table-title">📋 スポット一覧 <span id="table-count" style="font-size:12px;color:#999;font-weight:700"></span></div>
+    <div class="table-title"><span data-i18n="tb_title">📋 スポット一覧</span> <span id="table-count" style="font-size:12px;color:#999;font-weight:700"></span></div>
     <button class="filter-drawer-close" onclick="closeTableView()">×</button>
   </div>
   <div class="table-tools">
-    <input class="ms-search" id="table-q" autocomplete="off" placeholder="場所・作品・タレント・住所で絞り込み…" oninput="_tableSearch(this.value)">
-    <button class="filter-open-btn" onclick="openFilterDrawer()">🔍 フィルター</button>
+    <input class="ms-search" id="table-q" autocomplete="off" data-i18n-ph="tb_search_ph" placeholder="場所・作品・タレント・住所で絞り込み…" oninput="_tableSearch(this.value)">
+    <button class="filter-open-btn" onclick="openFilterDrawer()" id="table-filter-btn">🔍 <span data-i18n="filter">フィルター</span></button>
   </div>
   <div class="table-wrap">
     <table class="spot-table">
       <thead><tr>
-        <th onclick="_tableSort('name')">場所名<span id="th-name"></span></th>
-        <th onclick="_tableSort('series')">作品 / タレント<span id="th-series"></span></th>
-        <th style="cursor:default">マーク</th>
+        <th onclick="_tableSort('name')"><span data-i18n="th_name">場所名</span><span id="th-name"></span></th>
+        <th onclick="_tableSort('series')"><span data-i18n="th_series">作品 / タレント</span><span id="th-series"></span></th>
+        <th style="cursor:default" data-i18n="th_mark">マーク</th>
       </tr></thead>
       <tbody id="table-body"></tbody>
     </table>
@@ -456,16 +466,16 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
       <div class="detail-name"    id="detail-name"></div>
       <div class="detail-address" id="detail-address"></div>
       <div class="detail-memo"    id="detail-memo" style="display:none"></div>
-      <div class="appearances-title" id="app-title" style="display:none">登場作品</div>
+      <div class="appearances-title" id="app-title" style="display:none" data-i18n="appearances">登場作品</div>
       <div id="detail-apps"></div>
       <div class="mark-row">
         <button class="mark-btn" id="mark-want" onclick="toggleMark('want')">🤍 行きたい</button>
         <button class="mark-btn" id="mark-went" onclick="toggleMark('went')">☑️ 行った</button>
-        <button class="mark-btn share" id="share-btn" onclick="shareSpot()" title="このスポットのリンクを共有">🔗</button>
+        <button class="mark-btn share" id="share-btn" onclick="shareSpot()">🔗</button>
       </div>
-      <div class="mark-hint" id="mark-login-hint" style="display:none">💡 ログインするとマークが他の端末にも同期されます</div>
-      <button class="detail-map-btn" id="detail-map-btn">🗺 Googleマップで開く</button>
-      <button class="detail-add-btn" id="detail-add-btn" onclick="openAddInfoModal()">➕ このスポットに情報を追加する</button>
+      <div class="mark-hint" id="mark-login-hint" style="display:none" data-i18n="mark_hint">💡 ログインするとマークが他の端末にも同期されます</div>
+      <button class="detail-map-btn" id="detail-map-btn" data-i18n="open_gmaps">🗺 Googleマップで開く</button>
+      <button class="detail-add-btn" id="detail-add-btn" onclick="openAddInfoModal()" data-i18n="add_info">➕ このスポットに情報を追加する</button>
     </div>
   </div>
 </div>
@@ -473,83 +483,83 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 <!-- 新規スポット投稿モーダル -->
 <div class="modal-overlay" id="submit-modal" style="display:none" onclick="closeSubmitModal(event)">
   <div class="modal-card" onclick="event.stopPropagation()">
-    <div class="modal-title">📍 新しいスポットを投稿</div>
+    <div class="modal-title" data-i18n="sm_title">📍 新しいスポットを投稿</div>
 
     <div class="form-group">
-      <label class="form-label">場所名 <span style="color:#DC2626">*</span></label>
-      <input class="form-input" id="f-name" placeholder="例: 99 House Studio">
+      <label class="form-label"><span data-i18n="l_name">場所名</span> <span style="color:#DC2626">*</span></label>
+      <input class="form-input" id="f-name" data-i18n-ph="ph_name" placeholder="例: 99 House Studio">
     </div>
     <div class="form-group">
-      <label class="form-label">中カテゴリ（作品）<span style="color:#DC2626">*</span></label>
+      <label class="form-label"><span data-i18n="l_series">中カテゴリ（作品）</span> <span style="color:#DC2626">*</span></label>
       <div class="combo">
-        <input class="form-input" id="f-series" placeholder="入力して検索（例: GAP）" autocomplete="off">
+        <input class="form-input" id="f-series" data-i18n-ph="series_search_ph" placeholder="入力して検索（例: GAP）" autocomplete="off">
         <div class="combo-list" id="f-series-list" style="display:none"></div>
       </div>
-      <div class="form-hint">一覧に無い新しい作品は、そのまま入力してOKです</div>
+      <div class="form-hint" data-i18n="hint_series">一覧に無い新しい作品は、そのまま入力してOKです</div>
     </div>
     <div class="form-group">
-      <label class="form-label">タレント <span style="font-weight:400;color:#999;font-size:12px">／任意（おすすめ等は空欄でOK）</span></label>
+      <label class="form-label"><span data-i18n="l_talent">タレント</span> <span style="font-weight:400;color:#999;font-size:12px" data-i18n="talent_note">／任意（おすすめ等は空欄でOK）</span></label>
       <div class="combo">
-        <input class="form-input" id="f-cp" placeholder="なし（入力して検索・任意）" autocomplete="off">
+        <input class="form-input" id="f-cp" data-i18n-ph="ph_talent" placeholder="なし（入力して検索・任意）" autocomplete="off">
         <div class="combo-list" id="f-cp-list" style="display:none"></div>
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">シーン説明 <span style="color:#DC2626">*</span></label>
-      <input class="form-input" id="f-scene" placeholder="例: Monの家として使用されたスタジオ">
+      <label class="form-label"><span data-i18n="l_scene">シーン説明</span> <span style="color:#DC2626">*</span></label>
+      <input class="form-input" id="f-scene" data-i18n-ph="ph_scene" placeholder="例: Monの家として使用されたスタジオ">
     </div>
     <div class="form-group">
-      <label class="form-label">SNSリンク（任意）</label>
-      <input class="form-input" id="f-sns" placeholder="https://x.com/... など">
+      <label class="form-label" data-i18n="l_sns">SNSリンク（任意）</label>
+      <input class="form-input" id="f-sns" placeholder="https://x.com/...">
     </div>
     <div class="form-group">
-      <label class="form-label">GoogleマップURL（任意）</label>
+      <label class="form-label" data-i18n="l_gurl">GoogleマップURL（任意）</label>
       <input class="form-input" id="f-url" placeholder="https://maps.app.goo.gl/...">
     </div>
     <div class="form-group">
-      <label class="form-label">訪問メモ（任意）</label>
-      <input class="form-input" id="f-memo" placeholder="例: 入場500B、事前予約必要">
+      <label class="form-label" data-i18n="l_memo">訪問メモ（任意）</label>
+      <input class="form-input" id="f-memo" data-i18n-ph="ph_memo" placeholder="例: 入場500B、事前予約必要">
     </div>
     <div id="submit-msg" style="font-size:13px;text-align:center;min-height:20px;margin:6px 0"></div>
-    <button class="btn-primary" onclick="submitSpot()">投稿する（管理者確認後に公開）</button>
-    <button class="btn-cancel" onclick="closeSubmitModal()">キャンセル</button>
+    <button class="btn-primary" onclick="submitSpot()" data-i18n="btn_submit">投稿する（管理者確認後に公開）</button>
+    <button class="btn-cancel" onclick="closeSubmitModal()" data-i18n="btn_cancel">キャンセル</button>
   </div>
 </div>
 
 <!-- 既存スポットへの追加情報投稿モーダル -->
 <div class="modal-overlay" id="add-info-modal" style="display:none" onclick="if(event.target===this)closeAddInfoModal()">
   <div class="modal-card" onclick="event.stopPropagation()">
-    <div class="modal-title">➕ <span id="add-info-spot-name">このスポット</span>に情報を追加</div>
+    <div class="modal-title" id="add-info-title">➕ このスポットに情報を追加</div>
 
     <!-- タブ -->
     <div style="display:flex;gap:6px;margin-bottom:16px">
-      <button id="tab-btn-appearance" class="tab-btn active" onclick="switchAddInfoTab('appearance')">🎬 紐付け追加</button>
-      <button id="tab-btn-memo"       class="tab-btn"        onclick="switchAddInfoTab('memo')">💡 メモ・SNS補足</button>
+      <button id="tab-btn-appearance" class="tab-btn active" onclick="switchAddInfoTab('appearance')" data-i18n="tab_link">🎬 紐付け追加</button>
+      <button id="tab-btn-memo"       class="tab-btn"        onclick="switchAddInfoTab('memo')" data-i18n="tab_memo">💡 メモ・SNS補足</button>
     </div>
 
     <!-- 紐付け追加タブ -->
     <div id="tab-appearance">
       <div class="form-group">
-        <label class="form-label">中カテゴリ <span style="color:#DC2626">*</span></label>
+        <label class="form-label"><span data-i18n="l_series">中カテゴリ</span> <span style="color:#DC2626">*</span></label>
         <div class="combo">
-          <input class="form-input" id="ai-series" placeholder="入力して検索（例: GAP）" autocomplete="off">
+          <input class="form-input" id="ai-series" data-i18n-ph="series_search_ph" placeholder="入力して検索（例: GAP）" autocomplete="off">
           <div class="combo-list" id="ai-series-list" style="display:none"></div>
         </div>
-        <div class="form-hint">一覧に無い新しい作品は、そのまま入力してOKです</div>
+        <div class="form-hint" data-i18n="hint_series">一覧に無い新しい作品は、そのまま入力してOKです</div>
       </div>
       <div class="form-group">
-        <label class="form-label">タレント <span style="font-weight:400;color:#999;font-size:12px">／任意（おすすめ等は空欄でOK）</span></label>
+        <label class="form-label"><span data-i18n="l_talent">タレント</span> <span style="font-weight:400;color:#999;font-size:12px" data-i18n="talent_note">／任意（おすすめ等は空欄でOK）</span></label>
         <div class="combo">
-          <input class="form-input" id="ai-cp" placeholder="なし（入力して検索・任意）" autocomplete="off">
+          <input class="form-input" id="ai-cp" data-i18n-ph="ph_talent" placeholder="なし（入力して検索・任意）" autocomplete="off">
           <div class="combo-list" id="ai-cp-list" style="display:none"></div>
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">シーン説明 <span style="color:#DC2626">*</span></label>
-        <input class="form-input" id="ai-scene" placeholder="例: 別CPのロケ地として使用">
+        <label class="form-label"><span data-i18n="l_scene">シーン説明</span> <span style="color:#DC2626">*</span></label>
+        <input class="form-input" id="ai-scene" data-i18n-ph="ph_scene2" placeholder="例: 別CPのロケ地として使用">
       </div>
       <div class="form-group">
-        <label class="form-label">SNSリンク（任意）</label>
+        <label class="form-label" data-i18n="l_sns">SNSリンク（任意）</label>
         <input class="form-input" id="ai-sns" placeholder="https://x.com/...">
       </div>
     </div>
@@ -557,18 +567,18 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
     <!-- メモ・SNS補足タブ -->
     <div id="tab-memo" style="display:none">
       <div class="form-group">
-        <label class="form-label">訪問メモ・アクセス情報</label>
-        <textarea class="form-input" id="ai-memo" rows="3" placeholder="例: 入場500B、予約方法、アクセスのコツなど" style="resize:vertical"></textarea>
+        <label class="form-label" data-i18n="l_memo2">訪問メモ・アクセス情報</label>
+        <textarea class="form-input" id="ai-memo" rows="3" data-i18n-ph="ph_memo2" placeholder="例: 入場500B、予約方法、アクセスのコツなど" style="resize:vertical"></textarea>
       </div>
       <div class="form-group">
-        <label class="form-label">SNSリンク（補足情報）</label>
+        <label class="form-label" data-i18n="l_sns2">SNSリンク（補足情報）</label>
         <input class="form-input" id="ai-sns-memo" placeholder="https://x.com/...">
       </div>
     </div>
 
     <div id="add-info-msg" style="font-size:13px;text-align:center;min-height:20px;margin:6px 0"></div>
-    <button class="btn-primary" onclick="submitAddInfo()">送信する（管理者確認後に反映）</button>
-    <button class="btn-cancel" onclick="closeAddInfoModal()">キャンセル</button>
+    <button class="btn-primary" onclick="submitAddInfo()" data-i18n="btn_send">送信する（管理者確認後に反映）</button>
+    <button class="btn-cancel" onclick="closeAddInfoModal()" data-i18n="btn_cancel">キャンセル</button>
   </div>
 </div>
 
@@ -577,74 +587,74 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
   <div class="howto-card" onclick="event.stopPropagation()">
     <div class="howto-header">
       <button class="howto-close" onclick="document.getElementById('howto-overlay').style.display='none'">×</button>
-      <div class="howto-title">🗾 Googleマイマップへの取り込み方</div>
-      <div class="howto-sub">フィルターで絞ったスポットをスマホのGoogleマップで見られるようにします</div>
+      <div class="howto-title" data-i18n="h_title">🗾 Googleマイマップへの取り込み方</div>
+      <div class="howto-sub" data-i18n="h_sub">フィルターで絞ったスポットをスマホのGoogleマップで見られるようにします</div>
     </div>
 
     <div class="howto-divider"></div>
-    <div class="howto-section">STEP 1 — KMLファイルをダウンロード</div>
+    <div class="howto-section" data-i18n="h_s1">STEP 1 — KMLファイルをダウンロード</div>
     <div class="howto-step">
       <div class="howto-num">1</div>
       <div>
-        <div class="howto-step-title">見たい作品・CPをフィルターする</div>
-        <div class="howto-step-desc">画面上部のフィルターボタンで「GAP The Series」や「FreenBecky」など絞り込みます。件数が表示されます。</div>
+        <div class="howto-step-title" data-i18n="h_1t">見たい作品・CPをフィルターする</div>
+        <div class="howto-step-desc" data-i18n="h_1d">画面上部のフィルターボタンで「GAP The Series」や「FreenBecky」など絞り込みます。件数が表示されます。</div>
       </div>
     </div>
     <div class="howto-step">
       <div class="howto-num">2</div>
       <div>
-        <div class="howto-step-title">「マイマップ出力」ボタンをタップ</div>
-        <div class="howto-step-desc">KMLファイル（地図データの標準形式）がダウンロードされます。ファイル名はフィルター内容が入ります。</div>
-        <div class="howto-step-tip">💡 KMLとはGoogleマップが読み込める地図データのファイル形式です</div>
+        <div class="howto-step-title" data-i18n="h_2t">「マイマップ出力」ボタンをタップ</div>
+        <div class="howto-step-desc" data-i18n="h_2d">KMLファイル（地図データの標準形式）がダウンロードされます。ファイル名はフィルター内容が入ります。</div>
+        <div class="howto-step-tip" data-i18n="h_2tip">💡 KMLとはGoogleマップが読み込める地図データのファイル形式です</div>
       </div>
     </div>
 
     <div class="howto-divider"></div>
-    <div class="howto-section">STEP 2 — Googleマイマップに取り込む（PC推奨）</div>
+    <div class="howto-section" data-i18n="h_s2">STEP 2 — Googleマイマップに取り込む（PC推奨）</div>
     <div class="howto-step">
       <div class="howto-num">3</div>
       <div>
-        <div class="howto-step-title">mymaps.google.com を開く</div>
-        <div class="howto-step-desc">PCのブラウザで <a href="https://mymaps.google.com" target="_blank" class="howto-link">mymaps.google.com</a> にアクセスし、「新しい地図を作成」をクリックします。</div>
+        <div class="howto-step-title" data-i18n="h_3t">mymaps.google.com を開く</div>
+        <div class="howto-step-desc" data-i18n-html="h_3d">PCのブラウザで <a href="https://mymaps.google.com" target="_blank" class="howto-link">mymaps.google.com</a> にアクセスし、「新しい地図を作成」をクリックします。</div>
       </div>
     </div>
     <div class="howto-step">
       <div class="howto-num">4</div>
       <div>
-        <div class="howto-step-title">KMLファイルをインポート</div>
-        <div class="howto-step-desc">「インポート」ボタンをクリック → 先ほどダウンロードしたKMLファイルを選択します。</div>
-        <div class="howto-step-tip">📁 ファイルは「ダウンロード」フォルダにあります</div>
+        <div class="howto-step-title" data-i18n="h_4t">KMLファイルをインポート</div>
+        <div class="howto-step-desc" data-i18n="h_4d">「インポート」ボタンをクリック → 先ほどダウンロードしたKMLファイルを選択します。</div>
+        <div class="howto-step-tip" data-i18n="h_4tip">📁 ファイルは「ダウンロード」フォルダにあります</div>
       </div>
     </div>
     <div class="howto-step">
       <div class="howto-num">5</div>
       <div>
-        <div class="howto-step-title">地図に名前をつけて保存</div>
-        <div class="howto-step-desc">「無題の地図」をクリックして「GAP ロケ地マップ」などわかりやすい名前をつけます。自動で保存されます。</div>
+        <div class="howto-step-title" data-i18n="h_5t">地図に名前をつけて保存</div>
+        <div class="howto-step-desc" data-i18n="h_5d">「無題の地図」をクリックして「GAP ロケ地マップ」などわかりやすい名前をつけます。自動で保存されます。</div>
       </div>
     </div>
 
     <div class="howto-divider"></div>
-    <div class="howto-section">STEP 3 — スマホのGoogleマップで見る</div>
+    <div class="howto-section" data-i18n="h_s3">STEP 3 — スマホのGoogleマップで見る</div>
     <div class="howto-step">
       <div class="howto-num">6</div>
       <div>
-        <div class="howto-step-title">スマホのGoogleマップを開く</div>
-        <div class="howto-step-desc">下部メニューの「保存済み」→「マップ」タブをタップすると、作成したマイマップが表示されます。</div>
-        <div class="howto-step-tip">💡 同じGoogleアカウントでログインしていれば自動で同期されます</div>
+        <div class="howto-step-title" data-i18n="h_6t">スマホのGoogleマップを開く</div>
+        <div class="howto-step-desc" data-i18n="h_6d">下部メニューの「保存済み」→「マップ」タブをタップすると、作成したマイマップが表示されます。</div>
+        <div class="howto-step-tip" data-i18n="h_6tip">💡 同じGoogleアカウントでログインしていれば自動で同期されます</div>
       </div>
     </div>
     <div class="howto-step">
       <div class="howto-num">7</div>
       <div>
-        <div class="howto-step-title">現地でナビにも使える！</div>
-        <div class="howto-step-desc">各ピンをタップすると場所の詳細が見られます。「経路」ボタンで現地へのナビも起動できます。タイ旅行の前に準備しておくと便利です。</div>
-        <div class="howto-step-tip">🌸 オフライン地図と組み合わせると通信なしでも使えます</div>
+        <div class="howto-step-title" data-i18n="h_7t">現地でナビにも使える！</div>
+        <div class="howto-step-desc" data-i18n="h_7d">各ピンをタップすると場所の詳細が見られます。「経路」ボタンで現地へのナビも起動できます。タイ旅行の前に準備しておくと便利です。</div>
+        <div class="howto-step-tip" data-i18n="h_7tip">🌸 オフライン地図と組み合わせると通信なしでも使えます</div>
       </div>
     </div>
 
     <div style="padding:16px 20px 0">
-      <button onclick="document.getElementById('howto-overlay').style.display='none';exportKML()" style="width:100%;padding:13px;border-radius:12px;font-weight:800;font-size:15px;border:none;cursor:pointer;font-family:inherit;color:white;background:linear-gradient(135deg,#6EE7B7,#059669);display:flex;align-items:center;justify-content:center;gap:8px">
+      <button onclick="document.getElementById('howto-overlay').style.display='none';exportKML()" style="width:100%;padding:13px;border-radius:12px;font-weight:800;font-size:15px;border:none;cursor:pointer;font-family:inherit;color:white;background:linear-gradient(135deg,#6EE7B7,#059669);display:flex;align-items:center;justify-content:center;gap:8px" data-i18n="h_dl">
         ⬇ KMLファイルをダウンロードする
       </button>
       <div id="kml-download-msg" style="font-size:12px;text-align:center;color:#059669;min-height:16px;margin-top:8px"></div>
@@ -657,32 +667,32 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
   <div class="howto-card" onclick="event.stopPropagation()">
     <div class="howto-header">
       <button class="howto-close" onclick="document.getElementById('guide-overlay').style.display='none'">×</button>
-      <div class="gd-title">🌸 使い方ガイド</div>
-      <div class="gd-sub">推しの作品・CPで絞って聖地を巡る。旅先ではGoogleマップでそのまま案内まで。</div>
+      <div class="gd-title" data-i18n="g_title">🌸 使い方ガイド</div>
+      <div class="gd-sub" data-i18n="g_sub">推しの作品・CPで絞って聖地を巡る。旅先ではGoogleマップでそのまま案内まで。</div>
     </div>
 
     <!-- 1. 3ステップ -->
-    <div class="gd-eyebrow"><div class="gd-num">1</div><h4>まずはこの3ステップ</h4></div>
+    <div class="gd-eyebrow"><div class="gd-num">1</div><h4 data-i18n="g_h1">まずはこの3ステップ</h4></div>
     <div class="gd-body">
       <div class="gd-quick">
         <div class="gd-quick-line"></div>
-        <div class="gd-qstep"><div class="gd-qdot">🔍</div><div><div class="gd-qt">推しで絞る</div><div class="gd-qd">作品やカップルを選んで、見たい聖地だけ表示。</div></div></div>
-        <div class="gd-qstep"><div class="gd-qdot">📍</div><div><div class="gd-qt">ピンをタップ</div><div class="gd-qd">地図のピンを押すと、下から詳細カードが出ます。</div></div></div>
-        <div class="gd-qstep"><div class="gd-qdot">🧭</div><div><div class="gd-qt">Googleマップで開く</div><div class="gd-qd">「行く」と決めたら、使い慣れたGoogleマップで案内。</div></div></div>
+        <div class="gd-qstep"><div class="gd-qdot">🔍</div><div><div class="gd-qt" data-i18n="g_q1t">推しで絞る</div><div class="gd-qd" data-i18n="g_q1d">作品やカップルを選んで、見たい聖地だけ表示。</div></div></div>
+        <div class="gd-qstep"><div class="gd-qdot">📍</div><div><div class="gd-qt" data-i18n="g_q2t">ピンをタップ</div><div class="gd-qd" data-i18n="g_q2d">地図のピンを押すと、下から詳細カードが出ます。</div></div></div>
+        <div class="gd-qstep"><div class="gd-qdot">🧭</div><div><div class="gd-qt" data-i18n="g_q3t">Googleマップで開く</div><div class="gd-qd" data-i18n="g_q3d">「行く」と決めたら、使い慣れたGoogleマップで案内。</div></div></div>
       </div>
     </div>
 
     <div class="howto-divider"></div>
     <!-- 2. フィルター -->
-    <div class="gd-eyebrow"><div class="gd-num">2</div><h4>推しで絞り込む</h4></div>
+    <div class="gd-eyebrow"><div class="gd-num">2</div><h4 data-i18n="g_h2">推しで絞り込む</h4></div>
     <div class="gd-body">
-      <div class="gd-p">画面左上の<b>フィルターボタン</b>から、<b>作品</b>（GAP・23.5・The Loyal Pin など）や<b>カップル</b>（FreenBecky・MilkLove など）で絞れます。選んだ条件は上部にチップで出て、件数も表示されます。</div>
-      <div class="gd-note tip"><span class="gd-ni">💡</span><span>作品ごとにピンの色が変わります。<b>GAPはピンク、23.5はグリーン、The Loyal Pinはゴールド</b>。色でどの作品の聖地かひと目で分かります。</span></div>
+      <div class="gd-p" data-i18n-html="g_p2">画面左上の<b>フィルターボタン</b>から、<b>作品</b>（GAP・23.5・The Loyal Pin など）や<b>カップル</b>（FreenBecky・MilkLove など）で絞れます。選んだ条件は上部にチップで出て、件数も表示されます。</div>
+      <div class="gd-note tip"><span class="gd-ni">💡</span><span data-i18n-html="g_tip2">作品ごとにピンの色が変わります。<b>GAPはピンク、23.5はグリーン、The Loyal Pinはゴールド</b>。色でどの作品の聖地かひと目で分かります。</span></div>
     </div>
 
     <div class="howto-divider"></div>
     <!-- 3. ピンをタップ -->
-    <div class="gd-eyebrow"><div class="gd-num">3</div><h4>ピンをタップして詳細を見る</h4></div>
+    <div class="gd-eyebrow"><div class="gd-num">3</div><h4 data-i18n="g_h3">ピンをタップして詳細を見る</h4></div>
     <div class="gd-body">
       <div class="gd-phone-fig">
         <div class="gd-phone">
@@ -695,83 +705,83 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
             <div class="gd-pin" style="top:72px;left:36px;background:#F59E0B"></div>
           </div>
           <div class="gd-sheet">
-            <span class="gd-stag">🍰 カフェ</span>
+            <span class="gd-stag" data-i18n="g_fig_tag">🍰 カフェ</span>
             <div class="gd-stitle">Agalico</div>
             <div class="gd-srow">📍 Sukhumvit 51, Bangkok</div>
-            <div class="gd-sbtn">🧭 Googleマップで開く</div>
+            <div class="gd-sbtn" data-i18n="g_fig_btn">🧭 Googleマップで開く</div>
           </div>
         </div>
       </div>
-      <div class="gd-p" style="margin-top:8px">ピンをタップすると下から<b>詳細カード</b>がスライドアップ。名前・住所・登場作品・カップルが分かります。「<b>このスポットに情報を追加する</b>」から、みんなで情報を足していくこともできます。</div>
+      <div class="gd-p" style="margin-top:8px" data-i18n-html="g_p3">ピンをタップすると下から<b>詳細カード</b>がスライドアップ。名前・住所・登場作品・カップルが分かります。「<b>このスポットに情報を追加する</b>」から、みんなで情報を足していくこともできます。</div>
     </div>
 
     <div class="howto-divider"></div>
     <!-- 4. 旅先ナビ -->
-    <div class="gd-eyebrow"><div class="gd-num">4</div><h4>旅先でナビとして使う</h4></div>
+    <div class="gd-eyebrow"><div class="gd-num">4</div><h4 data-i18n="g_h4">旅先でナビとして使う</h4></div>
     <div class="gd-body">
-      <div class="gd-p">詳細カードの<b>「Googleマップで開く」</b>を押すと、スマホの<b>本物のGoogleマップアプリ</b>がそのスポットで立ち上がります。あとは普段どおり経路案内するだけ。見慣れた地図でそのまま歩けるのが一番おすすめの使い方です。</div>
-      <div class="gd-note tip"><span class="gd-ni">📲</span><span>事前の書き出しや保存は不要。<b>その場でタップ1回</b>でGoogleマップに飛べます。</span></div>
+      <div class="gd-p" data-i18n-html="g_p4">詳細カードの<b>「Googleマップで開く」</b>を押すと、スマホの<b>本物のGoogleマップアプリ</b>がそのスポットで立ち上がります。あとは普段どおり経路案内するだけ。見慣れた地図でそのまま歩けるのが一番おすすめの使い方です。</div>
+      <div class="gd-note tip"><span class="gd-ni">📲</span><span data-i18n-html="g_tip4">事前の書き出しや保存は不要。<b>その場でタップ1回</b>でGoogleマップに飛べます。</span></div>
     </div>
 
     <div class="howto-divider"></div>
     <!-- 5. マイマップ -->
-    <div class="gd-eyebrow"><div class="gd-num">5</div><h4>マイマップに丸ごと取り込む</h4></div>
+    <div class="gd-eyebrow"><div class="gd-num">5</div><h4 data-i18n="g_h5">マイマップに丸ごと取り込む</h4></div>
     <div class="gd-body">
-      <div class="gd-p">絞り込んだ聖地を<b>まとめて1枚の地図</b>にしたいときに。右上メニューの「マイマップ出力（KML）」から地図データ（KML）を書き出せます。出発前に全体像をながめたい人向けです。</div>
-      <div class="gd-stage s1">🟢 STEP 1 ・ スマホでもPCでもOK</div>
-      <div class="gd-kstep"><div class="gd-knum">1</div><div><div class="gd-kt">見たい作品・CPで絞り込む</div><div class="gd-kd">地図に入れたい聖地だけフィルターで表示します。</div></div></div>
-      <div class="gd-kstep"><div class="gd-knum">2</div><div><div class="gd-kt">「マイマップ出力」をタップ</div><div class="gd-kd">KMLファイルがダウンロードされます。</div></div></div>
-      <div class="gd-stage s2" style="margin-top:12px">🔵 STEP 2 ・ ここはPCがおすすめ</div>
-      <div class="gd-kstep"><div class="gd-knum pc">3</div><div><div class="gd-kt">mymaps.google.com を開く</div><div class="gd-kd">PCのブラウザで開き「新しい地図を作成」をクリック。</div></div></div>
-      <div class="gd-kstep"><div class="gd-knum pc">4</div><div><div class="gd-kt">KMLをインポート</div><div class="gd-kd">「インポート」→ さっき保存したKMLを選択。聖地が一気にピン表示されます。</div></div></div>
-      <div class="gd-kstep"><div class="gd-knum pc">5</div><div><div class="gd-kt">名前をつけて保存</div><div class="gd-kd">「GAP ロケ地マップ」など分かりやすい名前に。自動保存されます。</div></div></div>
-      <div class="gd-kstep"><div class="gd-knum pc">6</div><div><div class="gd-kt">スマホのGoogleマップで開く</div><div class="gd-kd">「保存済み」→「マップ」タブから、作った地図を表示できます。</div></div></div>
-      <div class="gd-note warn"><span class="gd-ni">⚠️</span><span><b>取り込みはスマホ単体ではできません。</b>スマホのマイマップは閲覧専用のため、インポートはPCが必要です。取り込んだピンはGoogleマップの検索には出ず、直接の経路案内もできません（一度タップして店名で再検索が必要）。</span></div>
+      <div class="gd-p" data-i18n-html="g_p5">絞り込んだ聖地を<b>まとめて1枚の地図</b>にしたいときに。右上メニューの「マイマップ出力（KML）」から地図データ（KML）を書き出せます。出発前に全体像をながめたい人向けです。</div>
+      <div class="gd-stage s1" data-i18n="g_st1">🟢 STEP 1 ・ スマホでもPCでもOK</div>
+      <div class="gd-kstep"><div class="gd-knum">1</div><div><div class="gd-kt" data-i18n="g_k1t">見たい作品・CPで絞り込む</div><div class="gd-kd" data-i18n="g_k1d">地図に入れたい聖地だけフィルターで表示します。</div></div></div>
+      <div class="gd-kstep"><div class="gd-knum">2</div><div><div class="gd-kt" data-i18n="g_k2t">「マイマップ出力」をタップ</div><div class="gd-kd" data-i18n="g_k2d">KMLファイルがダウンロードされます。</div></div></div>
+      <div class="gd-stage s2" style="margin-top:12px" data-i18n="g_st2">🔵 STEP 2 ・ ここはPCがおすすめ</div>
+      <div class="gd-kstep"><div class="gd-knum pc">3</div><div><div class="gd-kt" data-i18n="g_k3t">mymaps.google.com を開く</div><div class="gd-kd" data-i18n="g_k3d">PCのブラウザで開き「新しい地図を作成」をクリック。</div></div></div>
+      <div class="gd-kstep"><div class="gd-knum pc">4</div><div><div class="gd-kt" data-i18n="g_k4t">KMLをインポート</div><div class="gd-kd" data-i18n="g_k4d">「インポート」→ さっき保存したKMLを選択。聖地が一気にピン表示されます。</div></div></div>
+      <div class="gd-kstep"><div class="gd-knum pc">5</div><div><div class="gd-kt" data-i18n="g_k5t">名前をつけて保存</div><div class="gd-kd" data-i18n="g_k5d">「GAP ロケ地マップ」など分かりやすい名前に。自動保存されます。</div></div></div>
+      <div class="gd-kstep"><div class="gd-knum pc">6</div><div><div class="gd-kt" data-i18n="g_k6t">スマホのGoogleマップで開く</div><div class="gd-kd" data-i18n="g_k6d">「保存済み」→「マップ」タブから、作った地図を表示できます。</div></div></div>
+      <div class="gd-note warn"><span class="gd-ni">⚠️</span><span data-i18n-html="g_warn"><b>取り込みはスマホ単体ではできません。</b>スマホのマイマップは閲覧専用のため、インポートはPCが必要です。取り込んだピンはGoogleマップの検索には出ず、直接の経路案内もできません（一度タップして店名で再検索が必要）。</span></div>
     </div>
 
     <div class="howto-divider"></div>
     <!-- 6. 使い分け -->
-    <div class="gd-eyebrow"><div class="gd-num">6</div><h4>どっちを使う？</h4></div>
+    <div class="gd-eyebrow"><div class="gd-num">6</div><h4 data-i18n="g_h6">どっちを使う？</h4></div>
     <div class="gd-body">
-      <div class="gd-p" style="margin-bottom:2px">同じ「Googleマップで見る」でも、目的でおすすめが変わります。</div>
+      <div class="gd-p" style="margin-bottom:2px" data-i18n="g_p6">同じ「Googleマップで見る」でも、目的でおすすめが変わります。</div>
       <div class="gd-vs">
         <div class="gd-vscard a">
-          <div class="gd-vh">🧭 アプリで開く</div>
-          <ul><li>タップ1回で即ナビ</li><li>書き出し・保存ナシ</li><li>常に最新の情報</li><li>1か所ずつ案内</li></ul>
-          <div class="gd-vwhen">現地で動く人に</div>
+          <div class="gd-vh" data-i18n="g_vsA_h">🧭 アプリで開く</div>
+          <ul data-i18n-html="g_vsA_li"><li>タップ1回で即ナビ</li><li>書き出し・保存ナシ</li><li>常に最新の情報</li><li>1か所ずつ案内</li></ul>
+          <div class="gd-vwhen" data-i18n="g_vsA_when">現地で動く人に</div>
         </div>
         <div class="gd-vscard b">
-          <div class="gd-vh">🗾 マイマップ</div>
-          <ul><li>全部を1枚に表示</li><li>PCで作る手間あり</li><li>作った時点の情報</li><li>全体像をながめる</li></ul>
-          <div class="gd-vwhen">出発前に計画する人に</div>
+          <div class="gd-vh" data-i18n="g_vsB_h">🗾 マイマップ</div>
+          <ul data-i18n-html="g_vsB_li"><li>全部を1枚に表示</li><li>PCで作る手間あり</li><li>作った時点の情報</li><li>全体像をながめる</li></ul>
+          <div class="gd-vwhen" data-i18n="g_vsB_when">出発前に計画する人に</div>
         </div>
       </div>
-      <div class="gd-note tip"><span class="gd-ni">🌸</span><span>迷ったら<b>「アプリで開く」</b>でOK。旅先での使いやすさはこちらが上です。マイマップは「全部まとめて眺めたい」ときの予備くらいの位置づけが気楽です。</span></div>
+      <div class="gd-note tip"><span class="gd-ni">🌸</span><span data-i18n-html="g_tip6">迷ったら<b>「アプリで開く」</b>でOK。旅先での使いやすさはこちらが上です。マイマップは「全部まとめて眺めたい」ときの予備くらいの位置づけが気楽です。</span></div>
     </div>
 
     <div class="howto-divider"></div>
     <!-- 7. その他 -->
-    <div class="gd-eyebrow"><div class="gd-num">7</div><h4>そのほかの便利機能</h4></div>
+    <div class="gd-eyebrow"><div class="gd-num">7</div><h4 data-i18n="g_h7">そのほかの便利機能</h4></div>
     <div class="gd-body">
-      <div class="gd-feat"><div class="gd-fico">📋</div><div><div class="gd-ft">表形式のスポット一覧</div><div class="gd-fd">スポット一覧の「表で見る」から、全スポットを表でチェック。検索・並べ替え・マーク付けもここでできます。旅の計画づくりに。</div></div></div>
-      <div class="gd-feat"><div class="gd-fico">💖</div><div><div class="gd-ft">行きたい！／行った！マーク</div><div class="gd-fd">詳細カードでマークすると地図のピンに💖✅が付きます。フィルターの「マイマーク」で自分のリストだけ表示。ログインすると他の端末とも同期されます。</div></div></div>
-      <div class="gd-feat"><div class="gd-fico">🔗</div><div><div class="gd-ft">スポットを共有</div><div class="gd-fd">詳細カードの🔗ボタンで、そのスポットへの直リンクをコピー・共有できます。</div></div></div>
-      <div class="gd-feat"><div class="gd-fico">🔎</div><div><div class="gd-ft">検索</div><div class="gd-fd">上部の検索バーで、場所・住所・作品・カップル名から探せます。</div></div></div>
-      <div class="gd-feat"><div class="gd-fico">📍</div><div><div class="gd-ft">現在地</div><div class="gd-fd">いまいる場所を地図に表示。近くの聖地が分かります。</div></div></div>
-      <div class="gd-feat"><div class="gd-fico">＋</div><div><div class="gd-ft">スポットを投稿</div><div class="gd-fd">まだ載っていない聖地を自分で追加。Googleマップに出てこない隠れロケ地もここに。</div></div></div>
+      <div class="gd-feat"><div class="gd-fico">📋</div><div><div class="gd-ft" data-i18n="g_f_tbl_t">表形式のスポット一覧</div><div class="gd-fd" data-i18n="g_f_tbl_d">スポット一覧の「表で見る」から、全スポットを表でチェック。検索・並べ替え・マーク付けもここでできます。旅の計画づくりに。</div></div></div>
+      <div class="gd-feat"><div class="gd-fico">💖</div><div><div class="gd-ft" data-i18n="g_f_mark_t">行きたい！／行った！マーク</div><div class="gd-fd" data-i18n="g_f_mark_d">詳細カードでマークすると地図のピンに💖✅が付きます。フィルターの「マイマーク」で自分のリストだけ表示。ログインすると他の端末とも同期されます。</div></div></div>
+      <div class="gd-feat"><div class="gd-fico">🔗</div><div><div class="gd-ft" data-i18n="g_f_share_t">スポットを共有</div><div class="gd-fd" data-i18n="g_f_share_d">詳細カードの🔗ボタンで、そのスポットへの直リンクをコピー・共有できます。</div></div></div>
+      <div class="gd-feat"><div class="gd-fico">🔎</div><div><div class="gd-ft" data-i18n="g_f_srch_t">検索</div><div class="gd-fd" data-i18n="g_f_srch_d">上部の検索バーで、場所・住所・作品・カップル名から探せます。</div></div></div>
+      <div class="gd-feat"><div class="gd-fico">📍</div><div><div class="gd-ft" data-i18n="g_f_loc_t">現在地</div><div class="gd-fd" data-i18n="g_f_loc_d">いまいる場所を地図に表示。近くの聖地が分かります。</div></div></div>
+      <div class="gd-feat"><div class="gd-fico">＋</div><div><div class="gd-ft" data-i18n="g_f_post_t">スポットを投稿</div><div class="gd-fd" data-i18n="g_f_post_d">まだ載っていない聖地を自分で追加。Googleマップに出てこない隠れロケ地もここに。</div></div></div>
     </div>
 
     <div class="howto-divider"></div>
     <!-- 8. PWA -->
-    <div class="gd-eyebrow"><div class="gd-num">8</div><h4>アプリのように使う</h4></div>
+    <div class="gd-eyebrow"><div class="gd-num">8</div><h4 data-i18n="g_h8">アプリのように使う</h4></div>
     <div class="gd-body">
-      <div class="gd-p">ブラウザのメニューから<b>「ホーム画面に追加」</b>を選ぶと、アプリのアイコンが追加され、毎回ブラウザを開かずにサッと起動できます。</div>
-      <div class="gd-pwa"><span class="gd-pn">i</span><span><b>iPhone</b>：共有ボタン →「ホーム画面に追加」</span></div>
-      <div class="gd-pwa"><span class="gd-pn">A</span><span><b>Android</b>：メニュー（︙）→「ホーム画面に追加」</span></div>
+      <div class="gd-p" data-i18n-html="g_p8">ブラウザのメニューから<b>「ホーム画面に追加」</b>を選ぶと、アプリのアイコンが追加され、毎回ブラウザを開かずにサッと起動できます。</div>
+      <div class="gd-pwa"><span class="gd-pn">i</span><span data-i18n-html="g_pwa_i"><b>iPhone</b>：共有ボタン →「ホーム画面に追加」</span></div>
+      <div class="gd-pwa"><span class="gd-pn">A</span><span data-i18n-html="g_pwa_a"><b>Android</b>：メニュー（︙）→「ホーム画面に追加」</span></div>
     </div>
 
     <div style="padding:20px 20px 0">
-      <button onclick="document.getElementById('guide-overlay').style.display='none'" style="width:100%;padding:13px;border-radius:12px;font-weight:800;font-size:15px;border:none;cursor:pointer;font-family:inherit;color:white;background:linear-gradient(135deg,#F9A8D4,#C4B5FD)">
+      <button onclick="document.getElementById('guide-overlay').style.display='none'" style="width:100%;padding:13px;border-radius:12px;font-weight:800;font-size:15px;border:none;cursor:pointer;font-family:inherit;color:white;background:linear-gradient(135deg,#F9A8D4,#C4B5FD)" data-i18n="g_close">
         🌸 ガイドを閉じて地図を見る
       </button>
     </div>
@@ -810,6 +820,211 @@ const TTL=7*24*60*60*1000, CL='tsmap_loc_v2', CA='tsmap_app_v2', CS='tsmap_serie
 let TALENTS=[]; // 投稿フォーム用のタレント一覧
 const sc=(k,d)=>{try{localStorage.setItem(k,JSON.stringify({ts:Date.now(),data:d}))}catch(e){}};
 const lc=k=>{try{const r=localStorage.getItem(k);if(!r)return null;const{ts,data}=JSON.parse(r);if(Date.now()-ts>TTL){localStorage.removeItem(k);return null;}return data;}catch(e){return null;}};
+
+// ── 多言語対応（ja / en / zh=繁體中文 / th）──────────────────
+// 値は [ja, en, zh, th] の順。UI文言はすべてここを通す（データの中身は投稿された言語のまま）
+const LIDX={ja:0,en:1,zh:2,th:3};
+function detectLang(){const n=(navigator.language||'').toLowerCase();if(n.startsWith('ja'))return'ja';if(n.startsWith('zh'))return'zh';if(n.startsWith('th'))return'th';return'en';}
+let LANG=localStorage.getItem('tsmap_lang')||detectLang();
+if(!(LANG in LIDX))LANG='en';
+const t=k=>{const e=I18N[k];if(!e)return k;return e[LIDX[LANG]]??e[0];};
+const tf=(k,v)=>t(k).replace(/\{(\w+)\}/g,(m,p)=>v[p]??m);
+const I18N={
+search_ph:['場所・作品・CPを検索...','Search places, series, CPs...','搜尋地點、作品、CP…','ค้นหาสถานที่ ซีรีส์ CP...'],
+filter:['フィルター','Filter','篩選','ตัวกรอง'],
+filter_title:['🔍 絞り込み','🔍 Filters','🔍 篩選','🔍 ตัวกรอง'],
+sec_talent:['タレント（複数選択OK）','Talents (multi-select OK)','演員（可複選）','นักแสดง (เลือกได้หลายคน)'],
+sec_series:['作品（複数選択OK）','Series (multi-select OK)','作品（可複選）','ซีรีส์ (เลือกได้หลายเรื่อง)'],
+sec_marks:['マイマーク','My marks','我的標記','มาร์กของฉัน'],
+sec_other:['オススメ・その他','Recommended & more','推薦・其他','แนะนำและอื่น ๆ'],
+cp_search_ph:['頭文字で検索…（例: f → Freen）','Type to search… (e.g. f → Freen)','輸入搜尋…（例：f → Freen）','พิมพ์ค้นหา… (เช่น f → Freen)'],
+series_search_ph:['頭文字で検索…（例: g → GAP）','Type to search… (e.g. g → GAP)','輸入搜尋…（例：g → GAP）','พิมพ์ค้นหา… (เช่น g → GAP)'],
+all:['すべて','All','全部','ทั้งหมด'],
+reset:['✕ フィルターをリセット','✕ Reset filters','✕ 重設篩選','✕ ล้างตัวกรอง'],
+no_match:['該当なし','No matches','沒有符合項目','ไม่พบรายการ'],
+rec:['おすすめ','Recommended','推薦','แนะนำ'],
+want:['行きたい','Want to go','想去','อยากไป'],
+went:['行った','Visited','去過','ไปแล้ว'],
+want_on:['行きたい！','Want to go!','想去！','อยากไป!'],
+went_on:['行った！','Visited!','去過！','ไปแล้ว!'],
+count:['{n}件','{n} spots','{n} 筆','{n} แห่ง'],
+spot_list_n:['スポット一覧 {n}件','Spots ({n})','地點清單（{n}）','สถานที่ ({n})'],
+no_spots:['該当するスポットがありません','No spots found','沒有符合的地點','ไม่พบสถานที่ที่ตรงเงื่อนไข'],
+n_works:['📌 {n}作品に登場','📌 In {n} series','📌 出現於 {n} 部作品','📌 ปรากฏใน {n} เรื่อง'],
+appearances:['登場作品','Featured in','登場作品','ปรากฏในผลงาน'],
+open_gmaps:['🗺 Googleマップで開く','🗺 Open in Google Maps','🗺 用 Google 地圖開啟','🗺 เปิดใน Google Maps'],
+add_info:['➕ このスポットに情報を追加する','➕ Add info to this spot','➕ 為這個地點補充資訊','➕ เพิ่มข้อมูลให้สถานที่นี้'],
+gmaps_pending:['GoogleマップのURLは準備中です','Google Maps link is not ready yet','Google 地圖連結準備中','ลิงก์ Google Maps ยังไม่พร้อม'],
+link_copied:['リンクをコピーしました！','Link copied!','已複製連結！','คัดลอกลิงก์แล้ว!'],
+copy_prompt:['このURLをコピーしてください','Copy this URL','請複製此網址','คัดลอก URL นี้'],
+sns_x:['X(Twitter)の投稿を見る','View post on X (Twitter)','查看 X（Twitter）貼文','ดูโพสต์ X (Twitter)'],
+sns_ig:['Instagramの投稿を見る','View post on Instagram','查看 Instagram 貼文','ดูโพสต์ Instagram'],
+sns_tt:['TikTokの投稿を見る','View post on TikTok','查看 TikTok 影片','ดูคลิป TikTok'],
+sns_other:['SNS投稿を見る','View on social media','查看社群貼文','ดูโพสต์โซเชียล'],
+see_glworks:['🌺 Thai GL Worksで {s} を見る →','🌺 See {s} on Thai GL Works →','🌺 到 Thai GL Works 看 {s} →','🌺 ดู {s} บน Thai GL Works →'],
+mark_hint:['💡 ログインするとマークが他の端末にも同期されます','💡 Log in to sync marks across devices','💡 登入後標記會同步到其他裝置','💡 เข้าสู่ระบบเพื่อซิงก์มาร์กข้ามอุปกรณ์'],
+login_sub:['スポットの投稿や、行きたい！行った！マークの<br>端末をまたいだ保存にはログインが必要です','Sign in to submit spots and sync your<br>Want-to-go / Visited marks across devices','投稿地點、跨裝置同步「想去／去過」標記<br>需要登入','เข้าสู่ระบบเพื่อส่งสถานที่ และซิงก์มาร์ก<br>อยากไป/ไปแล้ว ข้ามอุปกรณ์'],
+login_google:['Googleでログイン','Sign in with Google','使用 Google 登入','เข้าสู่ระบบด้วย Google'],
+login_skip:['ログインせずに地図を見る','Continue without signing in','不登入直接看地圖','ดูแผนที่โดยไม่เข้าสู่ระบบ'],
+menu_login:['🔑 Googleでログイン','🔑 Sign in with Google','🔑 使用 Google 登入','🔑 เข้าสู่ระบบด้วย Google'],
+menu_admin:['⚙ 管理者画面','⚙ Admin','⚙ 管理後台','⚙ ผู้ดูแลระบบ'],
+menu_guide:['📖 使い方ガイド','📖 How-to guide','📖 使用指南','📖 วิธีใช้งาน'],
+menu_submit:['📍 スポットを投稿','📍 Submit a spot','📍 投稿地點','📍 ส่งสถานที่ใหม่'],
+menu_table:['📋 スポット一覧（表）','📋 Spot list (table)','📋 地點清單（表格）','📋 รายการสถานที่ (ตาราง)'],
+menu_kml:['🗾 マイマップ出力（KML）','🗾 Export My Maps (KML)','🗾 匯出我的地圖（KML）','🗾 ส่งออก My Maps (KML)'],
+menu_logout:['ログアウト','Sign out','登出','ออกจากระบบ'],
+geo_na:['現在地取得に非対応です','Geolocation is not supported','不支援定位功能','อุปกรณ์ไม่รองรับการระบุตำแหน่ง'],
+geo_fail:['現在地の取得に失敗しました','Could not get your location','無法取得目前位置','ไม่สามารถระบุตำแหน่งได้'],
+btn_table:['📋 表で見る','📋 Table view','📋 表格檢視','📋 ดูแบบตาราง'],
+tb_title:['📋 スポット一覧','📋 Spot List','📋 地點清單','📋 รายการสถานที่'],
+tb_search_ph:['場所・作品・タレント・住所で絞り込み…','Filter by place, series, talent, address…','以地點、作品、演員、地址篩選…','กรองตามสถานที่ ซีรีส์ นักแสดง ที่อยู่…'],
+th_name:['場所名','Place','地點','สถานที่'],
+th_series:['作品 / タレント','Series / Talent','作品／演員','ซีรีส์ / นักแสดง'],
+th_mark:['マーク','Marks','標記','มาร์ก'],
+tile_std:['標準','Standard','標準','มาตรฐาน'],
+tile_light:['淡色','Light','淺色','โทนอ่อน'],
+none_opt:['— なし（おすすめ・任意）—','— None (optional) —','— 無（選填）—','— ไม่มี (ไม่บังคับ) —'],
+new_free:['➕ 「{s}」をそのまま使う（新規）','➕ Use “{s}” (new)','➕ 直接使用「{s}」（新增）','➕ ใช้ “{s}” (ใหม่)'],
+cast:['出演','Cast','出演','นำแสดง'],
+sm_title:['📍 新しいスポットを投稿','📍 Submit a new spot','📍 投稿新地點','📍 ส่งสถานที่ใหม่'],
+l_name:['場所名','Place name','地點名稱','ชื่อสถานที่'],
+ph_name:['例: 99 House Studio','e.g. 99 House Studio','例：99 House Studio','เช่น 99 House Studio'],
+l_series:['中カテゴリ（作品）','Series','作品','ซีรีส์'],
+hint_series:['一覧に無い新しい作品は、そのまま入力してOKです','Not in the list? Just type the new title','清單裡沒有的新作品可直接輸入','ไม่มีในรายการ? พิมพ์ชื่อใหม่ได้เลย'],
+l_talent:['タレント','Talent','演員','นักแสดง'],
+talent_note:['／任意（おすすめ等は空欄でOK）','(optional)','（選填）','(ไม่บังคับ)'],
+ph_talent:['なし（入力して検索・任意）','None (type to search, optional)','無（輸入搜尋・選填）','ไม่มี (พิมพ์ค้นหา ไม่บังคับ)'],
+l_scene:['シーン説明','Scene description','場景說明','คำอธิบายฉาก'],
+ph_scene:['例: Monの家として使用されたスタジオ','e.g. Studio used as Mon’s house','例：作為 Mon 家的攝影棚','เช่น สตูดิโอที่ใช้เป็นบ้านของ Mon'],
+ph_scene2:['例: 別CPのロケ地として使用','e.g. Also used for another couple’s scenes','例：另一對 CP 的取景地','เช่น ใช้เป็นโลเคชั่นของคู่อื่น'],
+l_sns:['SNSリンク（任意）','Social link (optional)','社群連結（選填）','ลิงก์โซเชียล (ไม่บังคับ)'],
+l_gurl:['GoogleマップURL（任意）','Google Maps URL (optional)','Google 地圖網址（選填）','ลิงก์ Google Maps (ไม่บังคับ)'],
+l_memo:['訪問メモ（任意）','Visit notes (optional)','造訪筆記（選填）','บันทึกการไปเยือน (ไม่บังคับ)'],
+ph_memo:['例: 入場500B、事前予約必要','e.g. Entry 500B, booking required','例：門票 500B、需預約','เช่น ค่าเข้า 500B ต้องจองล่วงหน้า'],
+btn_submit:['投稿する（管理者確認後に公開）','Submit (published after review)','送出（審核後公開）','ส่ง (เผยแพร่หลังตรวจสอบ)'],
+btn_cancel:['キャンセル','Cancel','取消','ยกเลิก'],
+m_required:['※ 場所名・中カテゴリ・シーン説明を入力してください','※ Please fill in place name, series and scene','※ 請填寫地點名稱、作品與場景說明','※ กรุณากรอกชื่อสถานที่ ซีรีส์ และคำอธิบายฉาก'],
+m_login:['※ 投稿にはログインが必要です','※ Please sign in to submit','※ 投稿需要登入','※ ต้องเข้าสู่ระบบก่อนส่ง'],
+m_sending:['送信中...','Sending…','傳送中…','กำลังส่ง…'],
+m_sent:['✅ 投稿しました！管理者確認後に公開されます。','✅ Submitted! It will appear after review.','✅ 已送出！審核後將公開。','✅ ส่งแล้ว! จะแสดงหลังการตรวจสอบ'],
+m_fail:['送信に失敗しました。','Failed to send.','傳送失敗。','ส่งไม่สำเร็จ'],
+ai_title:['➕ {name} に情報を追加','➕ Add info to {name}','➕ 為 {name} 補充資訊','➕ เพิ่มข้อมูลให้ {name}'],
+tab_link:['🎬 紐付け追加','🎬 Add appearance','🎬 新增作品連結','🎬 เพิ่มผลงาน'],
+tab_memo:['💡 メモ・SNS補足','💡 Notes & links','💡 筆記・補充連結','💡 โน้ตและลิงก์เสริม'],
+l_memo2:['訪問メモ・アクセス情報','Visit notes / access info','造訪筆記・交通資訊','บันทึก/ข้อมูลการเดินทาง'],
+ph_memo2:['例: 入場500B、予約方法、アクセスのコツなど','e.g. Entry fee, booking, how to get there','例：門票、預約方式、交通方式','เช่น ค่าเข้า วิธีจอง การเดินทาง'],
+l_sns2:['SNSリンク（補足情報）','Social link (extra info)','社群連結（補充）','ลิงก์โซเชียล (ข้อมูลเสริม)'],
+btn_send:['送信する（管理者確認後に反映）','Send (applied after review)','送出（審核後更新）','ส่ง (อัปเดตหลังตรวจสอบ)'],
+m_required2:['※ 中カテゴリ・シーン説明は必須です','※ Series and scene are required','※ 作品與場景說明為必填','※ ต้องกรอกซีรีส์และคำอธิบายฉาก'],
+m_memo_req:['※ メモかSNSリンクを入力してください','※ Enter a note or a link','※ 請輸入筆記或連結','※ กรุณากรอกโน้ตหรือลิงก์'],
+m_sent2:['✅ 送信しました！管理者確認後に反映されます。','✅ Sent! It will be applied after review.','✅ 已送出！審核後將更新。','✅ ส่งแล้ว! จะอัปเดตหลังตรวจสอบ'],
+kml_none:['表示中のスポットがありません','No spots to export','沒有可匯出的地點','ไม่มีสถานที่ให้ส่งออก'],
+kml_done:['✅ {n}件をダウンロードしました','✅ Downloaded {n} spots','✅ 已下載 {n} 筆','✅ ดาวน์โหลดแล้ว {n} แห่ง'],
+kml_more:['他{n}作品に登場','In {n} more series','另出現於 {n} 部作品','อีก {n} เรื่อง'],
+h_title:['🗾 Googleマイマップへの取り込み方','🗾 Import into Google My Maps','🗾 匯入 Google 我的地圖','🗾 นำเข้า Google My Maps'],
+h_sub:['フィルターで絞ったスポットをスマホのGoogleマップで見られるようにします','View your filtered spots in the Google Maps app on your phone','讓篩選後的地點顯示在手機的 Google 地圖中','ดูสถานที่ที่กรองไว้ในแอป Google Maps บนมือถือ'],
+h_s1:['STEP 1 — KMLファイルをダウンロード','STEP 1 — Download the KML file','STEP 1 — 下載 KML 檔案','STEP 1 — ดาวน์โหลดไฟล์ KML'],
+h_1t:['見たい作品・CPをフィルターする','Filter the series / couples you want','篩選想看的作品・CP','กรองซีรีส์/คู่ที่ต้องการ'],
+h_1d:['画面上部のフィルターボタンで「GAP The Series」や「FreenBecky」など絞り込みます。件数が表示されます。','Use the filter button at the top to narrow down (e.g. “GAP The Series” or “FreenBecky”). The spot count is shown.','用上方的篩選按鈕縮小範圍（例如「GAP The Series」或「FreenBecky」），會顯示件數。','ใช้ปุ่มตัวกรองด้านบนเลือก เช่น “GAP The Series” หรือ “FreenBecky” จะแสดงจำนวนสถานที่'],
+h_2t:['「マイマップ出力」ボタンをタップ','Tap “Export My Maps”','點「匯出我的地圖」','แตะ “ส่งออก My Maps”'],
+h_2d:['KMLファイル（地図データの標準形式）がダウンロードされます。ファイル名はフィルター内容が入ります。','A KML file (a standard map-data format) will be downloaded. The filename reflects your filters.','會下載 KML 檔（地圖資料的標準格式），檔名會包含篩選內容。','ไฟล์ KML (รูปแบบมาตรฐานของข้อมูลแผนที่) จะถูกดาวน์โหลด ชื่อไฟล์ตามตัวกรอง'],
+h_2tip:['💡 KMLとはGoogleマップが読み込める地図データのファイル形式です','💡 KML is a map-data file format Google Maps can read','💡 KML 是 Google 地圖可讀取的地圖資料格式','💡 KML คือไฟล์ข้อมูลแผนที่ที่ Google Maps อ่านได้'],
+h_s2:['STEP 2 — Googleマイマップに取り込む（PC推奨）','STEP 2 — Import into Google My Maps (PC recommended)','STEP 2 — 匯入 Google 我的地圖（建議用電腦）','STEP 2 — นำเข้า Google My Maps (แนะนำใช้คอมพิวเตอร์)'],
+h_3t:['mymaps.google.com を開く','Open mymaps.google.com','開啟 mymaps.google.com','เปิด mymaps.google.com'],
+h_3d:['PCのブラウザで <a href="https://mymaps.google.com" target="_blank" class="howto-link">mymaps.google.com</a> にアクセスし、「新しい地図を作成」をクリックします。','Open <a href="https://mymaps.google.com" target="_blank" class="howto-link">mymaps.google.com</a> in a PC browser and click “Create a new map”.','在電腦瀏覽器開啟 <a href="https://mymaps.google.com" target="_blank" class="howto-link">mymaps.google.com</a>，點「建立新地圖」。','เปิด <a href="https://mymaps.google.com" target="_blank" class="howto-link">mymaps.google.com</a> บนคอมพิวเตอร์ แล้วคลิก “Create a new map”'],
+h_4t:['KMLファイルをインポート','Import the KML file','匯入 KML 檔案','นำเข้าไฟล์ KML'],
+h_4d:['「インポート」ボタンをクリック → 先ほどダウンロードしたKMLファイルを選択します。','Click “Import” and choose the KML file you downloaded.','點「匯入」→ 選擇剛下載的 KML 檔。','คลิก “Import” แล้วเลือกไฟล์ KML ที่ดาวน์โหลดไว้'],
+h_4tip:['📁 ファイルは「ダウンロード」フォルダにあります','📁 The file is in your Downloads folder','📁 檔案在「下載」資料夾裡','📁 ไฟล์อยู่ในโฟลเดอร์ Downloads'],
+h_5t:['地図に名前をつけて保存','Name the map and save','為地圖命名並儲存','ตั้งชื่อแผนที่แล้วบันทึก'],
+h_5d:['「無題の地図」をクリックして「GAP ロケ地マップ」などわかりやすい名前をつけます。自動で保存されます。','Click “Untitled map” and give it a clear name like “GAP locations”. It saves automatically.','點「未命名的地圖」改成好記的名稱（如「GAP 取景地」），會自動儲存。','คลิก “Untitled map” ตั้งชื่อ เช่น “GAP locations” ระบบบันทึกให้อัตโนมัติ'],
+h_s3:['STEP 3 — スマホのGoogleマップで見る','STEP 3 — View in Google Maps on your phone','STEP 3 — 在手機 Google 地圖查看','STEP 3 — ดูใน Google Maps บนมือถือ'],
+h_6t:['スマホのGoogleマップを開く','Open Google Maps on your phone','打開手機的 Google 地圖','เปิด Google Maps บนมือถือ'],
+h_6d:['下部メニューの「保存済み」→「マップ」タブをタップすると、作成したマイマップが表示されます。','Tap “Saved” → “Maps” tab at the bottom to find the map you made.','點下方「已儲存」→「地圖」分頁，就會看到建立的地圖。','แตะ “Saved” → แท็บ “Maps” ด้านล่าง จะเห็นแผนที่ที่สร้างไว้'],
+h_6tip:['💡 同じGoogleアカウントでログインしていれば自動で同期されます','💡 It syncs automatically with the same Google account','💡 使用同一個 Google 帳號會自動同步','💡 ซิงก์อัตโนมัติเมื่อใช้บัญชี Google เดียวกัน'],
+h_7t:['現地でナビにも使える！','Use it for navigation on site!','現場也能導航！','ใช้นำทางที่หน้างานได้!'],
+h_7d:['各ピンをタップすると場所の詳細が見られます。「経路」ボタンで現地へのナビも起動できます。タイ旅行の前に準備しておくと便利です。','Tap a pin for details, then “Directions” to navigate. Handy to prepare before your trip to Thailand.','點圖釘看詳情，按「路線」即可導航。出發去泰國前先準備好會很方便。','แตะหมุดเพื่อดูรายละเอียด กด “เส้นทาง” เพื่อนำทาง เตรียมไว้ก่อนทริปสะดวกมาก'],
+h_7tip:['🌸 オフライン地図と組み合わせると通信なしでも使えます','🌸 Combine with offline maps to use without data','🌸 搭配離線地圖，沒有網路也能用','🌸 ใช้คู่กับแผนที่ออฟไลน์ได้โดยไม่ต้องใช้เน็ต'],
+h_dl:['⬇ KMLファイルをダウンロードする','⬇ Download the KML file','⬇ 下載 KML 檔案','⬇ ดาวน์โหลดไฟล์ KML'],
+g_title:['🌸 使い方ガイド','🌸 How-to Guide','🌸 使用指南','🌸 วิธีใช้งาน'],
+g_sub:['推しの作品・CPで絞って聖地を巡る。旅先ではGoogleマップでそのまま案内まで。','Filter by your favorite series or couple and visit their filming spots — with Google Maps navigation on the go.','用喜歡的作品・CP 篩選聖地巡禮，旅途中直接用 Google 地圖導航。','กรองตามซีรีส์/คู่ที่ชอบ แล้วตามรอยโลเคชั่น พร้อมนำทางด้วย Google Maps'],
+g_h1:['まずはこの3ステップ','Start with these 3 steps','先從這 3 步開始','เริ่มด้วย 3 ขั้นตอนนี้'],
+g_q1t:['推しで絞る','Filter by your fave','用本命篩選','กรองตามคนโปรด'],
+g_q1d:['作品やカップルを選んで、見たい聖地だけ表示。','Pick a series or couple to show only their spots.','選作品或 CP，只顯示想看的聖地。','เลือกซีรีส์หรือคู่ เพื่อแสดงเฉพาะจุดที่สนใจ'],
+g_q2t:['ピンをタップ','Tap a pin','點擊圖釘','แตะหมุด'],
+g_q2d:['地図のピンを押すと、下から詳細カードが出ます。','Tap a map pin to open the detail card.','點地圖上的圖釘，下方會彈出詳情卡。','แตะหมุดบนแผนที่ การ์ดรายละเอียดจะเด้งขึ้นมา'],
+g_q3t:['Googleマップで開く','Open in Google Maps','用 Google 地圖開啟','เปิดใน Google Maps'],
+g_q3d:['「行く」と決めたら、使い慣れたGoogleマップで案内。','Decided to go? Let Google Maps guide you.','決定要去，就交給熟悉的 Google 地圖導航。','ถ้าจะไป ให้ Google Maps นำทางได้เลย'],
+g_h2:['推しで絞り込む','Filter by your fave','用本命篩選','กรองตามคนโปรด'],
+g_p2:['画面左上の<b>フィルターボタン</b>から、<b>作品</b>（GAP・23.5・The Loyal Pin など）や<b>カップル</b>（FreenBecky・MilkLove など）で絞れます。選んだ条件は上部にチップで出て、件数も表示されます。','Use the <b>filter button</b> at the top left to filter by <b>series</b> (GAP, 23.5, The Loyal Pin…) or <b>couple</b> (FreenBecky, MilkLove…). Selected filters appear as chips with a spot count.','用左上角的<b>篩選按鈕</b>，可以依<b>作品</b>（GAP、23.5、The Loyal Pin 等）或 <b>CP</b>（FreenBecky、MilkLove 等）篩選。選好的條件會以標籤顯示在上方，並顯示件數。','ใช้<b>ปุ่มตัวกรอง</b>มุมซ้ายบน กรองตาม<b>ซีรีส์</b> (GAP, 23.5, The Loyal Pin…) หรือ<b>คู่จิ้น</b> (FreenBecky, MilkLove…) เงื่อนไขที่เลือกจะแสดงเป็นชิปพร้อมจำนวน'],
+g_tip2:['作品ごとにピンの色が変わります。<b>GAPはピンク、23.5はグリーン、The Loyal Pinはゴールド</b>。色でどの作品の聖地かひと目で分かります。','Pin colors differ by series — <b>pink for GAP, green for 23.5, gold for The Loyal Pin</b> — so you can tell at a glance.','不同作品的圖釘顏色不同：<b>GAP 是粉紅、23.5 是綠色、The Loyal Pin 是金色</b>，一眼就能分辨。','สีหมุดต่างกันตามเรื่อง — <b>GAP สีชมพู, 23.5 สีเขียว, The Loyal Pin สีทอง</b> — ดูปุ๊บรู้เลย'],
+g_h3:['ピンをタップして詳細を見る','Tap a pin for details','點圖釘看詳情','แตะหมุดเพื่อดูรายละเอียด'],
+g_fig_tag:['🍰 カフェ','🍰 Cafe','🍰 咖啡廳','🍰 คาเฟ่'],
+g_fig_btn:['🧭 Googleマップで開く','🧭 Open in Google Maps','🧭 用 Google 地圖開啟','🧭 เปิดใน Google Maps'],
+g_p3:['ピンをタップすると下から<b>詳細カード</b>がスライドアップ。名前・住所・登場作品・カップルが分かります。「<b>このスポットに情報を追加する</b>」から、みんなで情報を足していくこともできます。','Tap a pin and the <b>detail card</b> slides up with the name, address, series and couples. Use “<b>Add info to this spot</b>” to contribute what you know.','點圖釘後<b>詳情卡</b>會滑出：名稱、地址、登場作品與 CP。也可以從「<b>為這個地點補充資訊</b>」一起補充情報。','แตะหมุดแล้ว<b>การ์ดรายละเอียด</b>จะเลื่อนขึ้นมา บอกชื่อ ที่อยู่ ซีรีส์ และคู่ ใช้ “<b>เพิ่มข้อมูลให้สถานที่นี้</b>” เพื่อช่วยกันเพิ่มข้อมูลได้'],
+g_h4:['旅先でナビとして使う','Navigate on your trip','旅途中當導航用','ใช้นำทางระหว่างทริป'],
+g_p4:['詳細カードの<b>「Googleマップで開く」</b>を押すと、スマホの<b>本物のGoogleマップアプリ</b>がそのスポットで立ち上がります。あとは普段どおり経路案内するだけ。見慣れた地図でそのまま歩けるのが一番おすすめの使い方です。','Tap <b>“Open in Google Maps”</b> on the card and the real Google Maps app opens right at that spot — then navigate as usual. This is the easiest way to use the map on your trip.','按詳情卡上的<b>「用 Google 地圖開啟」</b>，手機的 Google 地圖 App 會直接定位到該地點，接著照常導航即可。這是最推薦的用法。','กด<b>“เปิดใน Google Maps”</b>บนการ์ด แอป Google Maps จะเปิดที่จุดนั้นทันที แล้วนำทางตามปกติ นี่คือวิธีที่แนะนำที่สุด'],
+g_tip4:['事前の書き出しや保存は不要。<b>その場でタップ1回</b>でGoogleマップに飛べます。','No export or saving needed — <b>one tap</b> jumps straight to Google Maps.','不需事先匯出或儲存，<b>當場點一下</b>就能跳到 Google 地圖。','ไม่ต้องส่งออกหรือบันทึกล่วงหน้า — <b>แตะครั้งเดียว</b>ไป Google Maps ได้เลย'],
+g_h5:['マイマップに丸ごと取り込む','Import everything into My Maps','整批匯入我的地圖','นำเข้า My Maps ทั้งชุด'],
+g_p5:['絞り込んだ聖地を<b>まとめて1枚の地図</b>にしたいときに。右上メニューの「マイマップ出力（KML）」から地図データ（KML）を書き出せます。出発前に全体像をながめたい人向けです。','Want <b>all your filtered spots on one map</b>? Export a KML from the top-right menu (“Export My Maps (KML)”). Good for planning before departure.','想把篩選好的聖地<b>整合成一張地圖</b>時使用。從右上選單「匯出我的地圖（KML）」輸出地圖資料。適合出發前掌握全貌。','อยากได้<b>ทุกจุดในแผนที่เดียว</b>? ส่งออก KML จากเมนูขวาบน (“ส่งออก My Maps (KML)”) เหมาะกับการวางแผนก่อนออกเดินทาง'],
+g_st1:['🟢 STEP 1 ・ スマホでもPCでもOK','🟢 STEP 1 ・ Phone or PC','🟢 STEP 1・手機或電腦皆可','🟢 STEP 1・มือถือหรือ PC ก็ได้'],
+g_k1t:['見たい作品・CPで絞り込む','Filter what you want','篩選想要的作品・CP','กรองสิ่งที่ต้องการ'],
+g_k1d:['地図に入れたい聖地だけフィルターで表示します。','Show only the spots you want on the map.','只顯示要放進地圖的聖地。','แสดงเฉพาะจุดที่จะใส่ในแผนที่'],
+g_k2t:['「マイマップ出力」をタップ','Tap “Export My Maps”','點「匯出我的地圖」','แตะ “ส่งออก My Maps”'],
+g_k2d:['KMLファイルがダウンロードされます。','A KML file will be downloaded.','會下載 KML 檔。','ไฟล์ KML จะถูกดาวน์โหลด'],
+g_st2:['🔵 STEP 2 ・ ここはPCがおすすめ','🔵 STEP 2 ・ PC recommended here','🔵 STEP 2・這一步建議用電腦','🔵 STEP 2・ขั้นนี้แนะนำใช้ PC'],
+g_k3t:['mymaps.google.com を開く','Open mymaps.google.com','開啟 mymaps.google.com','เปิด mymaps.google.com'],
+g_k3d:['PCのブラウザで開き「新しい地図を作成」をクリック。','Open it in a PC browser and click “Create a new map”.','用電腦瀏覽器開啟，點「建立新地圖」。','เปิดบนเบราว์เซอร์ PC แล้วคลิก “Create a new map”'],
+g_k4t:['KMLをインポート','Import the KML','匯入 KML','นำเข้า KML'],
+g_k4d:['「インポート」→ さっき保存したKMLを選択。聖地が一気にピン表示されます。','“Import” → choose the saved KML. All spots appear as pins at once.','「匯入」→ 選剛存的 KML，聖地會一次全部顯示。','“Import” → เลือกไฟล์ KML ที่บันทึกไว้ หมุดทั้งหมดจะแสดงขึ้นพร้อมกัน'],
+g_k5t:['名前をつけて保存','Name and save','命名並儲存','ตั้งชื่อและบันทึก'],
+g_k5d:['「GAP ロケ地マップ」など分かりやすい名前に。自動保存されます。','Give it a clear name like “GAP locations”. It saves automatically.','取個好記的名稱（如「GAP 取景地」），會自動儲存。','ตั้งชื่อให้จำง่าย เช่น “GAP locations” บันทึกอัตโนมัติ'],
+g_k6t:['スマホのGoogleマップで開く','Open in Google Maps on your phone','在手機 Google 地圖開啟','เปิดใน Google Maps บนมือถือ'],
+g_k6d:['「保存済み」→「マップ」タブから、作った地図を表示できます。','Find it under “Saved” → “Maps” tab.','從「已儲存」→「地圖」分頁就能開啟。','ดูได้ที่ “Saved” → แท็บ “Maps”'],
+g_warn:['<b>取り込みはスマホ単体ではできません。</b>スマホのマイマップは閲覧専用のため、インポートはPCが必要です。取り込んだピンはGoogleマップの検索には出ず、直接の経路案内もできません（一度タップして店名で再検索が必要）。','<b>Importing can’t be done on a phone alone.</b> My Maps on mobile is view-only, so use a PC to import. Imported pins don’t show up in Google Maps search and can’t navigate directly (tap the pin, then search the name again).','<b>無法只用手機匯入。</b>手機版我的地圖僅供瀏覽，匯入需要電腦。匯入的圖釘不會出現在 Google 地圖搜尋，也無法直接導航（要先點圖釘再以店名搜尋）。','<b>นำเข้าด้วยมือถืออย่างเดียวไม่ได้</b> My Maps บนมือถือดูได้อย่างเดียว ต้องใช้ PC นำเข้า หมุดที่นำเข้าจะไม่ขึ้นในการค้นหาของ Google Maps และนำทางตรง ๆ ไม่ได้ (ต้องแตะหมุดแล้วค้นชื่อร้านอีกครั้ง)'],
+g_h6:['どっちを使う？','Which one to use?','要用哪一種？','ใช้แบบไหนดี?'],
+g_p6:['同じ「Googleマップで見る」でも、目的でおすすめが変わります。','Both open Google Maps — the best choice depends on your goal.','同樣是「用 Google 地圖看」，依目的推薦不同方式。','เปิด Google Maps เหมือนกัน แต่แบบไหนดีขึ้นอยู่กับเป้าหมาย'],
+g_vsA_h:['🧭 アプリで開く','🧭 Open in app','🧭 用 App 開啟','🧭 เปิดในแอป'],
+g_vsA_li:['<li>タップ1回で即ナビ</li><li>書き出し・保存ナシ</li><li>常に最新の情報</li><li>1か所ずつ案内</li>','<li>One tap to navigate</li><li>No export or saving</li><li>Always up to date</li><li>One spot at a time</li>','<li>點一下就導航</li><li>免匯出免儲存</li><li>資訊隨時最新</li><li>一次導一個點</li>','<li>แตะเดียวนำทางเลย</li><li>ไม่ต้องส่งออก/บันทึก</li><li>ข้อมูลล่าสุดเสมอ</li><li>นำทางทีละจุด</li>'],
+g_vsA_when:['現地で動く人に','For on-the-go travelers','適合現場行動派','เหมาะกับตอนอยู่หน้างาน'],
+g_vsB_h:['🗾 マイマップ','🗾 My Maps','🗾 我的地圖','🗾 My Maps'],
+g_vsB_li:['<li>全部を1枚に表示</li><li>PCで作る手間あり</li><li>作った時点の情報</li><li>全体像をながめる</li>','<li>Everything on one map</li><li>Needs PC setup</li><li>Snapshot at export</li><li>Great overview</li>','<li>全部顯示在一張圖</li><li>需用電腦製作</li><li>資訊停在匯出當下</li><li>可綜觀全貌</li>','<li>ทุกจุดในแผนที่เดียว</li><li>ต้องทำผ่าน PC</li><li>ข้อมูล ณ ตอนส่งออก</li><li>เห็นภาพรวมชัด</li>'],
+g_vsB_when:['出発前に計画する人に','For pre-trip planners','適合出發前規劃','เหมาะกับวางแผนก่อนเดินทาง'],
+g_tip6:['迷ったら<b>「アプリで開く」</b>でOK。旅先での使いやすさはこちらが上です。マイマップは「全部まとめて眺めたい」ときの予備くらいの位置づけが気楽です。','If unsure, just use <b>“Open in app”</b> — it’s easier on the road. Treat My Maps as a bonus for when you want the full overview.','不確定就選<b>「用 App 開啟」</b>，旅途中更好用。我的地圖當作「想一次看全部」時的備用即可。','ถ้าไม่แน่ใจ ใช้<b>“เปิดในแอป”</b>ได้เลย สะดวกกว่าตอนเดินทาง ส่วน My Maps ไว้ดูภาพรวมเป็นตัวเสริม'],
+g_h7:['そのほかの便利機能','More handy features','其他實用功能','ฟีเจอร์อื่น ๆ'],
+g_f_tbl_t:['表形式のスポット一覧','Spot list table','表格地點清單','ตารางรายการสถานที่'],
+g_f_tbl_d:['スポット一覧の「表で見る」から、全スポットを表でチェック。検索・並べ替え・マーク付けもここでできます。旅の計画づくりに。','Open “Table view” to browse all spots — search, sort and mark right from the table. Great for planning.','從「表格檢視」瀏覽全部地點，可搜尋、排序、加標記。規劃行程好幫手。','เปิด “ดูแบบตาราง” เพื่อดูทุกจุด ค้นหา เรียงลำดับ และมาร์กได้ในตาราง เหมาะกับวางแผนทริป'],
+g_f_mark_t:['行きたい！／行った！マーク','Want-to-go / Visited marks','想去／去過標記','มาร์ก อยากไป/ไปแล้ว'],
+g_f_mark_d:['詳細カードでマークすると地図のピンに💖✅が付きます。フィルターの「マイマーク」で自分のリストだけ表示。ログインすると他の端末とも同期されます。','Mark spots on the detail card and pins get 💖/✅. Filter by “My marks” to see only your list. Log in to sync across devices.','在詳情卡加標記後，圖釘會顯示💖✅。用「我的標記」篩選只看自己的清單。登入後可跨裝置同步。','มาร์กจากการ์ดรายละเอียด หมุดจะมี 💖/✅ กรองด้วย “มาร์กของฉัน” เพื่อดูเฉพาะของตัวเอง เข้าสู่ระบบเพื่อซิงก์ข้ามอุปกรณ์'],
+g_f_share_t:['スポットを共有','Share a spot','分享地點','แชร์สถานที่'],
+g_f_share_d:['詳細カードの🔗ボタンで、そのスポットへの直リンクをコピー・共有できます。','The 🔗 button on the detail card copies a direct link to that spot.','詳情卡上的🔗按鈕可複製、分享該地點的連結。','ปุ่ม 🔗 บนการ์ดคัดลอกลิงก์ตรงไปยังจุดนั้นเพื่อแชร์ได้'],
+g_f_srch_t:['検索','Search','搜尋','ค้นหา'],
+g_f_srch_d:['上部の検索バーで、場所・住所・作品・カップル名から探せます。','Search by place, address, series or couple in the top bar.','用上方搜尋列，以地點、地址、作品、CP 名稱搜尋。','ค้นหาจากแถบด้านบน ด้วยชื่อสถานที่ ที่อยู่ ซีรีส์ หรือคู่'],
+g_f_loc_t:['現在地','My location','目前位置','ตำแหน่งของฉัน'],
+g_f_loc_d:['いまいる場所を地図に表示。近くの聖地が分かります。','Show where you are and find nearby spots.','在地圖上顯示所在位置，找出附近的聖地。','แสดงตำแหน่งปัจจุบัน หาจุดใกล้ตัวได้ง่าย'],
+g_f_post_t:['スポットを投稿','Submit a spot','投稿地點','ส่งสถานที่'],
+g_f_post_d:['まだ載っていない聖地を自分で追加。Googleマップに出てこない隠れロケ地もここに。','Add spots not on the map yet — even hidden locations Google Maps doesn’t show.','自己新增還沒收錄的聖地，連 Google 地圖找不到的隱藏取景地也可以。','เพิ่มจุดที่ยังไม่มีในแผนที่ รวมถึงโลเคชั่นลับที่ Google Maps ไม่แสดง'],
+g_h8:['アプリのように使う','Use it like an app','像 App 一樣使用','ใช้เหมือนแอป'],
+g_p8:['ブラウザのメニューから<b>「ホーム画面に追加」</b>を選ぶと、アプリのアイコンが追加され、毎回ブラウザを開かずにサッと起動できます。','Choose <b>“Add to Home Screen”</b> in your browser menu to get an app icon for one-tap access.','在瀏覽器選單選<b>「加入主畫面」</b>，就會新增 App 圖示，之後不用開瀏覽器也能快速啟動。','เลือก<b>“เพิ่มลงหน้าจอโฮม”</b>ในเมนูเบราว์เซอร์ จะได้ไอคอนแอปเปิดใช้ได้ทันที'],
+g_pwa_i:['<b>iPhone</b>：共有ボタン →「ホーム画面に追加」','<b>iPhone</b>: Share button → “Add to Home Screen”','<b>iPhone</b>：分享按鈕 →「加入主畫面」','<b>iPhone</b>: ปุ่มแชร์ → “เพิ่มลงหน้าจอโฮม”'],
+g_pwa_a:['<b>Android</b>：メニュー（︙）→「ホーム画面に追加」','<b>Android</b>: Menu (⋮) → “Add to Home Screen”','<b>Android</b>：選單（⋮）→「加入主畫面」','<b>Android</b>: เมนู (⋮) → “เพิ่มลงหน้าจอโฮม”'],
+g_close:['🌸 ガイドを閉じて地図を見る','🌸 Close and explore the map','🌸 關閉指南看地圖','🌸 ปิดคู่มือไปดูแผนที่']
+};
+// data-i18n / data-i18n-html / data-i18n-ph 属性を持つ静的要素へ現在言語を反映
+function applyStaticI18n(){
+  document.documentElement.lang=LANG;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n);});
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{el.innerHTML=t(el.dataset.i18nHtml);});
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{el.placeholder=t(el.dataset.i18nPh);});
+}
+function updateLangChips(){document.querySelectorAll('.lang-chip').forEach(b=>b.classList.toggle('on',b.dataset.lang===LANG));}
+window.setLang=function(l){
+  if(!(l in LIDX))return;
+  LANG=l;
+  try{localStorage.setItem('tsmap_lang',l);}catch(e){}
+  applyStaticI18n();updateLangChips();
+  renderFilters();renderDrawer();renderSpotTable();renderTileBtn();updateMarkBtns();
+  if(selId){const loc=LOCS.find(x=>x.id===selId);if(loc)fillDetail(loc);}
+};
 
 // ── マスタデータ（Firestoreから動的取得） ──────────────────────
 // CP → 色（マーカー色の基準）
@@ -869,7 +1084,10 @@ let activeTypes=new Set(), activeCps=new Set(), searchQ="", selId=null, currentU
 // ── 行きたい！／行った！マーク ───────────────────────────────
 // { locationId: 'want' | 'went' } — 端末(localStorage)に常時保存し、ログイン中はFirestoreにも同期
 const CM='tsmap_marks_v1';
-const MARK_CFG={want:{label:'💖 行きたい',color:'#EC4899'},went:{label:'✅ 行った',color:'#059669'}};
+const MARK_CFG={want:{color:'#EC4899'},went:{color:'#059669'}};
+const markLabel=k=>k==='want'?'💖 '+t('want'):'✅ '+t('went');
+// おすすめタグの表示名（内部キーREC_TAGは日本語のまま、表示だけ翻訳）
+const recLabel=()=>'⭐ '+t('rec');
 let MARKS={}; try{MARKS=JSON.parse(localStorage.getItem(CM))||{};}catch(e){}
 let activeMarks=new Set();
 function saveMarks(){
@@ -991,6 +1209,7 @@ onAuthStateChanged(auth,user=>{
 
 // 起動時：ログイン状態に関係なくデータを読み込んで地図を表示
 (async()=>{
+  applyStaticI18n();updateLangChips();
   await loadAll();
   showUI();
   handleDeepLink();
@@ -1103,9 +1322,9 @@ async function loadAll(){
 
 // ── Leaflet ───────────────────────────────────────────────────
 const TILES = {
-  carto:      {url:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',attr:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',label:'標準'},
-  cartoLight: {url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',attr:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',label:'淡色'},
-  osm:        {url:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',attr:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',label:'OSM'},
+  carto:      {url:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',attr:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',labelKey:'tile_std'},
+  cartoLight: {url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',attr:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',labelKey:'tile_light'},
+  osm:        {url:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',attr:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',labelKey:null},
 };
 let currentTileKey='carto', tileLayer=null;
 
@@ -1125,8 +1344,8 @@ function renderTileBtn(){
   const wrap=document.createElement('div');
   wrap.id='tile-btn-wrap';
   wrap.style.cssText='position:fixed;bottom:calc(var(--drawer-h) + 58px);right:14px;z-index:45;display:flex;flex-direction:column;gap:5px;';
-  wrap.innerHTML=Object.entries(TILES).map(([key,t])=>`
-    <button onclick="window._switchTile('${key}')" style="padding:5px 11px;border-radius:20px;border:none;cursor:pointer;font-size:11px;font-weight:700;font-family:'Noto Sans JP',sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.15);background:${currentTileKey===key?'#111':'rgba(255,255,255,.95)'};color:${currentTileKey===key?'#fff':'#555'};backdrop-filter:blur(8px);">${t.label}</button>`).join('');
+  wrap.innerHTML=Object.entries(TILES).map(([key,tl])=>`
+    <button onclick="window._switchTile('${key}')" style="padding:5px 11px;border-radius:20px;border:none;cursor:pointer;font-size:11px;font-weight:700;font-family:'Noto Sans JP',sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.15);background:${currentTileKey===key?'#111':'rgba(255,255,255,.95)'};color:${currentTileKey===key?'#fff':'#555'};backdrop-filter:blur(8px);">${tl.labelKey?t(tl.labelKey):'OSM'}</button>`).join('');
   document.body.appendChild(wrap);
 }
 window._switchTile=function(key){
@@ -1191,20 +1410,19 @@ function renderActiveFilterBar(){
   const totalActive=activeTypes.size+activeCps.size;
   const chips=[];
   const filterIcon=totalActive>0?`<span style="background:#EC4899;color:white;border-radius:50%;width:18px;height:18px;font-size:10px;display:inline-flex;align-items:center;justify-content:center;font-weight:700">${totalActive}</span>`:'🔍';
-  chips.push(`<button class="filter-open-btn" onclick="openFilterDrawer()">${filterIcon} フィルター</button>`);
+  chips.push(`<button class="filter-open-btn" onclick="openFilterDrawer()">${filterIcon} ${t('filter')}</button>`);
   // CPチップ（優先・上）
   activeCps.forEach(cp=>{
     const cfg=cpCfg(cp);
     chips.push(`<button class="active-filter-chip" style="background:${cfg.color};color:white;border:none" onclick="window._setCpEnc('${enc(cp)}')">${cfg.emoji||'💗'} ${esc(cp)} ✕</button>`);
   });
   // 中カテゴリチップ
-  activeTypes.forEach(t=>{
-    chips.push(`<button class="active-filter-chip" style="background:#111;color:white" onclick="window._setTypeEnc('${enc(t)}')">${esc(t)} ✕</button>`);
+  activeTypes.forEach(tg=>{
+    chips.push(`<button class="active-filter-chip" style="background:#111;color:white" onclick="window._setTypeEnc('${enc(tg)}')">${tg===REC_TAG?recLabel():esc(tg)} ✕</button>`);
   });
   // マイマークチップ
   activeMarks.forEach(k=>{
-    const c=MARK_CFG[k];
-    chips.push(`<button class="active-filter-chip" style="background:${c.color};color:white" onclick="window._setMark('${k}')">${c.label} ✕</button>`);
+    chips.push(`<button class="active-filter-chip" style="background:${MARK_CFG[k].color};color:white" onclick="window._setMark('${k}')">${markLabel(k)} ✕</button>`);
   });
   document.getElementById('active-filters').innerHTML=chips.join('');
 }
@@ -1213,25 +1431,25 @@ function renderActiveFilterBar(){
 function renderFilterDrawerBody(){
   document.getElementById('filter-drawer-body').innerHTML=`
     <div class="filter-section">
-      <div class="filter-section-title">タレント（複数選択OK）</div>
+      <div class="filter-section-title">${t('sec_talent')}</div>
       <div class="ms-chips" id="cp-chips"></div>
-      <input class="ms-search" id="cp-search" autocomplete="off" placeholder="頭文字で検索…（例: f → Freen）"
+      <input class="ms-search" id="cp-search" autocomplete="off" placeholder="${t('cp_search_ph')}"
         value="${escAttr(cpSearchQ)}" oninput="_cpSearch(this.value)">
       <div class="ms-list" id="cp-list"></div>
     </div>
     <div class="filter-section">
-      <div class="filter-section-title">作品（複数選択OK）</div>
+      <div class="filter-section-title">${t('sec_series')}</div>
       <div class="ms-chips" id="series-chips"></div>
-      <input class="ms-search" id="series-search" autocomplete="off" placeholder="頭文字で検索…（例: g → GAP）"
+      <input class="ms-search" id="series-search" autocomplete="off" placeholder="${t('series_search_ph')}"
         value="${escAttr(seriesSearchQ)}" oninput="_seriesSearch(this.value)">
       <div class="ms-list" id="series-list"></div>
     </div>
     <div class="filter-section">
-      <div class="filter-section-title">マイマーク</div>
+      <div class="filter-section-title">${t('sec_marks')}</div>
       <div class="type-grid" id="mark-pills"></div>
     </div>
     <div class="filter-section">
-      <div class="filter-section-title">オススメ・その他</div>
+      <div class="filter-section-title">${t('sec_other')}</div>
       <div class="type-grid" id="other-pills"></div>
     </div>`;
   refreshFilterSelections();
@@ -1267,7 +1485,7 @@ window._seriesSearch=function(v){seriesSearchQ=v;renderSeriesList();};
 function renderCpList(){
   const box=document.getElementById('cp-list'); if(!box)return;
   const items=msMatch(getUniqueCPs(),cpSearchQ);
-  if(!items.length){box.innerHTML='<div class="ms-empty">該当なし</div>';return;}
+  if(!items.length){box.innerHTML=`<div class="ms-empty">${t('no_match')}</div>`;return;}
   box.innerHTML=items.map(cp=>{const cfg=cpCfg(cp);const on=activeCps.has(cp);
     return`<button class="ms-row${on?' on':''}" onclick="window._setCpEnc('${enc(cp)}')">
       <span class="ms-check">${on?'✓':''}</span>
@@ -1278,7 +1496,7 @@ function renderSeriesList(){
   const box=document.getElementById('series-list'); if(!box)return;
   const works=getVisibleTags().filter(t=>!COMMON_TAGS.has(t)&&t!==REC_TAG);
   const items=msMatch(works,seriesSearchQ);
-  if(!items.length){box.innerHTML='<div class="ms-empty">該当なし</div>';return;}
+  if(!items.length){box.innerHTML=`<div class="ms-empty">${t('no_match')}</div>`;return;}
   box.innerHTML=items.map(s=>{const on=activeTypes.has(s);
     return`<button class="ms-row${on?' on':''}" onclick="window._setTypeEnc('${enc(s)}')">
       <span class="ms-check">${on?'✓':''}</span><span>${esc(s)}</span></button>`;}).join('');
@@ -1287,11 +1505,11 @@ function renderOtherPills(){
   const box=document.getElementById('other-pills'); if(!box)return;
   const commons=getVisibleTags().filter(t=>COMMON_TAGS.has(t));
   const recAvail=activeCps.size===0&&LOCS.some(isRecSpot);
-  let html=`<button class="filter-pill${activeTypes.size===0?' active':''}" onclick="window._clearTypes()">すべて</button>`;
+  let html=`<button class="filter-pill${activeTypes.size===0?' active':''}" onclick="window._clearTypes()">${t('all')}</button>`;
   if(recAvail){const on=activeTypes.has(REC_TAG);
-    html+=`<button class="filter-pill${on?' active':''}" style="${on?`background:${REC_CFG.color};border-color:${REC_CFG.color};color:#fff`:''}" onclick="window._setType('${REC_TAG.replace(/'/g,"\\'")}')">${REC_TAG}</button>`;}
-  commons.forEach(t=>{const on=activeTypes.has(t);
-    html+=`<button class="filter-pill${on?' active':''}" style="border-style:dashed" onclick="window._setTypeEnc('${enc(t)}')">🌐 ${esc(t)}</button>`;});
+    html+=`<button class="filter-pill${on?' active':''}" style="${on?`background:${REC_CFG.color};border-color:${REC_CFG.color};color:#fff`:''}" onclick="window._setTypeEnc('${enc(REC_TAG)}')">${recLabel()}</button>`;}
+  commons.forEach(tg=>{const on=activeTypes.has(tg);
+    html+=`<button class="filter-pill${on?' active':''}" style="border-style:dashed" onclick="window._setTypeEnc('${enc(tg)}')">🌐 ${esc(tg)}</button>`;});
   box.innerHTML=html;
 }
 
@@ -1301,7 +1519,7 @@ function renderMarkPills(){
   box.innerHTML=Object.entries(MARK_CFG).map(([k,c])=>{
     const on=activeMarks.has(k);
     const n=Object.values(MARKS).filter(v=>v===k).length;
-    return`<button class="filter-pill${on?' active':''}" style="${on?`background:${c.color};border-color:${c.color};color:#fff`:''}" onclick="window._setMark('${k}')">${c.label}${n?` (${n})`:''}</button>`;
+    return`<button class="filter-pill${on?' active':''}" style="${on?`background:${c.color};border-color:${c.color};color:#fff`:''}" onclick="window._setMark('${k}')">${markLabel(k)}${n?` (${n})`:''}</button>`;
   }).join('');
 }
 
@@ -1311,9 +1529,9 @@ function renderMapOverlayInfo(){
   if(!el)return;
   const parts=[];
   activeCps.forEach(cp=>{const cfg=cpCfg(cp);parts.push(`<span class="cp-dot" style="background:${cfg.color}"></span><span>${cfg.emoji||'💗'} ${esc(cp)}</span>`);});
-  activeTypes.forEach(t=>parts.push(`<span>${esc(t)}</span>`));
-  activeMarks.forEach(k=>parts.push(`<span style="color:${MARK_CFG[k].color}">${MARK_CFG[k].label}</span>`));
-  parts.push(`<span style="color:#bbb;font-weight:400">📍 ${filtered.length}件</span>`);
+  activeTypes.forEach(tg=>parts.push(`<span>${tg===REC_TAG?recLabel():esc(tg)}</span>`));
+  activeMarks.forEach(k=>parts.push(`<span style="color:${MARK_CFG[k].color}">${markLabel(k)}</span>`));
+  parts.push(`<span style="color:#bbb;font-weight:400">📍 ${tf('count',{n:filtered.length})}</span>`);
   el.innerHTML=parts.join('<span style="color:#ddd">|</span>');
 }
 
@@ -1335,12 +1553,12 @@ window.resetFilters=function(){
 // ── Drawer ───────────────────────────────────────────────────
 function renderDrawer(){
   const filtered=getFiltered();
-  document.getElementById('spot-count').textContent=`📍 ${filtered.length}件`;
+  document.getElementById('spot-count').textContent=`📍 ${tf('count',{n:filtered.length})}`;
   renderMapOverlayInfo();
-  document.getElementById('drawer-title').textContent=`スポット一覧 ${filtered.length}件`;
+  document.getElementById('drawer-title').textContent=tf('spot_list_n',{n:filtered.length});
   const el=document.getElementById('drawer-list');
   if(!filtered.length){
-    el.innerHTML=`<div style="padding:8px 4px 4px;color:#bbb;font-size:13px">該当するスポットがありません</div>`;
+    el.innerHTML=`<div style="padding:8px 4px 4px;color:#bbb;font-size:13px">${t('no_spots')}</div>`;
     return;
   }
   el.innerHTML=filtered.map(loc=>{
@@ -1348,10 +1566,10 @@ function renderDrawer(){
     const mk=MARKS[loc.id];
     return`<div class="drawer-card${isSel?' selected':''}" style="${isSel?`border-color:${cfg.color};box-shadow:0 2px 12px ${cfg.border};`:''}" onclick="window._sel('${enc(loc.id)}')">
       <div class="drawer-card-icon" style="display:flex;justify-content:space-between;align-items:center">${catEmoji(loc.category)}${mk?`<span style="font-size:15px">${mk==='want'?'💖':'✅'}</span>`:''}</div>
-      <span class="drawer-card-series" style="background:${cfg.light};color:${cfg.color};border-color:${cfg.border}">${esc((a0&&a0.series)?a0.series:(isRec?REC_TAG:''))}</span>
+      <span class="drawer-card-series" style="background:${cfg.light};color:${cfg.color};border-color:${cfg.border}">${(a0&&a0.series)?esc(a0.series):(isRec?recLabel():'')}</span>
       <div class="drawer-card-name">${esc(loc.name)}</div>
       <div class="drawer-card-desc">${esc(a0?.scene_desc||loc.memo||'')}</div>
-      ${worksN>1?`<div class="drawer-card-multi">📌 ${worksN}作品に登場</div>`:''}
+      ${worksN>1?`<div class="drawer-card-multi">${tf('n_works',{n:worksN})}</div>`:''}
     </div>`;
   }).join('');
   setTimeout(()=>{updateDrawerVar();},50);
@@ -1375,15 +1593,19 @@ window._sel=function(locId,fromPin){
   renderMarkers(); renderDrawer();
   if(!selId){closeDetailDirect();return;}
   const loc=LOCS.find(l=>l.id===locId);
-  const apps=locApps(locId);
+  focusSpot(loc,fromPin);
+  fillDetail(loc);
+};
+// 詳細パネルのDOMを描画（言語切替時の再描画にも使う）
+function fillDetail(loc){
+  const apps=locApps(loc.id);
   const isRec=isRecSpot(loc);
   // 色はCPで決まる（おすすめ＝タレント無しは金色）
   const primaryCp=apps[0]?.cp||'';
   const cfg=isRec?REC_CFG:(primaryCp?cpCfg(primaryCp):FB);
-  focusSpot(loc,fromPin);
   document.getElementById('detail-accent').style.background=`linear-gradient(90deg,${cfg.border},${cfg.color})`;
   document.getElementById('detail-tags').innerHTML=
-    (isRec&&!apps.some(a=>a.series)?`<span class="detail-tag" style="background:${REC_CFG.light};color:${REC_CFG.color};border-color:${REC_CFG.border}">${REC_TAG}</span>`:'')+
+    (isRec&&!apps.some(a=>a.series)?`<span class="detail-tag" style="background:${REC_CFG.light};color:${REC_CFG.color};border-color:${REC_CFG.border}">${recLabel()}</span>`:'')+
     [...new Set(apps.map(a=>a.series).filter(Boolean))].map(s=>`<span class="detail-tag" style="background:#F3F4F6;color:#555;border-color:#E5E7EB">${esc(s)}</span>`).join('')+
     `<span class="detail-tag" style="background:${cfg.light};color:${cfg.color};border-color:${cfg.border}">${catEmoji(loc.category)} ${esc(loc.category)}</span>`;
   document.getElementById('detail-name').textContent=loc.name;
@@ -1419,7 +1641,7 @@ window._sel=function(locId,fromPin){
       const snsHtml=g.items.map(x=>{if(!x.sns_url||seen.has(x.sns_url))return'';seen.add(x.sns_url);return buildSnsLink(x);}).filter(Boolean).join('');
       const dramaLink=buildDramaLink(ac,g.series);
       return`<div class="appearance-item" style="background:${ac.light};border-color:${ac.border}">
-        <div class="appearance-series" style="color:${ac.color}">${esc(g.series)||REC_TAG}</div>
+        <div class="appearance-series" style="color:${ac.color}">${esc(g.series)||recLabel()}</div>
         ${peopleHtml?`<div class="appearance-cp">${peopleHtml}</div>`:''}
         ${scenesHtml}
         ${dramaLink}
@@ -1453,8 +1675,8 @@ function updateMarkBtns(){
   const mk=selId?MARKS[selId]:null;
   w.classList.toggle('on-want',mk==='want');
   g.classList.toggle('on-went',mk==='went');
-  w.textContent=mk==='want'?'💖 行きたい！':'🤍 行きたい';
-  g.textContent=mk==='went'?'✅ 行った！':'☑️ 行った';
+  w.textContent=mk==='want'?'💖 '+t('want_on'):'🤍 '+t('want');
+  g.textContent=mk==='went'?'✅ '+t('went_on'):'☑️ '+t('went');
   const hint=document.getElementById('mark-login-hint');
   if(hint)hint.style.display=currentUser?'none':'block';
 }
@@ -1466,8 +1688,8 @@ window.shareSpot=async function(){
   if(navigator.share){
     try{await navigator.share({title:loc?loc.name:'Thai Series Map',url});}catch(e){}
   }else{
-    try{await navigator.clipboard.writeText(url);alert('リンクをコピーしました！');}
-    catch(e){prompt('このURLをコピーしてください',url);}
+    try{await navigator.clipboard.writeText(url);alert(t('link_copied'));}
+    catch(e){prompt(t('copy_prompt'),url);}
   }
 };
 
@@ -1504,19 +1726,19 @@ function renderSpotTable(){
   });
   document.getElementById('th-name').textContent=tableSortKey==='name'?(tableSortDir>0?' ▲':' ▼'):'';
   document.getElementById('th-series').textContent=tableSortKey==='series'?(tableSortDir>0?' ▲':' ▼'):'';
-  document.getElementById('table-count').textContent=`${rows.length}件`;
+  document.getElementById('table-count').textContent=tf('count',{n:rows.length});
   document.getElementById('table-body').innerHTML=rows.map(r=>{
     const {loc,series,cps}=r;
     const mk=MARKS[loc.id];
     const isRec=isRecSpot(loc);
     return`<tr onclick="window._tableSel('${enc(loc.id)}')">
       <td><div class="tname">${catEmoji(loc.category)} ${esc(loc.name)}</div>${loc.address?`<div class="taddr">${esc(loc.address)}</div>`:''}</td>
-      <td><div class="tser">${series.map(esc).join('、')||(isRec?REC_TAG:'—')}</div>${cps.length?`<div class="tcps">${cps.map(esc).join('、')}</div>`:''}</td>
+      <td><div class="tser">${series.map(esc).join('、')||(isRec?recLabel():'—')}</div>${cps.length?`<div class="tcps">${cps.map(esc).join('、')}</div>`:''}</td>
       <td onclick="event.stopPropagation()" style="white-space:nowrap">
         <button class="tmark-btn w${mk==='want'?' on':''}" onclick="window._tableMark('${enc(loc.id)}','want')" title="行きたい">💖</button><button class="tmark-btn g${mk==='went'?' on':''}" onclick="window._tableMark('${enc(loc.id)}','went')" title="行った">✅</button>
       </td>
     </tr>`;
-  }).join('')||`<tr><td colspan="3" style="text-align:center;color:#bbb;padding:30px">該当するスポットがありません</td></tr>`;
+  }).join('')||`<tr><td colspan="3" style="text-align:center;color:#bbb;padding:30px">${t('no_spots')}</td></tr>`;
 }
 
 window.closeDetail=e=>{if(e.target===document.getElementById('detail-overlay'))closeDetailDirect();};
@@ -1597,10 +1819,10 @@ document.addEventListener('click',e=>{
 
 // ── 現在地 ────────────────────────────────────────────────────
 window.locateMe=()=>{
-  if(!navigator.geolocation){alert('現在地取得に非対応です');return;}
+  if(!navigator.geolocation){alert(t('geo_na'));return;}
   navigator.geolocation.getCurrentPosition(pos=>{
     if(map)map.setView([pos.coords.latitude,pos.coords.longitude],14,{animate:true});
-  },()=>alert('現在地の取得に失敗しました'));
+  },()=>alert(t('geo_fail')));
 };
 
 // ── Submit ────────────────────────────────────────────────────
@@ -1608,7 +1830,7 @@ window.locateMe=()=>{
 // ── 入力式ドロップダウン（コンボボックス） ─────────────────────
 // input + 候補リスト。入力で絞り込み（頭文字優先）、タップで確定。
 // getOptions: () => [{value, sub?, emoji?, badge?}] を返す関数（開くたびに最新を取得）
-function setupCombo(id,getOptions,{allowFree=false,emptyLabel=null}={}){
+function setupCombo(id,getOptions,{allowFree=false,emptyKey=null}={}){
   const input=document.getElementById(id), list=document.getElementById(id+'-list');
   if(!input||!list)return;
   function render(){
@@ -1621,12 +1843,12 @@ function setupCombo(id,getOptions,{allowFree=false,emptyLabel=null}={}){
     });
     const items=[...starts,...contains];
     let html='';
-    if(emptyLabel)html+=`<button type="button" class="combo-row combo-empty-row" data-v="">${emptyLabel}</button>`;
+    if(emptyKey)html+=`<button type="button" class="combo-row combo-empty-row" data-v="">${t(emptyKey)}</button>`;
     html+=items.map(o=>`<button type="button" class="combo-row" data-v="${escAttr(o.value)}">${o.emoji?o.emoji+' ':''}${esc(o.value)}${o.sub?`<span class="combo-sub">（${esc(o.sub)}）</span>`:''}${o.badge?`<span class="combo-badge">${o.badge}</span>`:''}</button>`).join('');
     if(!items.length&&q){
       html+=allowFree
-        ?`<button type="button" class="combo-row" data-v="${escAttr(input.value.trim())}">➕ 「${esc(input.value.trim())}」をそのまま使う（新規）</button>`
-        :`<div class="ms-empty">該当なし</div>`;
+        ?`<button type="button" class="combo-row" data-v="${escAttr(input.value.trim())}">${tf('new_free',{s:esc(input.value.trim())})}</button>`
+        :`<div class="ms-empty">${t('no_match')}</div>`;
     }
     list.innerHTML=html;
   }
@@ -1659,18 +1881,18 @@ function cpComboOptions(seriesInputId){
   const castSet=new Set(cast);
   const rows=[];
   cast.forEach(nm=>{
-    const t=master.find(x=>x.name===nm)||{name:nm,emoji:'⭐',real_name:''};
-    rows.push({value:t.name,sub:t.real_name,emoji:t.emoji||'⭐',badge:'出演'});
+    const tl=master.find(x=>x.name===nm)||{name:nm,emoji:'⭐',real_name:''};
+    rows.push({value:tl.name,sub:tl.real_name,emoji:tl.emoji||'⭐',badge:esc(t('cast'))});
   });
-  master.filter(t=>!castSet.has(t.name)).forEach(t=>rows.push({value:t.name,sub:t.real_name,emoji:t.emoji||'⭐'}));
+  master.filter(tl=>!castSet.has(tl.name)).forEach(tl=>rows.push({value:tl.name,sub:tl.real_name,emoji:tl.emoji||'⭐'}));
   return rows;
 }
 // 投稿フォーム4か所のコンボボックスを初期化（loadAllから一度だけ呼ぶ）
 function setupFormCombos(){
   setupCombo('f-series',seriesComboOptions,{allowFree:true});
-  setupCombo('f-cp',()=>cpComboOptions('f-series'),{emptyLabel:'— なし（おすすめ・任意）—',allowFree:true});
+  setupCombo('f-cp',()=>cpComboOptions('f-series'),{emptyKey:'none_opt',allowFree:true});
   setupCombo('ai-series',seriesComboOptions,{allowFree:true});
-  setupCombo('ai-cp',()=>cpComboOptions('ai-series'),{emptyLabel:'— なし（おすすめ・任意）—',allowFree:true});
+  setupCombo('ai-cp',()=>cpComboOptions('ai-series'),{emptyKey:'none_opt',allowFree:true});
 }
 
 window.openSubmitModal=()=>{
@@ -1694,17 +1916,17 @@ window.submitSpot=async()=>{
   const url=document.getElementById('f-url').value.trim();
   const memo=document.getElementById('f-memo').value.trim();
   const msgEl=document.getElementById('submit-msg');
-  if(!currentUser){msgEl.style.color='#DC2626';msgEl.textContent='※ 投稿にはログインが必要です';return;}
-  if(!name||!series||!scene){msgEl.style.color='#DC2626';msgEl.textContent='※ 場所名・中カテゴリ・シーン説明を入力してください';return;}
-  msgEl.style.color='#9333EA';msgEl.textContent='送信中...';
+  if(!currentUser){msgEl.style.color='#DC2626';msgEl.textContent=t('m_login');return;}
+  if(!name||!series||!scene){msgEl.style.color='#DC2626';msgEl.textContent=t('m_required');return;}
+  msgEl.style.color='#9333EA';msgEl.textContent=t('m_sending');
   try{
     await addDoc(collection(db,'location_submissions'),{
       name,series,cp,scene_desc:scene,sns_url:sns||'',googleMapsUrl:url||'',memo:memo||'',
       status:'未承認',submittedBy:currentUser.email,submittedAt:serverTimestamp()
     });
-    msgEl.style.color='#059669';msgEl.textContent='✅ 投稿しました！管理者確認後に公開されます。';
+    msgEl.style.color='#059669';msgEl.textContent=t('m_sent');
     setTimeout(()=>document.getElementById('submit-modal').style.display='none',2000);
-  }catch(e){msgEl.style.color='#DC2626';msgEl.textContent='送信に失敗しました。';}
+  }catch(e){msgEl.style.color='#DC2626';msgEl.textContent=t('m_fail');}
 };
 
 // ── 既存スポットへの追加情報投稿 ─────────────────────────────
@@ -1716,7 +1938,7 @@ window.openAddInfoModal=function(){
   const loc=LOCS.find(l=>l.id===selId);
   if(!loc)return;
   addInfoTargetId=selId;
-  document.getElementById('add-info-spot-name').textContent=loc.name;
+  document.getElementById('add-info-title').innerHTML=tf('ai_title',{name:esc(loc.name)});
   // フォームリセット
   ['ai-scene','ai-sns','ai-memo','ai-sns-memo','ai-cp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('ai-series').value='プライベート';
@@ -1736,16 +1958,16 @@ window.switchAddInfoTab=function(tab){
 };
 window.submitAddInfo=async function(){
   const msgEl=document.getElementById('add-info-msg');
-  if(!currentUser){msgEl.style.color='#DC2626';msgEl.textContent='※ 投稿にはログインが必要です';return;}
+  if(!currentUser){msgEl.style.color='#DC2626';msgEl.textContent=t('m_login');return;}
   const isAppearance=document.getElementById('tab-appearance').style.display!=='none';
-  msgEl.style.color='#9333EA';msgEl.textContent='送信中...';
+  msgEl.style.color='#9333EA';msgEl.textContent=t('m_sending');
   try{
     if(isAppearance){
       const cp=document.getElementById('ai-cp').value.trim();
       const series=document.getElementById('ai-series').value.trim();
       const scene=document.getElementById('ai-scene').value.trim();
       const sns=document.getElementById('ai-sns').value.trim();
-      if(!series||!scene){msgEl.style.color='#DC2626';msgEl.textContent='※ 中カテゴリ・シーン説明は必須です';return;}
+      if(!series||!scene){msgEl.style.color='#DC2626';msgEl.textContent=t('m_required2');return;}
       await addDoc(collection(db,'location_submissions'),{
         target_location_id:addInfoTargetId,
         submission_type:'appearance_add',
@@ -1755,7 +1977,7 @@ window.submitAddInfo=async function(){
     } else {
       const memo=document.getElementById('ai-memo').value.trim();
       const sns=document.getElementById('ai-sns-memo').value.trim();
-      if(!memo&&!sns){msgEl.style.color='#DC2626';msgEl.textContent='※ メモかSNSリンクを入力してください';return;}
+      if(!memo&&!sns){msgEl.style.color='#DC2626';msgEl.textContent=t('m_memo_req');return;}
       await addDoc(collection(db,'location_submissions'),{
         target_location_id:addInfoTargetId,
         submission_type:'memo_add',
@@ -1763,9 +1985,9 @@ window.submitAddInfo=async function(){
         status:'未承認',submittedBy:currentUser.email,submittedAt:serverTimestamp()
       });
     }
-    msgEl.style.color='#059669';msgEl.textContent='✅ 送信しました！管理者確認後に反映されます。';
+    msgEl.style.color='#059669';msgEl.textContent=t('m_sent2');
     setTimeout(()=>closeAddInfoModal(),2000);
-  }catch(e){msgEl.style.color='#DC2626';msgEl.textContent='送信に失敗しました。';}
+  }catch(e){msgEl.style.color='#DC2626';msgEl.textContent=t('m_fail');}
 };
 
 // ── PCサイドバー トグル ───────────────────────────────────────
@@ -1794,10 +2016,10 @@ window.toggleSidebar=function(){
 function buildSnsLink(a){
   const url=safeUrl(a.sns_url);
   if(!url)return '';
-  let icon='🔗', label='SNS投稿を見る';
-  if(url.includes('x.com')||url.includes('twitter.com')){icon='𝕏'; label='X(Twitter)の投稿を見る';}
-  else if(url.includes('instagram.com')){icon='📸'; label='Instagramの投稿を見る';}
-  else if(url.includes('tiktok.com')){icon='🎵'; label='TikTokの投稿を見る';}
+  let icon='🔗', label=t('sns_other');
+  if(url.includes('x.com')||url.includes('twitter.com')){icon='𝕏'; label=t('sns_x');}
+  else if(url.includes('instagram.com')){icon='📸'; label=t('sns_ig');}
+  else if(url.includes('tiktok.com')){icon='🎵'; label=t('sns_tt');}
   return `<a href="${esc(url)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:6px 12px;border-radius:10px;background:#F3F4F6;color:#555;text-decoration:none;margin-top:4px">${icon} ${label} →</a>`;
 }
 
@@ -1807,7 +2029,7 @@ function buildDramaLink(cfg, seriesName){
   const id = seriesDramaId(seriesName).trim();
   if(!id) return '';
   const href = GL_URL + '?drama=' + encodeURIComponent(id);
-  return`<a href="${href}" target="_blank" class="drama-link-btn" style="background:${cfg.light};color:${cfg.color};border:1.5px solid ${cfg.border}">🌺 Thai GL Worksで ${esc(seriesName)} を見る →</a>`;
+  return`<a href="${href}" target="_blank" class="drama-link-btn" style="background:${cfg.light};color:${cfg.color};border:1.5px solid ${cfg.border}">${tf('see_glworks',{s:esc(seriesName)})}</a>`;
 }
 
 // ── KML出力 ──────────────────────────────────────────────────
@@ -1832,7 +2054,7 @@ window.closeGuide=function(e){
 
 window.exportKML=function(){
   const filtered=getFiltered();
-  if(!filtered.length){alert('表示中のスポットがありません');return;}
+  if(!filtered.length){alert(t('kml_none'));return;}
   let fname='thai-series-map';
   if(activeCps.size>0)fname+='-'+[...activeCps].join('_');
   if(activeTypes.size>0)fname+='-'+[...activeTypes].join('_');
@@ -1844,7 +2066,7 @@ window.exportKML=function(){
     const hasUrl=gUrl&&gUrl.indexOf('xxx')===-1;
     const descParts=[];
     if(a0)descParts.push('<b>'+escXml(a0.series)+'</b> / '+escXml(a0.cp));
-    if(apps.length>1)descParts.push('他'+(apps.length-1)+'作品に登場');
+    if(apps.length>1)descParts.push(tf('kml_more',{n:apps.length-1}));
     if(loc.memo)descParts.push(escXml(loc.memo));
     if(hasUrl)descParts.push('<a href="'+escXml(gUrl)+'">Googleマップ</a>');
     const desc=descParts.join('<br>');
@@ -1870,7 +2092,7 @@ window.exportKML=function(){
   a.href=url;a.download=fname;a.click();
   URL.revokeObjectURL(url);
   const msg=document.getElementById('kml-download-msg');
-  if(msg)msg.textContent='✅ '+filtered.length+'件をダウンロードしました';
+  if(msg)msg.textContent=tf('kml_done',{n:filtered.length});
 };
 function escXml(s){
   return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
