@@ -1,0 +1,9 @@
+# macOS
+.DS_Store
+
+# バックアップ・作業用ファイル（公開リポジトリに載せない）
+tsmap_backup_*.json
+firestore_appearances.json
+firestore_import.html
+Map deploy.rtf
+.claude/

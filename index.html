@@ -26,6 +26,17 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 .login-btn{display:flex;align-items:center;gap:12px;background:var(--white);border:2px solid #E5E7EB;border-radius:14px;padding:14px 28px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 12px rgba(0,0,0,.08);transition:all .15s;width:100%;max-width:300px;justify-content:center}
 .login-btn:hover{border-color:#C4B5FD;box-shadow:0 4px 20px rgba(147,51,234,.15)}
 .login-btn img{width:22px;height:22px}
+.login-close{position:absolute;top:max(env(safe-area-inset-top),16px);right:16px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.9);border:none;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#666;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.login-skip{background:none;border:none;font-size:13px;font-weight:700;color:#9333EA;cursor:pointer;font-family:inherit;padding:8px;text-decoration:underline}
+
+/* ── 行きたい！行った！マークボタン ── */
+.mark-row{display:flex;gap:8px;margin-top:12px}
+.mark-btn{flex:1;padding:11px 8px;border-radius:12px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;color:#777;transition:all .15s}
+.mark-btn:active{transform:scale(.96)}
+.mark-btn.on-want{background:#FDF2F8;border-color:#EC4899;color:#EC4899}
+.mark-btn.on-went{background:#ECFDF5;border-color:#059669;color:#059669}
+.mark-btn.share{flex:0 0 auto;width:46px}
+.mark-hint{font-size:11px;color:#aaa;text-align:center;margin-top:6px}
 
 /* ── 地図フルスクリーン ── */
 #map{position:fixed;inset:0;z-index:0}
@@ -290,15 +301,17 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 </head>
 <body>
 
-<!-- ログイン画面 -->
-<div id="login-screen">
+<!-- ログイン画面（閲覧は不要。投稿・マーク同期などログインが必要な操作時に表示） -->
+<div id="login-screen" style="display:none">
+  <button class="login-close" onclick="closeLoginScreen()">×</button>
   <div class="login-logo">🌸</div>
   <div class="login-title">Thai Series Map</div>
-  <div class="login-sub">タイドラマ 聖地巡礼マップへようこそ<br>ログインして聖地を探しましょう</div>
+  <div class="login-sub">スポットの投稿や、行きたい！行った！マークの<br>端末をまたいだ保存にはログインが必要です</div>
   <button class="login-btn" onclick="doLogin()">
     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
     Googleでログイン
   </button>
+  <button class="login-skip" onclick="closeLoginScreen()">ログインせずに地図を見る</button>
 </div>
 
 <!-- 地図（フルスクリーン） -->
@@ -335,13 +348,14 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 
 <!-- ユーザーメニュー -->
 <div class="user-menu" id="user-menu">
-  <div style="display:flex;align-items:center;gap:10px;padding:10px 12px 8px">
+  <div id="user-info-row" style="display:none;align-items:center;gap:10px;padding:10px 12px 8px">
     <img class="user-avatar" id="user-avatar" src="" alt="">
     <div>
       <div id="user-name" style="font-size:13px;font-weight:700"></div>
       <div id="user-email" style="font-size:11px;color:#999"></div>
     </div>
   </div>
+  <button class="user-menu-item" id="login-menu-item" onclick="toggleUserMenuClose();doLogin()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit;color:#9333EA;font-weight:700">🔑 Googleでログイン</button>
   <div class="user-menu-divider"></div>
   <a href="admin.html" class="user-menu-item" id="admin-menu-item" style="display:none">⚙ 管理者画面</a>
   <a href="https://thai-gl-works-2c835.web.app/" target="_blank" class="user-menu-item">🌺 Thai GL Works</a>
@@ -349,7 +363,7 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
   <button class="user-menu-item" onclick="openSubmitModal()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit">📍 スポットを投稿</button>
   <button class="user-menu-item" onclick="toggleUserMenuClose();openKmlModal()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit;color:#059669">🗾 マイマップ出力（KML）</button>
   <div class="user-menu-divider"></div>
-  <button class="user-menu-item" onclick="doLogout()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit;color:#DC2626">ログアウト</button>
+  <button class="user-menu-item" id="logout-menu-item" onclick="doLogout()" style="display:none;border:none;background:none;width:100%;text-align:left;font-family:inherit;color:#DC2626">ログアウト</button>
 </div>
 
 <!-- スポット数バッジ -->
@@ -385,6 +399,12 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
       <div class="detail-memo"    id="detail-memo" style="display:none"></div>
       <div class="appearances-title" id="app-title" style="display:none">登場作品</div>
       <div id="detail-apps"></div>
+      <div class="mark-row">
+        <button class="mark-btn" id="mark-want" onclick="toggleMark('want')">🤍 行きたい</button>
+        <button class="mark-btn" id="mark-went" onclick="toggleMark('went')">☑️ 行った</button>
+        <button class="mark-btn share" id="share-btn" onclick="shareSpot()" title="このスポットのリンクを共有">🔗</button>
+      </div>
+      <div class="mark-hint" id="mark-login-hint" style="display:none">💡 ログインするとマークが他の端末にも同期されます</div>
       <button class="detail-map-btn" id="detail-map-btn">🗺 Googleマップで開く</button>
       <button class="detail-add-btn" id="detail-add-btn" onclick="openAddInfoModal()">➕ このスポットに情報を追加する</button>
     </div>
@@ -668,7 +688,9 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
     <!-- 7. その他 -->
     <div class="gd-eyebrow"><div class="gd-num">7</div><h4>そのほかの便利機能</h4></div>
     <div class="gd-body">
-      <div class="gd-feat"><div class="gd-fico">🔎</div><div><div class="gd-ft">検索</div><div class="gd-fd">上部の検索バーで、場所・作品・カップル名から探せます。</div></div></div>
+      <div class="gd-feat"><div class="gd-fico">💖</div><div><div class="gd-ft">行きたい！／行った！マーク</div><div class="gd-fd">詳細カードでマークすると地図のピンに💖✅が付きます。フィルターの「マイマーク」で自分のリストだけ表示。ログインすると他の端末とも同期されます。</div></div></div>
+      <div class="gd-feat"><div class="gd-fico">🔗</div><div><div class="gd-ft">スポットを共有</div><div class="gd-fd">詳細カードの🔗ボタンで、そのスポットへの直リンクをコピー・共有できます。</div></div></div>
+      <div class="gd-feat"><div class="gd-fico">🔎</div><div><div class="gd-ft">検索</div><div class="gd-fd">上部の検索バーで、場所・住所・作品・カップル名から探せます。</div></div></div>
       <div class="gd-feat"><div class="gd-fico">📍</div><div><div class="gd-ft">現在地</div><div class="gd-fd">いまいる場所を地図に表示。近くの聖地が分かります。</div></div></div>
       <div class="gd-feat"><div class="gd-fico">＋</div><div><div class="gd-ft">スポットを投稿</div><div class="gd-fd">まだ載っていない聖地を自分で追加。Googleマップに出てこない隠れロケ地もここに。</div></div></div>
     </div>
@@ -698,7 +720,7 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, getDocs, addDoc, serverTimestamp }
+import { getFirestore, collection, getDocs, addDoc, doc, getDoc, setDoc, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const FB_CFG = {
@@ -778,6 +800,30 @@ function seriesDramaId(s){return(SERIES_MAP[s]||{}).drama_id||'';}
 let LOCS=[], APPS=[], map=null, markers={};
 // フィルターは複数選択可能（Set使用）
 let activeTypes=new Set(), activeCps=new Set(), searchQ="", selId=null, currentUser=null;
+// ── 行きたい！／行った！マーク ───────────────────────────────
+// { locationId: 'want' | 'went' } — 端末(localStorage)に常時保存し、ログイン中はFirestoreにも同期
+const CM='tsmap_marks_v1';
+const MARK_CFG={want:{label:'💖 行きたい',color:'#EC4899'},went:{label:'✅ 行った',color:'#059669'}};
+let MARKS={}; try{MARKS=JSON.parse(localStorage.getItem(CM))||{};}catch(e){}
+let activeMarks=new Set();
+function saveMarks(){
+  try{localStorage.setItem(CM,JSON.stringify(MARKS));}catch(e){}
+  if(currentUser){
+    setDoc(doc(db,'users',currentUser.uid),{spotMarks:MARKS},{merge:true})
+      .catch(e=>console.warn('マーク同期に失敗:',e));
+  }
+}
+// ログイン時：Firestoreのマークと端末のマークを統合（端末側を優先）して両方に保存
+async function loadRemoteMarks(){
+  if(!currentUser)return;
+  try{
+    const snap=await getDoc(doc(db,'users',currentUser.uid));
+    const remote=snap.exists()?(snap.data().spotMarks||{}):{};
+    MARKS={...remote,...MARKS};
+    saveMarks();
+    if(map){renderMarkers();renderDrawer();renderMarkPills();}
+  }catch(e){console.warn('マーク読み込みに失敗:',e);}
+}
 // フィルタードロワーの「頭文字検索」入力値（再描画でも保持する）
 let cpSearchQ="", seriesSearchQ="";
 // 全CPに共通で常に表示するタグ
@@ -815,10 +861,13 @@ function getFiltered(){
       const hitRec=recActive&&isRec;
       if(!hitType&&!hitRec)return false;
     }
+    // マイマーク（行きたい・行った）フィルター
+    if(activeMarks.size>0&&!activeMarks.has(MARKS[loc.id]))return false;
     if(searchQ){
       const q=searchQ.toLowerCase();
       const hit=loc.name.toLowerCase().includes(q)||
         (loc.memo||'').toLowerCase().includes(q)||
+        (loc.address||'').toLowerCase().includes(q)||
         apps.some(a=>(a.series||'').toLowerCase().includes(q)||(a.cp||'').toLowerCase().includes(q)||(a.scene_desc||'').toLowerCase().includes(q));
       if(!hit)return false;
     }
@@ -842,28 +891,58 @@ window.doLogin=async()=>{
     }
   }
 };
-window.doLogout=async()=>{await signOut(auth);[CL,CA,CS].forEach(k=>localStorage.removeItem(k));};
+window.doLogout=async()=>{await signOut(auth);[CL,CA,CS,CC,CK,CT].forEach(k=>localStorage.removeItem(k));};
 
 // リダイレクト方式のログイン結果を処理
 getRedirectResult(auth).then(result=>{
   if(result?.user) console.log('redirect login ok:', result.user.email);
 }).catch(e=>console.error('redirect error:',e));
 
-onAuthStateChanged(auth,async user=>{
+// ログインは任意：地図の閲覧は誰でもOK。ログインすると投稿とマークの同期ができる
+onAuthStateChanged(auth,user=>{
   currentUser=user;
+  const infoRow=document.getElementById('user-info-row');
+  const loginItem=document.getElementById('login-menu-item');
+  const logoutItem=document.getElementById('logout-menu-item');
   if(user){
     document.getElementById('login-screen').style.display='none';
     document.getElementById('user-avatar').src=user.photoURL||'';
     document.getElementById('user-name').textContent=user.displayName||'';
     document.getElementById('user-email').textContent=user.email||'';
-    if(user.email===ADMIN)document.getElementById('admin-menu-item').style.display='flex';
-    await loadAll();
-    showUI();
+    infoRow.style.display='flex';
+    loginItem.style.display='none';
+    logoutItem.style.display='flex';
+    document.getElementById('admin-menu-item').style.display=user.email===ADMIN?'flex':'none';
+    loadRemoteMarks();
   } else {
-    document.getElementById('login-screen').style.display='flex';
-    hideUI();
+    infoRow.style.display='none';
+    loginItem.style.display='flex';
+    logoutItem.style.display='none';
+    document.getElementById('admin-menu-item').style.display='none';
   }
+  updateMarkBtns();
 });
+
+// 起動時：ログイン状態に関係なくデータを読み込んで地図を表示
+(async()=>{
+  await loadAll();
+  showUI();
+  handleDeepLink();
+})();
+
+// ?spot=<id> 付きURLで開いたら、そのスポットの詳細を直接表示（SNS共有用）
+function handleDeepLink(){
+  try{
+    const sid=new URLSearchParams(location.search).get('spot');
+    if(sid&&LOCS.some(l=>l.id===sid))window._sel(sid);
+  }catch(e){}
+}
+
+// ログインが必要な操作の前に呼ぶ
+function requireLogin(){
+  document.getElementById('login-screen').style.display='flex';
+}
+window.closeLoginScreen=()=>{document.getElementById('login-screen').style.display='none';};
 
 // PC幅（768px以上）かどうかの判定。CSSの @media(min-width:768px) と揃える
 function isPC(){return window.matchMedia('(min-width:768px)').matches;}
@@ -992,6 +1071,7 @@ window._switchTile=function(key){
 };
 
 function renderMarkers(){
+  if(!map)return;
   Object.values(markers).forEach(m=>map.removeLayer(m));
   markers={};
   const filteredIds=new Set(getFiltered().map(l=>l.id));
@@ -1014,6 +1094,7 @@ function renderMarkers(){
         </svg>
         <div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:13px;line-height:1;pointer-events:none">${icon_emoji}</div>
         ${n>1?`<div style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:#EC4899;border:2px solid white;font-size:8px;color:white;display:flex;align-items:center;justify-content:center;font-weight:900;line-height:1">${n}</div>`:''}
+        ${MARKS[loc.id]?`<div style="position:absolute;top:-6px;left:-7px;font-size:13px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));pointer-events:none">${MARKS[loc.id]==='want'?'💖':'✅'}</div>`:''}
       </div>`;
     const icon=L.divIcon({html,className:'',iconSize:[36,46],iconAnchor:[18,46],popupAnchor:[0,-46]});
     if(!inF)return; // フィルター外は表示しない
@@ -1025,6 +1106,13 @@ function renderMarkers(){
 
 // ── Filters ───────────────────────────────────────────────────
 function escAttr(s){return(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+// HTML出力用エスケープ（innerHTMLに流す文字列はすべてこれを通す）
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+// リンクは http/https のみ許可（javascript: 等のURLを無効化）
+const safeUrl=u=>/^https?:\/\//i.test(u||'')?u:'';
+// インラインonclickへ文字列を安全に渡すためのエンコード（受け側でdecodeURIComponent）
+// ※ encodeURIComponent は ' をエンコードしないため、属性内のJS文字列が壊れないよう追加変換する
+const enc=s=>encodeURIComponent(s).replace(/'/g,'%27');
 // ── フィルタードロワー ────────────────────────────────────────
 function renderFilters(){
   renderActiveFilterBar();
@@ -1040,11 +1128,16 @@ function renderActiveFilterBar(){
   // CPチップ（優先・上）
   activeCps.forEach(cp=>{
     const cfg=cpCfg(cp);
-    chips.push(`<button class="active-filter-chip" style="background:${cfg.color};color:white;border:none" onclick="window._setCp('${cp}')">${cfg.emoji||'💗'} ${cp} ✕</button>`);
+    chips.push(`<button class="active-filter-chip" style="background:${cfg.color};color:white;border:none" onclick="window._setCpEnc('${enc(cp)}')">${cfg.emoji||'💗'} ${esc(cp)} ✕</button>`);
   });
   // 中カテゴリチップ
   activeTypes.forEach(t=>{
-    chips.push(`<button class="active-filter-chip" style="background:#111;color:white" onclick="window._setType('${t.replace(/'/g,"\\'")}')">${t} ✕</button>`);
+    chips.push(`<button class="active-filter-chip" style="background:#111;color:white" onclick="window._setTypeEnc('${enc(t)}')">${esc(t)} ✕</button>`);
+  });
+  // マイマークチップ
+  activeMarks.forEach(k=>{
+    const c=MARK_CFG[k];
+    chips.push(`<button class="active-filter-chip" style="background:${c.color};color:white" onclick="window._setMark('${k}')">${c.label} ✕</button>`);
   });
   document.getElementById('active-filters').innerHTML=chips.join('');
 }
@@ -1067,6 +1160,10 @@ function renderFilterDrawerBody(){
       <div class="ms-list" id="series-list"></div>
     </div>
     <div class="filter-section">
+      <div class="filter-section-title">マイマーク</div>
+      <div class="type-grid" id="mark-pills"></div>
+    </div>
+    <div class="filter-section">
       <div class="filter-section-title">オススメ・その他</div>
       <div class="type-grid" id="other-pills"></div>
     </div>`;
@@ -1074,17 +1171,17 @@ function renderFilterDrawerBody(){
 }
 
 // 選択チップ・候補リスト・オススメボタンだけを更新（検索入力欄は作り直さない＝入力中もフォーカスが外れない）
-function refreshFilterSelections(){ renderCpChips(); renderSeriesChips(); renderCpList(); renderSeriesList(); renderOtherPills(); }
+function refreshFilterSelections(){ renderCpChips(); renderSeriesChips(); renderCpList(); renderSeriesList(); renderMarkPills(); renderOtherPills(); }
 
 function renderCpChips(){
   const box=document.getElementById('cp-chips'); if(!box)return;
   box.innerHTML=[...activeCps].map(cp=>{const cfg=cpCfg(cp);
-    return`<button class="ms-chip" style="background:${cfg.color};color:#fff" onclick="window._setCp('${cp.replace(/'/g,"\\'")}')">${cfg.emoji||'💗'} ${cp} ✕</button>`;}).join('');
+    return`<button class="ms-chip" style="background:${cfg.color};color:#fff" onclick="window._setCpEnc('${enc(cp)}')">${cfg.emoji||'💗'} ${esc(cp)} ✕</button>`;}).join('');
 }
 function renderSeriesChips(){
   const box=document.getElementById('series-chips'); if(!box)return;
   box.innerHTML=[...activeTypes].filter(t=>!COMMON_TAGS.has(t)&&t!==REC_TAG).map(t=>
-    `<button class="ms-chip" style="background:#111;color:#fff" onclick="window._setType('${t.replace(/'/g,"\\'")}')">${t} ✕</button>`).join('');
+    `<button class="ms-chip" style="background:#111;color:#fff" onclick="window._setTypeEnc('${enc(t)}')">${esc(t)} ✕</button>`).join('');
 }
 // 頭文字（前方一致）を優先し、その後に部分一致を並べる
 function msMatch(list,q){
@@ -1105,10 +1202,10 @@ function renderCpList(){
   const items=msMatch(getUniqueCPs(),cpSearchQ);
   if(!items.length){box.innerHTML='<div class="ms-empty">該当なし</div>';return;}
   box.innerHTML=items.map(cp=>{const cfg=cpCfg(cp);const on=activeCps.has(cp);
-    return`<button class="ms-row${on?' on':''}" onclick="window._setCp('${cp.replace(/'/g,"\\'")}')">
+    return`<button class="ms-row${on?' on':''}" onclick="window._setCpEnc('${enc(cp)}')">
       <span class="ms-check">${on?'✓':''}</span>
       <span class="cp-dot" style="background:${cfg.color||'#888'}"></span>
-      <span>${cfg.emoji||'💗'} ${cp}</span></button>`;}).join('');
+      <span>${cfg.emoji||'💗'} ${esc(cp)}</span></button>`;}).join('');
 }
 function renderSeriesList(){
   const box=document.getElementById('series-list'); if(!box)return;
@@ -1116,8 +1213,8 @@ function renderSeriesList(){
   const items=msMatch(works,seriesSearchQ);
   if(!items.length){box.innerHTML='<div class="ms-empty">該当なし</div>';return;}
   box.innerHTML=items.map(s=>{const on=activeTypes.has(s);
-    return`<button class="ms-row${on?' on':''}" onclick="window._setType('${s.replace(/'/g,"\\'")}')">
-      <span class="ms-check">${on?'✓':''}</span><span>${s}</span></button>`;}).join('');
+    return`<button class="ms-row${on?' on':''}" onclick="window._setTypeEnc('${enc(s)}')">
+      <span class="ms-check">${on?'✓':''}</span><span>${esc(s)}</span></button>`;}).join('');
 }
 function renderOtherPills(){
   const box=document.getElementById('other-pills'); if(!box)return;
@@ -1127,8 +1224,18 @@ function renderOtherPills(){
   if(recAvail){const on=activeTypes.has(REC_TAG);
     html+=`<button class="filter-pill${on?' active':''}" style="${on?`background:${REC_CFG.color};border-color:${REC_CFG.color};color:#fff`:''}" onclick="window._setType('${REC_TAG.replace(/'/g,"\\'")}')">${REC_TAG}</button>`;}
   commons.forEach(t=>{const on=activeTypes.has(t);
-    html+=`<button class="filter-pill${on?' active':''}" style="border-style:dashed" onclick="window._setType('${t.replace(/'/g,"\\'")}')">🌐 ${t}</button>`;});
+    html+=`<button class="filter-pill${on?' active':''}" style="border-style:dashed" onclick="window._setTypeEnc('${enc(t)}')">🌐 ${esc(t)}</button>`;});
   box.innerHTML=html;
+}
+
+// マイマーク（行きたい・行った）フィルター
+function renderMarkPills(){
+  const box=document.getElementById('mark-pills'); if(!box)return;
+  box.innerHTML=Object.entries(MARK_CFG).map(([k,c])=>{
+    const on=activeMarks.has(k);
+    const n=Object.values(MARKS).filter(v=>v===k).length;
+    return`<button class="filter-pill${on?' active':''}" style="${on?`background:${c.color};border-color:${c.color};color:#fff`:''}" onclick="window._setMark('${k}')">${c.label}${n?` (${n})`:''}</button>`;
+  }).join('');
 }
 
 function renderMapOverlayInfo(){
@@ -1136,8 +1243,9 @@ function renderMapOverlayInfo(){
   const el=document.getElementById('map-overlay-info');
   if(!el)return;
   const parts=[];
-  activeCps.forEach(cp=>{const cfg=cpCfg(cp);parts.push(`<span class="cp-dot" style="background:${cfg.color}"></span><span>${cfg.emoji||'💗'} ${cp}</span>`);});
-  activeTypes.forEach(t=>parts.push(`<span>${t}</span>`));
+  activeCps.forEach(cp=>{const cfg=cpCfg(cp);parts.push(`<span class="cp-dot" style="background:${cfg.color}"></span><span>${cfg.emoji||'💗'} ${esc(cp)}</span>`);});
+  activeTypes.forEach(t=>parts.push(`<span>${esc(t)}</span>`));
+  activeMarks.forEach(k=>parts.push(`<span style="color:${MARK_CFG[k].color}">${MARK_CFG[k].label}</span>`));
   parts.push(`<span style="color:#bbb;font-weight:400">📍 ${filtered.length}件</span>`);
   el.innerHTML=parts.join('<span style="color:#ddd">|</span>');
 }
@@ -1152,7 +1260,7 @@ window.closeFilterDrawer=function(){
   document.getElementById('filter-overlay').classList.remove('open');
 };
 window.resetFilters=function(){
-  activeTypes.clear();activeCps.clear();
+  activeTypes.clear();activeCps.clear();activeMarks.clear();
   cpSearchQ='';seriesSearchQ='';
   renderFilters();renderMarkers();renderDrawer();
 };
@@ -1170,11 +1278,12 @@ function renderDrawer(){
   }
   el.innerHTML=filtered.map(loc=>{
     const apps=locApps(loc.id),a0=apps[0],isRec=isRecSpot(loc),cfg=isRec?REC_CFG:(a0&&a0.cp?cpCfg(a0.cp):FB),isSel=loc.id===selId,worksN=new Set(apps.map(a=>a.series||REC_TAG)).size;
-    return`<div class="drawer-card${isSel?' selected':''}" style="${isSel?`border-color:${cfg.color};box-shadow:0 2px 12px ${cfg.border};`:''}" onclick="window._sel('${loc.id}')">
-      <div class="drawer-card-icon">${catEmoji(loc.category)}</div>
-      <span class="drawer-card-series" style="background:${cfg.light};color:${cfg.color};border-color:${cfg.border}">${(a0&&a0.series)?a0.series:(isRec?REC_TAG:'')}</span>
-      <div class="drawer-card-name">${loc.name}</div>
-      <div class="drawer-card-desc">${a0?.scene_desc||loc.memo||''}</div>
+    const mk=MARKS[loc.id];
+    return`<div class="drawer-card${isSel?' selected':''}" style="${isSel?`border-color:${cfg.color};box-shadow:0 2px 12px ${cfg.border};`:''}" onclick="window._sel('${enc(loc.id)}')">
+      <div class="drawer-card-icon" style="display:flex;justify-content:space-between;align-items:center">${catEmoji(loc.category)}${mk?`<span style="font-size:15px">${mk==='want'?'💖':'✅'}</span>`:''}</div>
+      <span class="drawer-card-series" style="background:${cfg.light};color:${cfg.color};border-color:${cfg.border}">${esc((a0&&a0.series)?a0.series:(isRec?REC_TAG:''))}</span>
+      <div class="drawer-card-name">${esc(loc.name)}</div>
+      <div class="drawer-card-desc">${esc(a0?.scene_desc||loc.memo||'')}</div>
       ${worksN>1?`<div class="drawer-card-multi">📌 ${worksN}作品に登場</div>`:''}
     </div>`;
   }).join('');
@@ -1194,15 +1303,17 @@ window._sel=function(locId){
   const cfg=isRec?REC_CFG:(primaryCp?cpCfg(primaryCp):FB);
   if(loc.lat&&loc.lng&&map){
     const offsetLat=loc.lat-0.003;
-    map.setView([offsetLat,loc.lng],15,{animate:true});
+    // すでにズームインして見ているときは引き戻さない
+    map.setView([offsetLat,loc.lng],Math.max(map.getZoom(),15),{animate:true});
   }
   document.getElementById('detail-accent').style.background=`linear-gradient(90deg,${cfg.border},${cfg.color})`;
   document.getElementById('detail-tags').innerHTML=
     (isRec&&!apps.some(a=>a.series)?`<span class="detail-tag" style="background:${REC_CFG.light};color:${REC_CFG.color};border-color:${REC_CFG.border}">${REC_TAG}</span>`:'')+
-    [...new Set(apps.map(a=>a.series).filter(Boolean))].map(s=>`<span class="detail-tag" style="background:#F3F4F6;color:#555;border-color:#E5E7EB">${s}</span>`).join('')+
-    `<span class="detail-tag" style="background:${cfg.light};color:${cfg.color};border-color:${cfg.border}">${catEmoji(loc.category)} ${loc.category}</span>`;
+    [...new Set(apps.map(a=>a.series).filter(Boolean))].map(s=>`<span class="detail-tag" style="background:#F3F4F6;color:#555;border-color:#E5E7EB">${esc(s)}</span>`).join('')+
+    `<span class="detail-tag" style="background:${cfg.light};color:${cfg.color};border-color:${cfg.border}">${catEmoji(loc.category)} ${esc(loc.category)}</span>`;
   document.getElementById('detail-name').textContent=loc.name;
-  document.getElementById('detail-address').innerHTML=loc.address?`<span>📌</span> ${loc.address}`:'';
+  document.getElementById('detail-address').innerHTML=loc.address?`<span>📌</span> ${esc(loc.address)}`:'';
+  updateMarkBtns();
   const memoEl=document.getElementById('detail-memo');
   if(loc.memo){memoEl.textContent=`💡 ${loc.memo}`;memoEl.style.display='block';}else{memoEl.style.display='none';}
 
@@ -1224,16 +1335,16 @@ window._sel=function(locId){
       const ac=first&&first.cp?cpCfg(first.cp):FB;
       // 人物一覧（重複除去）：それぞれ自分の推し色で表示
       const people=[...new Set(g.items.map(x=>x.cp).filter(Boolean))];
-      const peopleHtml=people.map(cp=>{const c=cpCfg(cp);return`<span style="color:${c.color};opacity:.85;margin-right:10px;white-space:nowrap">${c.emoji||'💗'} ${cp}</span>`;}).join('');
+      const peopleHtml=people.map(cp=>{const c=cpCfg(cp);return`<span style="color:${c.color};opacity:.85;margin-right:10px;white-space:nowrap">${c.emoji||'💗'} ${esc(cp)}</span>`;}).join('');
       // シーン説明（重複除去）
       const scenes=[...new Set(g.items.map(x=>x.scene_desc).filter(Boolean))];
-      const scenesHtml=scenes.map(s=>`<div class="appearance-scene">${s}</div>`).join('');
+      const scenesHtml=scenes.map(s=>`<div class="appearance-scene">${esc(s)}</div>`).join('');
       // SNSリンク（同じURLは1つだけ）
       const seen=new Set();
       const snsHtml=g.items.map(x=>{if(!x.sns_url||seen.has(x.sns_url))return'';seen.add(x.sns_url);return buildSnsLink(x);}).filter(Boolean).join('');
       const dramaLink=buildDramaLink(ac,g.series);
       return`<div class="appearance-item" style="background:${ac.light};border-color:${ac.border}">
-        <div class="appearance-series" style="color:${ac.color}">${g.series||REC_TAG}</div>
+        <div class="appearance-series" style="color:${ac.color}">${esc(g.series)||REC_TAG}</div>
         ${peopleHtml?`<div class="appearance-cp">${peopleHtml}</div>`:''}
         ${scenesHtml}
         ${dramaLink}
@@ -1244,11 +1355,45 @@ window._sel=function(locId){
 
   const btn=document.getElementById('detail-map-btn');
   btn.style.background=`linear-gradient(135deg,${cfg.border},${cfg.color})`;
-  btn.onclick=()=>{if(loc.googleMapsUrl&&!loc.googleMapsUrl.includes('xxx')){window.open(loc.googleMapsUrl,'_blank');}else{alert('GoogleマップのURLは準備中です');}};
+  btn.onclick=()=>{const u=safeUrl(loc.googleMapsUrl);if(u&&!u.includes('xxx')){window.open(u,'_blank');}else{alert('GoogleマップのURLは準備中です');}};
   document.getElementById('detail-overlay').style.display='block';
   document.getElementById('drawer').style.display='none';
   document.getElementById('drawer').classList.remove('collapsed');
   drawerCollapsed=false;
+};
+
+// ── 行きたい！行った！マーク操作 ─────────────────────────────
+window.toggleMark=function(kind){
+  if(!selId)return;
+  if(MARKS[selId]===kind)delete MARKS[selId];
+  else MARKS[selId]=kind;
+  saveMarks();
+  updateMarkBtns();
+  renderMarkers();renderDrawer();renderMarkPills();
+  if(activeMarks.size)renderMapOverlayInfo();
+};
+function updateMarkBtns(){
+  const w=document.getElementById('mark-want'),g=document.getElementById('mark-went');
+  if(!w||!g)return;
+  const mk=selId?MARKS[selId]:null;
+  w.classList.toggle('on-want',mk==='want');
+  g.classList.toggle('on-went',mk==='went');
+  w.textContent=mk==='want'?'💖 行きたい！':'🤍 行きたい';
+  g.textContent=mk==='went'?'✅ 行った！':'☑️ 行った';
+  const hint=document.getElementById('mark-login-hint');
+  if(hint)hint.style.display=currentUser?'none':'block';
+}
+// スポットの共有リンク（?spot=<id>）
+window.shareSpot=async function(){
+  if(!selId)return;
+  const loc=LOCS.find(l=>l.id===selId);
+  const url=location.origin+location.pathname+'?spot='+enc(selId);
+  if(navigator.share){
+    try{await navigator.share({title:loc?loc.name:'Thai Series Map',url});}catch(e){}
+  }else{
+    try{await navigator.clipboard.writeText(url);alert('リンクをコピーしました！');}
+    catch(e){prompt('このURLをコピーしてください',url);}
+  }
 };
 
 window.closeDetail=e=>{if(e.target===document.getElementById('detail-overlay'))closeDetailDirect();};
@@ -1274,6 +1419,13 @@ function applyFilterChange(){
 window._setType=t=>{
   if(activeTypes.has(t)){activeTypes.delete(t);}
   else{activeTypes.add(t);}
+  applyFilterChange();
+};
+// インラインonclick経由（encodeURIComponent済み文字列を受ける）
+window._setTypeEnc=s=>window._setType(decodeURIComponent(s));
+window._setCpEnc=s=>window._setCp(decodeURIComponent(s));
+window._setMark=k=>{
+  if(activeMarks.has(k)){activeMarks.delete(k);}else{activeMarks.add(k);}
   applyFilterChange();
 };
 // 「すべて」＝作品/おすすめの選択をクリア（タレント選択は残す）
@@ -1309,12 +1461,6 @@ window.onSearch=function(v){
   renderMarkers();
   renderDrawer();
 };
-window.resetFilters=function(){
-  activeTypes.clear();activeCps.clear();
-  cpSearchQ='';seriesSearchQ='';
-  renderFilters();renderMarkers();renderDrawer();
-};
-
 // ── User menu ─────────────────────────────────────────────────
 window.toggleUserMenu=()=>document.getElementById('user-menu').classList.toggle('open');
 window.toggleUserMenuClose=()=>document.getElementById('user-menu').classList.remove('open');
@@ -1341,7 +1487,7 @@ function populateSubmitSelects(){
   if(!cpSel||!aiCpSel)return;
   const list=TALENTS.length?TALENTS:Object.keys(CP_MAP).map(c=>({name:c,emoji:CP_MAP[c].emoji}));
   const cpOpts='<option value="">— なし（おすすめ・任意）—</option>'+
-    list.map(t=>`<option value="${t.name}">${t.emoji||'⭐'} ${t.name}${t.real_name?`（${t.real_name}）`:''}</option>`).join('');
+    list.map(t=>`<option value="${esc(t.name)}">${t.emoji||'⭐'} ${esc(t.name)}${t.real_name?`（${esc(t.real_name)}）`:''}</option>`).join('');
   cpSel.innerHTML=cpOpts;
   aiCpSel.innerHTML=cpOpts;
 }
@@ -1351,14 +1497,14 @@ function buildSeriesOpts(cp, defaultSeries='プライベート'){
   const all=[...new Set([...cpTags,...getUniqueSeries()])].sort();
   // プライベートを先頭に
   const ordered=['プライベート',...all.filter(s=>s!=='プライベート')];
-  return ordered.map(s=>`<option value="${s}"${s===defaultSeries?' selected':''}>${s}</option>`).join('');
+  return ordered.map(s=>`<option value="${esc(s)}"${s===defaultSeries?' selected':''}>${esc(s)}</option>`).join('');
 }
 
 // 作品（中カテゴリ）の選択肢：プライベートを先頭に全作品
 function buildSeriesOptsAll(defaultSeries='プライベート'){
   const all=getUniqueSeries();
   const ordered=['プライベート',...all.filter(s=>s!=='プライベート')];
-  return ordered.map(s=>`<option value="${s}"${s===defaultSeries?' selected':''}>${s}</option>`).join('');
+  return ordered.map(s=>`<option value="${esc(s)}"${s===defaultSeries?' selected':''}>${esc(s)}</option>`).join('');
 }
 // その作品に出演しているタレント（なしを先頭に）。該当が無ければ全タレントを出す。
 function getSeriesTalents(series){return[...new Set(APPS.filter(a=>a.series===series).map(a=>a.cp).filter(Boolean))];}
@@ -1366,7 +1512,7 @@ function buildCpOptsForSeries(series){
   const master=TALENTS.length?TALENTS:Object.keys(CP_MAP).map(c=>({name:c,emoji:CP_MAP[c].emoji,real_name:''}));
   const cast=series?getSeriesTalents(series):[];
   const castSet=new Set(cast);
-  const opt=t=>`<option value="${t.name}">${t.emoji||'⭐'} ${t.name}${t.real_name?`（${t.real_name}）`:''}</option>`;
+  const opt=t=>`<option value="${esc(t.name)}">${t.emoji||'⭐'} ${esc(t.name)}${t.real_name?`（${esc(t.real_name)}）`:''}</option>`;
   const castRows=cast.map(nm=>{const t=master.find(x=>x.name===nm)||{name:nm,emoji:'⭐',real_name:''};return opt(t);}).join('');
   const otherRows=master.filter(t=>!castSet.has(t.name)).map(opt).join('');
   let html='<option value="">— なし（おすすめ・任意）—</option>';
@@ -1385,6 +1531,7 @@ window.onAddInfoCpChange=function(){
 };
 
 window.openSubmitModal=()=>{
+  if(!currentUser){toggleUserMenuClose();requireLogin();return;}
   ['f-name','f-scene','f-sns','f-url','f-memo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   // 作品（中カテゴリ）を先に組み立て → 既定「プライベート」→ それに応じたタレント候補
   document.getElementById('f-series').innerHTML=buildSeriesOptsAll('プライベート');
@@ -1406,6 +1553,7 @@ window.submitSpot=async()=>{
   const url=document.getElementById('f-url').value.trim();
   const memo=document.getElementById('f-memo').value.trim();
   const msgEl=document.getElementById('submit-msg');
+  if(!currentUser){msgEl.style.color='#DC2626';msgEl.textContent='※ 投稿にはログインが必要です';return;}
   if(!name||!series||!scene){msgEl.style.color='#DC2626';msgEl.textContent='※ 場所名・中カテゴリ・シーン説明を入力してください';return;}
   msgEl.style.color='#9333EA';msgEl.textContent='送信中...';
   try{
@@ -1423,6 +1571,7 @@ let addInfoTargetId=null;
 
 window.openAddInfoModal=function(){
   if(!selId)return;
+  if(!currentUser){requireLogin();return;}
   const loc=LOCS.find(l=>l.id===selId);
   if(!loc)return;
   addInfoTargetId=selId;
@@ -1447,6 +1596,7 @@ window.switchAddInfoTab=function(tab){
 };
 window.submitAddInfo=async function(){
   const msgEl=document.getElementById('add-info-msg');
+  if(!currentUser){msgEl.style.color='#DC2626';msgEl.textContent='※ 投稿にはログインが必要です';return;}
   const isAppearance=document.getElementById('tab-appearance').style.display!=='none';
   msgEl.style.color='#9333EA';msgEl.textContent='送信中...';
   try{
@@ -1502,13 +1652,13 @@ window.toggleSidebar=function(){
 
 // ── SNS リンク生成 ───────────────────────────────────────────
 function buildSnsLink(a){
-  const url=a.sns_url||'';
+  const url=safeUrl(a.sns_url);
   if(!url)return '';
   let icon='🔗', label='SNS投稿を見る';
   if(url.includes('x.com')||url.includes('twitter.com')){icon='𝕏'; label='X(Twitter)の投稿を見る';}
   else if(url.includes('instagram.com')){icon='📸'; label='Instagramの投稿を見る';}
   else if(url.includes('tiktok.com')){icon='🎵'; label='TikTokの投稿を見る';}
-  return `<a href="${url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:6px 12px;border-radius:10px;background:#F3F4F6;color:#555;text-decoration:none;margin-top:4px">${icon} ${label} →</a>`;
+  return `<a href="${esc(url)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:6px 12px;border-radius:10px;background:#F3F4F6;color:#555;text-decoration:none;margin-top:4px">${icon} ${label} →</a>`;
 }
 
 // ── Thai GL Works リンク生成 ──────────────────────────────────
@@ -1517,7 +1667,7 @@ function buildDramaLink(cfg, seriesName){
   const id = seriesDramaId(seriesName).trim();
   if(!id) return '';
   const href = GL_URL + '?drama=' + encodeURIComponent(id);
-  return`<a href="${href}" target="_blank" class="drama-link-btn" style="background:${cfg.light};color:${cfg.color};border:1.5px solid ${cfg.border}">🌺 Thai GL Worksで ${seriesName} を見る →</a>`;
+  return`<a href="${href}" target="_blank" class="drama-link-btn" style="background:${cfg.light};color:${cfg.color};border:1.5px solid ${cfg.border}">🌺 Thai GL Worksで ${esc(seriesName)} を見る →</a>`;
 }
 
 // ── KML出力 ──────────────────────────────────────────────────
@@ -1550,12 +1700,13 @@ window.exportKML=function(){
   const parts=filtered.map(function(loc){
     const apps=locApps(loc.id);
     const a0=apps[0];
-    const hasUrl=loc.googleMapsUrl&&loc.googleMapsUrl.indexOf('xxx')===-1;
+    const gUrl=safeUrl(loc.googleMapsUrl);
+    const hasUrl=gUrl&&gUrl.indexOf('xxx')===-1;
     const descParts=[];
     if(a0)descParts.push('<b>'+escXml(a0.series)+'</b> / '+escXml(a0.cp));
     if(apps.length>1)descParts.push('他'+(apps.length-1)+'作品に登場');
     if(loc.memo)descParts.push(escXml(loc.memo));
-    if(hasUrl)descParts.push('<a href="'+loc.googleMapsUrl+'">Googleマップ</a>');
+    if(hasUrl)descParts.push('<a href="'+escXml(gUrl)+'">Googleマップ</a>');
     const desc=descParts.join('<br>');
     const cfg=a0&&a0.cp?cpCfg(a0.cp):{color:'#888780'};
     const c=cfg.color.replace('#','');
@@ -1585,7 +1736,7 @@ function escXml(s){
   return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 // 管理者用キャッシュクリア
-window.clearMapCache=()=>{[CL,CA,CS,CC,CK].forEach(k=>localStorage.removeItem(k));location.reload();};
+window.clearMapCache=()=>{[CL,CA,CS,CC,CK,CT].forEach(k=>localStorage.removeItem(k));location.reload();};
 
 // ── ドロワー開閉 ─────────────────────────────────────────────
 let drawerCollapsed=false;
