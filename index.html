@@ -1112,6 +1112,7 @@ let currentTileKey='carto', tileLayer=null;
 function initMap(){
   if(map){map.remove();map=null;markers={};}
   map=L.map('map',{center:[13.7,100.5],zoom:6,zoomControl:false,attributionControl:true});
+  window._map=map; // デバッグ用（コンソールから地図状態を確認できる）
   tileLayer=L.tileLayer(TILES.carto.url,{attribution:TILES.carto.attr,maxZoom:19,subdomains:'abcd'}).addTo(map);
   L.control.zoom({position:'bottomright'}).addTo(map);
   map.on('click',()=>{closeDetailDirect();toggleUserMenuClose();});
