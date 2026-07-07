@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- OGP画像の編集用ソース。編集後は以下で再生成:
+  Chrome --headless --screenshot=og-image.png --window-size=1200,630 og-image.svg を包んだHTML
+-->
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="left"><rect x="0" y="0" width="700" height="630"/></clipPath>
+  </defs>
+
+  <!-- ===== 左：イラスト面 ===== -->
+  <g clip-path="url(#left)">
+    <!-- 空 -->
+    <rect x="0" y="0" width="700" height="215" fill="#AEDFF2"/>
+    <circle cx="90" cy="80" r="42" fill="#FBE28A"/>
+
+    <!-- 街並み（パステルのファサード＋アーチ） -->
+    <rect x="150" y="60" width="150" height="155" fill="#F2695E"/>
+    <path d="M180 215 v-70 a45 45 0 0 1 90 0 v70 Z" fill="#F9C173"/>
+    <rect x="300" y="95" width="120" height="120" fill="#A8E6CF"/>
+    <rect x="322" y="130" width="32" height="42" fill="#7FD8D8"/>
+    <rect x="368" y="130" width="32" height="42" fill="#7FD8D8"/>
+    <rect x="420" y="40" width="160" height="175" fill="#CDB4EB"/>
+    <path d="M448 215 v-85 a32 32 0 0 1 64 0 v85 Z" fill="#F7B1C1"/>
+    <rect x="536" y="120" width="26" height="95" fill="#B79BE0"/>
+    <rect x="580" y="75" width="120" height="140" fill="#FFD9C9"/>
+    <path d="M600 215 v-60 a30 30 0 0 1 60 0 v60 Z" fill="#F2695E"/>
+    <!-- 階段（参考画像のモチーフ） -->
+    <g fill="#F7A8B8">
+      <rect x="86" y="185" width="66" height="30"/>
+      <rect x="102" y="163" width="50" height="24"/>
+      <rect x="118" y="141" width="34" height="24"/>
+    </g>
+
+    <!-- 地図面 -->
+    <rect x="0" y="215" width="700" height="415" fill="#FBEED7"/>
+    <!-- 道路 -->
+    <g stroke-linecap="round" fill="none">
+      <path d="M-30 330 L 740 300" stroke="#FFFFFF" stroke-width="30"/>
+      <path d="M120 200 L 300 660" stroke="#FFFFFF" stroke-width="26"/>
+      <path d="M-20 520 L 730 470" stroke="#F6BFD4" stroke-width="22"/>
+      <path d="M520 210 L 430 660" stroke="#BDE8CC" stroke-width="22"/>
+    </g>
+    <!-- プール（ターコイズ） -->
+    <rect x="18" y="546" width="240" height="120" rx="18" fill="#7ED6D0"/>
+    <path d="M40 585 q20 -12 40 0 t40 0 t40 0 t40 0" stroke="#B8ECE8" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M52 615 q20 -12 40 0 t40 0 t40 0" stroke="#B8ECE8" stroke-width="7" fill="none" stroke-linecap="round"/>
+
+    <!-- 巡礼ルート（点線） -->
+    <path d="M170 452 Q 300 380 405 430 T 610 355" stroke="#2A2435" stroke-width="6" fill="none" stroke-dasharray="2 20" stroke-linecap="round"/>
+
+    <!-- 観葉植物 -->
+    <g transform="translate(608,560)">
+      <path d="M0 0 C -28 -34 -30 -60 -6 -84 C 8 -58 10 -30 0 0 Z" fill="#5FBF8E" transform="rotate(-28)"/>
+      <path d="M0 0 C -28 -34 -30 -60 -6 -84 C 8 -58 10 -30 0 0 Z" fill="#7ED6A0" transform="rotate(24)"/>
+      <path d="M0 0 C -26 -32 -28 -56 -6 -80 C 8 -54 10 -28 0 0 Z" fill="#4CAF7D"/>
+      <path d="M-30 0 h60 l-9 52 h-42 Z" fill="#E8845E"/>
+    </g>
+
+    <!-- 地図ピン（作品カラー：ピンク/グリーン/ゴールド） -->
+    <g>
+      <g transform="translate(170,452)">
+        <ellipse cx="0" cy="8" rx="22" ry="8" fill="rgba(42,36,53,.18)"/>
+        <path d="M0 0 C -14 -22 -34 -36 -34 -62 a34 34 0 1 1 68 0 C 34 -36 14 -22 0 0 Z" fill="#EC4899"/>
+        <circle cx="0" cy="-60" r="16" fill="#fff"/>
+        <circle cx="0" cy="-60" r="7" fill="#F9A8D4"/>
+      </g>
+      <g transform="translate(405,430) scale(1.18)">
+        <ellipse cx="0" cy="8" rx="22" ry="8" fill="rgba(42,36,53,.18)"/>
+        <path d="M0 0 C -14 -22 -34 -36 -34 -62 a34 34 0 1 1 68 0 C 34 -36 14 -22 0 0 Z" fill="#10B981"/>
+        <circle cx="0" cy="-60" r="16" fill="#fff"/>
+        <circle cx="0" cy="-60" r="7" fill="#6EE7B7"/>
+      </g>
+      <g transform="translate(610,355)">
+        <ellipse cx="0" cy="8" rx="22" ry="8" fill="rgba(42,36,53,.18)"/>
+        <path d="M0 0 C -14 -22 -34 -36 -34 -62 a34 34 0 1 1 68 0 C 34 -36 14 -22 0 0 Z" fill="#F5A623"/>
+        <circle cx="0" cy="-60" r="16" fill="#fff"/>
+        <circle cx="0" cy="-60" r="7" fill="#FBD38D"/>
+      </g>
+      <!-- ハート付きミニピン -->
+      <g transform="translate(90,300)">
+        <path d="M0 0 C -10 -16 -24 -26 -24 -44 a24 24 0 1 1 48 0 C 24 -26 10 -16 0 0 Z" fill="#B79BE0"/>
+        <path d="M0 -37 c -3 -7 -13 -7 -13 1 c 0 6 8 11 13 15 c 5 -4 13 -9 13 -15 c 0 -8 -10 -8 -13 -1 Z" fill="#fff"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- ===== 右：テキスト面 ===== -->
+  <rect x="700" y="0" width="500" height="435" fill="#CDB4EB"/>
+  <rect x="700" y="435" width="500" height="195" fill="#F5E27A"/>
+  <!-- 右上のアーチ飾り -->
+  <path d="M1076 130 v-45 a38 38 0 0 1 76 0 v45 Z" fill="#F7B1C1"/>
+  <path d="M1090 130 v-38 a24 24 0 0 1 48 0 v38 Z" fill="#F2695E"/>
+
+  <!-- タイトル -->
+  <g font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="800" fill="#111111">
+    <text x="742" y="165" font-size="104" letter-spacing="-3">Thai</text>
+    <text x="742" y="272" font-size="104" letter-spacing="-3">Series</text>
+    <text x="742" y="379" font-size="104" letter-spacing="-3">Map</text>
+  </g>
+  <!-- 桜（アプリロゴ） -->
+  <g transform="translate(1022,345)">
+    <g fill="#F9A8D4">
+      <ellipse cx="0" cy="-26" rx="13" ry="17"/>
+      <ellipse cx="25" cy="-8" rx="13" ry="17" transform="rotate(72 25 -8)"/>
+      <ellipse cx="15" cy="21" rx="13" ry="17" transform="rotate(144 15 21)"/>
+      <ellipse cx="-15" cy="21" rx="13" ry="17" transform="rotate(-144 -15 21)"/>
+      <ellipse cx="-25" cy="-8" rx="13" ry="17" transform="rotate(-72 -25 -8)"/>
+    </g>
+    <circle cx="0" cy="0" r="10" fill="#F472B6"/>
+  </g>
+
+  <!-- サブタイトル＋URL（黄色面） -->
+  <g font-family="'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP',sans-serif" fill="#111111">
+    <text x="742" y="502" font-size="34" font-weight="700">タイドラマ・タイGL</text>
+    <text x="742" y="546" font-size="34" font-weight="700">聖地巡礼マップ</text>
+  </g>
+  <text x="742" y="596" font-family="Helvetica Neue, Arial, sans-serif" font-size="21.5" font-weight="600" fill="#111111">cooorrrrry9999.github.io/thai-series-map</text>
+
+  <!-- ===== 黒グリッド線 ===== -->
+  <rect x="0" y="210" width="700" height="10" fill="#1A1A1A"/>
+  <rect x="695" y="0" width="10" height="630" fill="#1A1A1A"/>
+  <rect x="700" y="430" width="500" height="10" fill="#1A1A1A"/>
+</svg>
