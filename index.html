@@ -113,8 +113,19 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 .series-btn.active{background:white;font-weight:700;color:#111}
 /* 選択中バッジ */
 .active-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;margin-left:auto}
-.filter-drawer-footer{padding:12px 14px;border-top:1px solid #F1F5F9;flex-shrink:0}
-.filter-reset-btn{width:100%;padding:10px;border-radius:10px;border:1.5px solid #E5E7EB;background:white;color:#555;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
+.filter-drawer-footer{padding:12px 14px;border-top:1px solid #F1F5F9;flex-shrink:0;display:flex;gap:8px}
+.filter-reset-btn{flex:1;padding:11px 6px;border-radius:10px;border:1.5px solid #E5E7EB;background:white;color:#555;font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit}
+.filter-apply-btn{flex:1.5;padding:11px 6px;border-radius:10px;border:none;background:linear-gradient(135deg,#F9A8D4,#9333EA);color:#fff;font-weight:800;font-size:12.5px;cursor:pointer;font-family:inherit;box-shadow:0 2px 10px rgba(147,51,234,.3)}
+.filter-sheet-handle{display:none}
+/* スマホ：フィルターは左ドロワーではなく下からのボトムシート（片手で操作しやすい） */
+@media(max-width:767px){
+  .filter-drawer{top:auto;bottom:0;left:0;right:0;width:100%;height:auto;max-height:80dvh;border-radius:20px 20px 0 0;transform:translateY(100%);box-shadow:0 -8px 32px rgba(0,0,0,.22)}
+  .filter-drawer.open{transform:translateY(0)}
+  .filter-sheet-handle{display:block;width:36px;height:4px;background:#E5E7EB;border-radius:2px;margin:10px auto 0;flex-shrink:0}
+  .filter-drawer-header{padding-top:8px}
+  .ms-list{max-height:230px}
+  .filter-drawer-footer{padding-bottom:max(env(safe-area-inset-bottom),12px)}
+}
 /* 上部に常時表示するアクティブフィルター表示 */
 .active-filters{position:fixed;top:calc(max(env(safe-area-inset-top),10px) + 48px);left:0;right:0;z-index:40;padding:6px 12px;display:flex;gap:6px;align-items:center;overflow-x:auto;-webkit-overflow-scrolling:touch;pointer-events:none}
 .active-filters::-webkit-scrollbar{display:none}
@@ -164,6 +175,8 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 .tmark-btn.on{opacity:1}
 .tmark-btn.on.w{border-color:#EC4899;background:#FDF2F8}
 .tmark-btn.on.g{border-color:#059669;background:#ECFDF5}
+.tf-sel{flex:1;min-width:0;padding:7px 6px;border:1.5px solid #E5E7EB;border-radius:9px;font-size:12px;font-weight:600;font-family:inherit;background:#fff;color:#555;outline:none}
+.tf-sel.on{border-color:#9333EA;color:#9333EA;background:#FAF5FF}
 .drawer-list{overflow-x:auto;display:flex;gap:10px;padding:0 14px 16px}
 .drawer-list::-webkit-scrollbar{display:none}
 .drawer-card{flex-shrink:0;width:220px;background:var(--white);border-radius:14px;border:1.5px solid #EEE;padding:12px;cursor:pointer;transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.06)}
@@ -398,8 +411,9 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 <!-- 左サイドフィルタードロワーオーバーレイ -->
 <div class="filter-drawer-overlay" id="filter-overlay" onclick="closeFilterDrawer()"></div>
 
-<!-- 左サイドフィルタードロワー -->
+<!-- フィルタードロワー（PC:左サイド / スマホ:ボトムシート） -->
 <div class="filter-drawer" id="filter-drawer">
+  <div class="filter-sheet-handle"></div>
   <div class="filter-drawer-header">
     <div class="filter-drawer-title" data-i18n="filter_title">🔍 絞り込み</div>
     <button class="filter-drawer-close" onclick="closeFilterDrawer()">×</button>
@@ -407,6 +421,7 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
   <div class="filter-drawer-body" id="filter-drawer-body"></div>
   <div class="filter-drawer-footer">
     <button class="filter-reset-btn" onclick="resetFilters()" data-i18n="reset">✕ フィルターをリセット</button>
+    <button class="filter-apply-btn" id="filter-apply-btn" onclick="closeFilterDrawer()">✓</button>
   </div>
 </div>
 
@@ -472,6 +487,12 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
   <div class="table-tools">
     <input class="ms-search" id="table-q" autocomplete="off" data-i18n-ph="tb_search_ph" placeholder="場所・作品・タレント・住所で絞り込み…" oninput="_tableSearch(this.value)">
     <button class="filter-open-btn" onclick="openFilterDrawer()" id="table-filter-btn">🔍 <span data-i18n="filter">フィルター</span></button>
+  </div>
+  <!-- 項目別フィルター（作品・タレント・マーク） -->
+  <div class="table-tools" style="padding-top:0">
+    <select class="tf-sel" id="tf-series" onchange="_tableFilter('series',this.value)"></select>
+    <select class="tf-sel" id="tf-cp" onchange="_tableFilter('cp',this.value)"></select>
+    <select class="tf-sel" id="tf-mark" onchange="_tableFilter('mark',this.value)"></select>
   </div>
   <div class="table-wrap">
     <table class="spot-table">
@@ -870,7 +891,7 @@ sec_other:['オススメ・その他','Recommended & more','推薦・其他','�
 cp_search_ph:['頭文字で検索…（例: f → Freen）','Type to search… (e.g. f → Freen)','輸入搜尋…（例：f → Freen）','พิมพ์ค้นหา… (เช่น f → Freen)'],
 series_search_ph:['頭文字で検索…（例: g → GAP）','Type to search… (e.g. g → GAP)','輸入搜尋…（例：g → GAP）','พิมพ์ค้นหา… (เช่น g → GAP)'],
 all:['すべて','All','全部','ทั้งหมด'],
-reset:['✕ フィルターをリセット','✕ Reset filters','✕ 重設篩選','✕ ล้างตัวกรอง'],
+reset:['✕ リセット','✕ Reset','✕ 重設','✕ ล้าง'],
 no_match:['該当なし','No matches','沒有符合項目','ไม่พบรายการ'],
 rec:['おすすめ','Recommended','推薦','แนะนำ'],
 want:['行きたい','Want to go','想去','อยากไป'],
@@ -911,6 +932,11 @@ tb_search_ph:['場所・作品・タレント・住所で絞り込み…','Filte
 th_name:['場所名','Place','地點','สถานที่'],
 th_series:['作品 / タレント','Series / Talent','作品／演員','ซีรีส์ / นักแสดง'],
 th_mark:['マーク','Marks','標記','มาร์ก'],
+f_series_all:['🎬 作品: すべて','🎬 Series: all','🎬 作品：全部','🎬 ซีรีส์: ทั้งหมด'],
+f_cp_all:['⭐ タレント: すべて','⭐ Talent: all','⭐ 演員：全部','⭐ นักแสดง: ทั้งหมด'],
+f_mark_all:['📌 マーク: すべて','📌 Marks: all','📌 標記：全部','📌 มาร์ก: ทั้งหมด'],
+f_mark_none:['マークなし','No mark','未標記','ไม่มีมาร์ก'],
+apply_n:['✓ この条件で表示（{n}件）','✓ Show results ({n})','✓ 顯示結果（{n}）','✓ แสดงผลลัพธ์ ({n})'],
 tile_std:['標準','Standard','標準','มาตรฐาน'],
 tile_light:['淡色','Light','淺色','โทนอ่อน'],
 none_opt:['— なし（おすすめ・任意）—','— None (optional) —','— 無（選填）—','— ไม่มี (ไม่บังคับ) —'],
@@ -1053,7 +1079,7 @@ window.setLang=function(l){
   LANG=l;
   try{localStorage.setItem('tsmap_lang',l);}catch(e){}
   applyStaticI18n();updateLangChips();
-  renderFilters();renderDrawer();renderSpotTable();renderTileBtn();updateMarkBtns();
+  renderFilters();renderDrawer();populateTableFilters();renderSpotTable();renderTileBtn();updateMarkBtns();
   if(selId){const loc=LOCS.find(x=>x.id===selId);if(loc)fillDetail(loc);}
 };
 
@@ -1487,7 +1513,12 @@ function renderFilterDrawerBody(){
 }
 
 // 選択チップ・候補リスト・オススメボタンだけを更新（検索入力欄は作り直さない＝入力中もフォーカスが外れない）
-function refreshFilterSelections(){ renderCpChips(); renderSeriesChips(); renderCpList(); renderSeriesList(); renderMarkPills(); renderOtherPills(); }
+function refreshFilterSelections(){ renderCpChips(); renderSeriesChips(); renderCpList(); renderSeriesList(); renderMarkPills(); renderOtherPills(); updateApplyBtn(); }
+// ボトムシート下部の「この条件で表示（N件）」をライブ更新
+function updateApplyBtn(){
+  const b=document.getElementById('filter-apply-btn');
+  if(b)b.textContent=tf('apply_n',{n:getFiltered().length});
+}
 
 function renderCpChips(){
   const box=document.getElementById('cp-chips'); if(!box)return;
@@ -1578,6 +1609,8 @@ window.closeFilterDrawer=function(){
 window.resetFilters=function(){
   activeTypes.clear();activeCps.clear();activeMarks.clear();
   cpSearchQ='';seriesSearchQ='';
+  tableFilters={series:'',cp:'',mark:''};
+  populateTableFilters();
   renderFilters();renderMarkers();renderDrawer();renderSpotTable();
 };
 
@@ -1739,8 +1772,32 @@ window.shareSpot=async function(){
 
 // ── スポット一覧（表形式ビュー） ─────────────────────────────
 let tableQ='', tableSortKey='name', tableSortDir=1;
+// 項目別フィルター（作品／タレント／マーク）
+let tableFilters={series:'',cp:'',mark:''};
+function populateTableFilters(){
+  const sel=document.getElementById('tf-series');
+  if(sel){
+    sel.innerHTML=`<option value="">${t('f_series_all')}</option>`+getUniqueSeries().map(s=>`<option value="${escAttr(s)}"${s===tableFilters.series?' selected':''}>${esc(s)}</option>`).join('');
+    sel.classList.toggle('on',!!tableFilters.series);
+  }
+  const cp=document.getElementById('tf-cp');
+  if(cp){
+    cp.innerHTML=`<option value="">${t('f_cp_all')}</option>`+getUniqueCPs().map(s=>`<option value="${escAttr(s)}"${s===tableFilters.cp?' selected':''}>${esc(s)}</option>`).join('');
+    cp.classList.toggle('on',!!tableFilters.cp);
+  }
+  const mk=document.getElementById('tf-mark');
+  if(mk){
+    mk.innerHTML=`<option value="">${t('f_mark_all')}</option>
+      <option value="want"${tableFilters.mark==='want'?' selected':''}>💖 ${t('want')}</option>
+      <option value="went"${tableFilters.mark==='went'?' selected':''}>✅ ${t('went')}</option>
+      <option value="none"${tableFilters.mark==='none'?' selected':''}>${t('f_mark_none')}</option>`;
+    mk.classList.toggle('on',!!tableFilters.mark);
+  }
+}
+window._tableFilter=(k,v)=>{tableFilters[k]=v;populateTableFilters();renderSpotTable();};
 window.openTableView=function(){
   document.getElementById('table-overlay').style.display='flex';
+  populateTableFilters();
   renderSpotTable();
 };
 window.closeTableView=function(){document.getElementById('table-overlay').style.display='none';};
@@ -1763,6 +1820,11 @@ function renderSpotTable(){
       cps:[...new Set(apps.map(a=>a.cp).filter(Boolean))]};
   });
   if(q)rows=rows.filter(r=>[r.loc.name,r.loc.address,r.loc.category,r.loc.memo,...r.series,...r.cps].join(' ').toLowerCase().includes(q));
+  // 項目別フィルター
+  if(tableFilters.series)rows=rows.filter(r=>r.series.includes(tableFilters.series));
+  if(tableFilters.cp)rows=rows.filter(r=>r.cps.includes(tableFilters.cp));
+  if(tableFilters.mark==='none')rows=rows.filter(r=>!MARKS[r.loc.id]);
+  else if(tableFilters.mark)rows=rows.filter(r=>MARKS[r.loc.id]===tableFilters.mark);
   rows.sort((a,b)=>{
     const va=tableSortKey==='name'?a.loc.name:(a.series[0]||'￿');
     const vb=tableSortKey==='name'?b.loc.name:(b.series[0]||'￿');
