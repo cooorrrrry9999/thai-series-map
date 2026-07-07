@@ -175,8 +175,10 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 .tmark-btn.on{opacity:1}
 .tmark-btn.on.w{border-color:#EC4899;background:#FDF2F8}
 .tmark-btn.on.g{border-color:#059669;background:#ECFDF5}
-.tf-sel{flex:1;min-width:0;padding:7px 6px;border:1.5px solid #E5E7EB;border-radius:9px;font-size:12px;font-weight:600;font-family:inherit;background:#fff;color:#555;outline:none}
+.tf-sel{flex:1;min-width:0;width:100%;padding:7px 6px;border:1.5px solid #E5E7EB;border-radius:9px;font-size:12px;font-weight:600;font-family:inherit;background:#fff;color:#555;outline:none}
 .tf-sel.on{border-color:#9333EA;color:#9333EA;background:#FAF5FF}
+.tf-sel::placeholder{color:#999;font-weight:600}
+.table-tools .combo-list{min-width:240px;max-height:240px}
 .drawer-list{overflow-x:auto;display:flex;gap:10px;padding:0 14px 16px}
 .drawer-list::-webkit-scrollbar{display:none}
 .drawer-card{flex-shrink:0;width:220px;background:var(--white);border-radius:14px;border:1.5px solid #EEE;padding:12px;cursor:pointer;transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.06)}
@@ -488,11 +490,17 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
     <input class="ms-search" id="table-q" autocomplete="off" data-i18n-ph="tb_search_ph" placeholder="場所・作品・タレント・住所で絞り込み…" oninput="_tableSearch(this.value)">
     <button class="filter-open-btn" onclick="openFilterDrawer()" id="table-filter-btn">🔍 <span data-i18n="filter">フィルター</span></button>
   </div>
-  <!-- 項目別フィルター（作品・タレント・マーク） -->
+  <!-- 項目別フィルター（作品・タレント＝入力式ドロップダウン、マーク＝4択） -->
   <div class="table-tools" style="padding-top:0">
-    <select class="tf-sel" id="tf-series" onchange="_tableFilter('series',this.value)"></select>
-    <select class="tf-sel" id="tf-cp" onchange="_tableFilter('cp',this.value)"></select>
-    <select class="tf-sel" id="tf-mark" onchange="_tableFilter('mark',this.value)"></select>
+    <div class="combo" style="flex:1.1;min-width:0">
+      <input class="tf-sel" id="tf-series" data-i18n-ph="f_series_all" placeholder="🎬 作品: すべて" autocomplete="off">
+      <div class="combo-list" id="tf-series-list" style="display:none"></div>
+    </div>
+    <div class="combo" style="flex:1.1;min-width:0">
+      <input class="tf-sel" id="tf-cp" data-i18n-ph="f_cp_all" placeholder="⭐ タレント: すべて" autocomplete="off">
+      <div class="combo-list" id="tf-cp-list" style="display:none"></div>
+    </div>
+    <select class="tf-sel" id="tf-mark" style="flex:.8" onchange="_tableFilter('mark',this.value)"></select>
   </div>
   <div class="table-wrap">
     <table class="spot-table">
@@ -1775,14 +1783,15 @@ let tableQ='', tableSortKey='name', tableSortDir=1;
 // 項目別フィルター（作品／タレント／マーク）
 let tableFilters={series:'',cp:'',mark:''};
 function populateTableFilters(){
+  // 作品・タレントは入力式コンボ（setupFormCombosで初期化済み）：表示値と選択中ハイライトだけ同期
   const sel=document.getElementById('tf-series');
   if(sel){
-    sel.innerHTML=`<option value="">${t('f_series_all')}</option>`+getUniqueSeries().map(s=>`<option value="${escAttr(s)}"${s===tableFilters.series?' selected':''}>${esc(s)}</option>`).join('');
+    sel.value=tableFilters.series;
     sel.classList.toggle('on',!!tableFilters.series);
   }
   const cp=document.getElementById('tf-cp');
   if(cp){
-    cp.innerHTML=`<option value="">${t('f_cp_all')}</option>`+getUniqueCPs().map(s=>`<option value="${escAttr(s)}"${s===tableFilters.cp?' selected':''}>${esc(s)}</option>`).join('');
+    cp.value=tableFilters.cp;
     cp.classList.toggle('on',!!tableFilters.cp);
   }
   const mk=document.getElementById('tf-mark');
@@ -1937,7 +1946,7 @@ window.locateMe=()=>{
 // ── 入力式ドロップダウン（コンボボックス） ─────────────────────
 // input + 候補リスト。入力で絞り込み（頭文字優先）、タップで確定。
 // getOptions: () => [{value, sub?, emoji?, badge?}] を返す関数（開くたびに最新を取得）
-function setupCombo(id,getOptions,{allowFree=false,emptyKey=null}={}){
+function setupCombo(id,getOptions,{allowFree=false,emptyKey=null,onSelect=null,getCurrent=null}={}){
   const input=document.getElementById(id), list=document.getElementById(id+'-list');
   if(!input||!list)return;
   function render(){
@@ -1961,15 +1970,18 @@ function setupCombo(id,getOptions,{allowFree=false,emptyKey=null}={}){
   }
   const show=()=>{render();list.style.display='block';};
   const hide=()=>{list.style.display='none';};
-  input.addEventListener('focus',show);
+  input.addEventListener('focus',()=>{input.select();show();});
   input.addEventListener('input',show);
-  input.addEventListener('blur',()=>setTimeout(hide,150));
+  // 確定せず離れたら表示を現在の選択値に戻す（フィルター用コンボの取り違え防止）
+  input.addEventListener('blur',()=>setTimeout(()=>{hide();if(getCurrent)input.value=getCurrent();},150));
   // mousedownで確定（blurより先に発火するのでフォーカス外れによる取りこぼしがない）
   list.addEventListener('mousedown',e=>{
     const btn=e.target.closest('.combo-row'); if(!btn)return;
     e.preventDefault();
     input.value=btn.dataset.v;
     hide();
+    input.blur();
+    if(onSelect)onSelect(btn.dataset.v);
   });
 }
 
@@ -1982,7 +1994,9 @@ function seriesComboOptions(){
 }
 // タレントの候補：選択中の作品の出演タレントを「出演」バッジ付きで先頭に
 function cpComboOptions(seriesInputId){
-  const series=(document.getElementById(seriesInputId)?.value||'').trim();
+  return cpOptionsForSeries((document.getElementById(seriesInputId)?.value||'').trim());
+}
+function cpOptionsForSeries(series){
   const master=TALENTS.length?TALENTS:Object.keys(CP_MAP).map(c=>({name:c,emoji:CP_MAP[c].emoji,real_name:''}));
   const cast=series?getSeriesTalents(series):[];
   const castSet=new Set(cast);
@@ -1994,12 +2008,23 @@ function cpComboOptions(seriesInputId){
   master.filter(tl=>!castSet.has(tl.name)).forEach(tl=>rows.push({value:tl.name,sub:tl.real_name,emoji:tl.emoji||'⭐'}));
   return rows;
 }
-// 投稿フォーム4か所のコンボボックスを初期化（loadAllから一度だけ呼ぶ）
+// 投稿フォーム・表フィルターのコンボボックスを初期化（loadAllから一度だけ呼ぶ）
 function setupFormCombos(){
   setupCombo('f-series',seriesComboOptions,{allowFree:true});
   setupCombo('f-cp',()=>cpComboOptions('f-series'),{emptyKey:'none_opt',allowFree:true});
   setupCombo('ai-series',seriesComboOptions,{allowFree:true});
   setupCombo('ai-cp',()=>cpComboOptions('ai-series'),{emptyKey:'none_opt',allowFree:true});
+  // 表ビューの項目別フィルター（作品を選ぶと、タレント候補はその出演者が先頭に並ぶ）
+  setupCombo('tf-series',()=>getUniqueSeries().map(s=>({value:s})),
+    {emptyKey:'f_series_all',onSelect:v=>window._tableFilter('series',v),getCurrent:()=>tableFilters.series});
+  setupCombo('tf-cp',()=>{
+    // 実データに登場するタレントだけを候補に（マスタ情報で絵文字・本名を補完）
+    const inData=new Set(getUniqueCPs());
+    const rows=cpOptionsForSeries(tableFilters.series).filter(o=>inData.has(o.value));
+    const seen=new Set(rows.map(o=>o.value));
+    getUniqueCPs().filter(c=>!seen.has(c)).forEach(c=>rows.push({value:c,emoji:'⭐'}));
+    return rows;
+  },{emptyKey:'f_cp_all',onSelect:v=>window._tableFilter('cp',v),getCurrent:()=>tableFilters.cp});
 }
 
 window.openSubmitModal=()=>{
@@ -2035,7 +2060,7 @@ window.submitSpot=async()=>{
     });
     msgEl.style.color='#059669';msgEl.textContent=t('m_sent');
     setTimeout(()=>document.getElementById('submit-modal').style.display='none',2000);
-  }catch(e){msgEl.style.color='#DC2626';msgEl.textContent=t('m_fail');}
+  }catch(e){console.error('投稿失敗:',e);msgEl.style.color='#DC2626';msgEl.textContent=t('m_fail')+(e&&e.code?'（'+e.code+'）':'');}
 };
 
 // ── 既存スポットへの追加情報投稿 ─────────────────────────────
@@ -2098,7 +2123,7 @@ window.submitAddInfo=async function(){
     }
     msgEl.style.color='#059669';msgEl.textContent=t('m_sent2');
     setTimeout(()=>closeAddInfoModal(),2000);
-  }catch(e){msgEl.style.color='#DC2626';msgEl.textContent=t('m_fail');}
+  }catch(e){console.error('投稿失敗:',e);msgEl.style.color='#DC2626';msgEl.textContent=t('m_fail')+(e&&e.code?'（'+e.code+'）':'');}
 };
 
 // ── PCサイドバー トグル ───────────────────────────────────────
