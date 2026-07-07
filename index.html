@@ -3,8 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Thai Series Map 🌸</title>
-<meta name="description" content="タイドラマ・推し活 聖地巡礼マップ">
+<title>Thai Series Map 🌸 タイドラマ・タイGL聖地巡礼マップ | Thai GL Filming Locations</title>
+<meta name="description" content="タイドラマ・タイGLの聖地巡礼マップ。GAP The Series・23.5・The Loyal Pin などのロケ地・撮影場所を地図で探して、Googleマップでそのままナビ。Interactive map of Thai GL series filming & shooting locations in Bangkok and Thailand.">
+<link rel="canonical" href="https://cooorrrrry9999.github.io/thai-series-map/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Thai Series Map">
+<meta property="og:title" content="Thai Series Map 🌸 タイGL聖地巡礼マップ | Thai GL Filming Locations">
+<meta property="og:description" content="タイGLドラマのロケ地・聖地を地図で。推しの作品・カップルで絞って、Googleマップでナビまで。Find filming locations of Thai GL series on an interactive map.">
+<meta property="og:url" content="https://cooorrrrry9999.github.io/thai-series-map/">
+<meta property="og:image" content="https://cooorrrrry9999.github.io/thai-series-map/icon-512.png">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale:alternate" content="zh_TW">
+<meta property="og:locale:alternate" content="th_TH">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Thai Series Map","alternateName":["タイGL聖地巡礼マップ","Thai GL Filming Locations Map"],"url":"https://cooorrrrry9999.github.io/thai-series-map/","description":"Interactive map of Thai GL / Thai drama filming locations（タイドラマ・タイGLの聖地巡礼・ロケ地マップ）. Find shooting places of GAP The Series, 23.5, The Loyal Pin and more, with Google Maps navigation.","applicationCategory":"TravelApplication","operatingSystem":"Web","inLanguage":["ja","en","zh-TW","th"],"isAccessibleForFree":true}
+</script>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2D2A4A">
 <meta name="mobile-web-app-capable" content="yes">
@@ -17,6 +32,8 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--white:#fff;--text:#111827;--text-sub:#6B7280;--bg:#F8FAFC;--shadow:0 4px 24px rgba(0,0,0,.12)}
 html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;color:var(--text)}
+/* 検索エンジン向けの不可視見出し（スクリーンリーダーにも読まれる） */
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 
 /* ── ログイン画面 ── */
 #login-screen{position:fixed;inset:0;z-index:300;background:linear-gradient(160deg,#FDF2F8 0%,#F5F3FF 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;gap:20px}
@@ -337,6 +354,16 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 </style>
 </head>
 <body>
+
+<h1 class="sr-only">Thai Series Map — タイドラマ・タイGL 聖地巡礼マップ / Thai GL Series Filming &amp; Shooting Locations Map</h1>
+<noscript>
+  <p style="padding:20px;font-family:sans-serif;line-height:1.8">
+    Thai Series Map はタイドラマ・タイGLの聖地（ロケ地・撮影場所）をまとめた地図アプリです。
+    GAP The Series、23.5、The Loyal Pin、Blank The Series などの filming locations / shooting places をバンコクを中心に掲載しています。
+    ご利用には JavaScript を有効にしてください。<br>
+    Interactive map of Thai GL drama filming locations in Thailand. Please enable JavaScript to view the map.
+  </p>
+</noscript>
 
 <!-- ログイン画面（閲覧は不要。投稿・マーク同期などログインが必要な操作時に表示） -->
 <div id="login-screen" style="display:none">
@@ -908,6 +935,7 @@ m_login:['※ 投稿にはログインが必要です','※ Please sign in to su
 m_sending:['送信中...','Sending…','傳送中…','กำลังส่ง…'],
 m_sent:['✅ 投稿しました！管理者確認後に公開されます。','✅ Submitted! It will appear after review.','✅ 已送出！審核後將公開。','✅ ส่งแล้ว! จะแสดงหลังการตรวจสอบ'],
 m_fail:['送信に失敗しました。','Failed to send.','傳送失敗。','ส่งไม่สำเร็จ'],
+m_bad_url:['※ リンクは https:// で始まるURLを入力してください','※ Links must start with https://','※ 連結請以 https:// 開頭','※ ลิงก์ต้องขึ้นต้นด้วย https://'],
 ai_title:['➕ {name} に情報を追加','➕ Add info to {name}','➕ 為 {name} 補充資訊','➕ เพิ่มข้อมูลให้ {name}'],
 tab_link:['🎬 紐付け追加','🎬 Add appearance','🎬 新增作品連結','🎬 เพิ่มผลงาน'],
 tab_memo:['💡 メモ・SNS補足','💡 Notes & links','💡 筆記・補充連結','💡 โน้ตและลิงก์เสริม'],
@@ -1585,8 +1613,14 @@ function focusSpot(loc,fromPin){
   // 詳細パネルが下から画面を覆うため、ピンが中心より上に来るよう画面比率で中心をずらす
   const offsetY=map.getSize().y*(isPC()?0.08:0.2);
   const center=map.unproject(map.project([loc.lat,loc.lng],z).add([0,offsetY]),z);
+  // 既にほぼ同じ位置・同じズームなら動かさない（flyToが同一地点でNaNを出す境界ケース対策）
+  const dist=map.project(map.getCenter(),z).distanceTo(map.project(center,z));
+  if(dist<2&&map.getZoom()===z)return;
   if(fromPin)map.panTo(center,{animate:true,duration:.35});
-  else map.flyTo(center,z,{duration:.7});
+  else{
+    try{map.flyTo(center,z,{duration:.7});}
+    catch(e){map.setView(center,z,{animate:true});}
+  }
 }
 window._sel=function(locId,fromPin){
   selId=selId===locId?null:locId;
@@ -1596,10 +1630,17 @@ window._sel=function(locId,fromPin){
   focusSpot(loc,fromPin);
   fillDetail(loc);
 };
+// SEO: ページタイトルをスポットに合わせて動的に変更（?spot= 直リンクのインデックス用）
+const BASE_TITLE=document.title;
+function setSpotTitle(loc,apps){
+  const s=[...new Set(apps.map(a=>a.series).filter(Boolean))][0];
+  document.title=`${loc.name}${s?` — ${s} ロケ地 / Filming Location`:''} | Thai Series Map`;
+}
 // 詳細パネルのDOMを描画（言語切替時の再描画にも使う）
 function fillDetail(loc){
   const apps=locApps(loc.id);
   const isRec=isRecSpot(loc);
+  setSpotTitle(loc,apps);
   // 色はCPで決まる（おすすめ＝タレント無しは金色）
   const primaryCp=apps[0]?.cp||'';
   const cfg=isRec?REC_CFG:(primaryCp?cpCfg(primaryCp):FB);
@@ -1743,6 +1784,7 @@ function renderSpotTable(){
 
 window.closeDetail=e=>{if(e.target===document.getElementById('detail-overlay'))closeDetailDirect();};
 window.closeDetailDirect=()=>{
+  document.title=BASE_TITLE;
   document.getElementById('detail-overlay').style.display='none';
   const dr=document.getElementById('drawer');
   dr.style.display='block';
@@ -1918,6 +1960,8 @@ window.submitSpot=async()=>{
   const msgEl=document.getElementById('submit-msg');
   if(!currentUser){msgEl.style.color='#DC2626';msgEl.textContent=t('m_login');return;}
   if(!name||!series||!scene){msgEl.style.color='#DC2626';msgEl.textContent=t('m_required');return;}
+  // リンク欄は https:// 形式のみ受け付ける（無効なURLの投稿を防ぐ）
+  if((sns&&!/^https?:\/\//i.test(sns))||(url&&!/^https?:\/\//i.test(url))){msgEl.style.color='#DC2626';msgEl.textContent=t('m_bad_url');return;}
   msgEl.style.color='#9333EA';msgEl.textContent=t('m_sending');
   try{
     await addDoc(collection(db,'location_submissions'),{
@@ -1968,6 +2012,7 @@ window.submitAddInfo=async function(){
       const scene=document.getElementById('ai-scene').value.trim();
       const sns=document.getElementById('ai-sns').value.trim();
       if(!series||!scene){msgEl.style.color='#DC2626';msgEl.textContent=t('m_required2');return;}
+      if(sns&&!/^https?:\/\//i.test(sns)){msgEl.style.color='#DC2626';msgEl.textContent=t('m_bad_url');return;}
       await addDoc(collection(db,'location_submissions'),{
         target_location_id:addInfoTargetId,
         submission_type:'appearance_add',
@@ -1978,6 +2023,7 @@ window.submitAddInfo=async function(){
       const memo=document.getElementById('ai-memo').value.trim();
       const sns=document.getElementById('ai-sns-memo').value.trim();
       if(!memo&&!sns){msgEl.style.color='#DC2626';msgEl.textContent=t('m_memo_req');return;}
+      if(sns&&!/^https?:\/\//i.test(sns)){msgEl.style.color='#DC2626';msgEl.textContent=t('m_bad_url');return;}
       await addDoc(collection(db,'location_submissions'),{
         target_location_id:addInfoTargetId,
         submission_type:'memo_add',

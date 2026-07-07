@@ -91,17 +91,19 @@ service cloud.firestore {
       //      ]);
     }
 
-    // location_submissions: ファンからの新規場所投稿（将来用）
-    //   ログインユーザーが status="未承認" で投稿できる
-    //   管理者が確認して locations に移す運用
+    // location_submissions: ファンからの投稿
+    //   ① 新規スポット投稿（name/series/scene_desc。座標・カテゴリは管理者が承認時に付与）
+    //   ② 既存スポットへの追加情報（target_location_id + submission_type）
+    //   ログインユーザーが status="未承認"・本人メールでのみ作成できる
     match /location_submissions/{id} {
       allow read: if isAdmin();
       allow create: if isLoggedIn()
         && request.resource.data.status == "未承認"
-        && request.resource.data.keys().hasAll([
-             'name','lat','lng','category','googleMapsUrl',
-             'scene_desc','series','cp','type','status','submittedBy'
-           ]);
+        && request.resource.data.submittedBy == request.auth.token.email
+        && (
+             request.resource.data.keys().hasAll(['name','series','scene_desc'])
+             || request.resource.data.keys().hasAll(['target_location_id','submission_type'])
+           );
       allow update, delete: if isAdmin();
     }
 

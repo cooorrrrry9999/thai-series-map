@@ -85,6 +85,23 @@ else
   fi
 fi
 
+# ── ②b sitemap.xml を data.json から自動生成（SEO：全スポットの直リンクを検索エンジンに知らせる）──
+if [ -f "data.json" ] && command -v python3 &> /dev/null; then
+  python3 - <<'PYEOF'
+import json, datetime
+BASE = "https://cooorrrrry9999.github.io/thai-series-map/"
+d = json.load(open('data.json'))
+today = datetime.date.today().isoformat()
+urls = [f'  <url><loc>{BASE}</loc><lastmod>{today}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>']
+for l in d.get('locations', []):
+    if l.get('id'):
+        urls.append(f'  <url><loc>{BASE}?spot={l["id"]}</loc><lastmod>{today}</lastmod><changefreq>monthly</changefreq></url>')
+xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + '\n'.join(urls) + '\n</urlset>\n'
+open('sitemap.xml', 'w').write(xml)
+print(f"🔎 sitemap.xml を生成しました（{len(urls)} URL）")
+PYEOF
+fi
+
 # ── ③ ステージング & コミット ──────────────────────────────
 echo ""
 echo "📦 変更ファイルをまとめています..."
