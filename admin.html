@@ -266,7 +266,10 @@ window.refreshFromDB=async function(){clearAdminCache();await loadAll(true);show
 async function loadAll(forceRefresh=false){
   const cl=!forceRefresh&&loadAC(CACHE_KEYS.locs);
   const ca_=!forceRefresh&&loadAC(CACHE_KEYS.apps);
-  const cs=!forceRefresh&&loadAC(CACHE_KEYS.subs);
+  // 承認待ち（location_submissions）は常に最新を取得する＝キャッシュしない。
+  // これをキャッシュすると「新しい投稿が管理者に出ない」「承認・却下してもカードが消えない」原因になる。
+  const cs=null;
+  localStorage.removeItem(CACHE_KEYS.subs); // 過去バージョンが残したキャッシュも掃除
   const cc=!forceRefresh&&loadAC(CACHE_KEYS.cp);
   const csm=!forceRefresh&&loadAC(CACHE_KEYS.series);
   const ccat=!forceRefresh&&loadAC(CACHE_KEYS.cat);
@@ -299,7 +302,7 @@ async function loadAll(forceRefresh=false){
 
   if(results[0])saveAC(CACHE_KEYS.locs,LOCS);
   if(results[1])saveAC(CACHE_KEYS.apps,APPS);
-  if(results[2])saveAC(CACHE_KEYS.subs,SUBS);
+  // results[2]（承認待ち）は毎回最新を取得するのでキャッシュ保存しない
   if(results[3])saveAC(CACHE_KEYS.cp,CP_M);
   if(results[4])saveAC(CACHE_KEYS.series,SERIES_M);
   if(results[5])saveAC(CACHE_KEYS.cat,CAT_M);
@@ -321,7 +324,6 @@ function localDeleteLoc(id){LOCS=LOCS.filter(l=>l.id!==id);saveAC(CACHE_KEYS.loc
 function localUpdateApp(id,data){const idx=APPS.findIndex(a=>a.id===id);if(idx>=0)APPS[idx]={...APPS[idx],...data};saveAC(CACHE_KEYS.apps,APPS);}
 function localAddApp(id,data){APPS.push({id,...data});saveAC(CACHE_KEYS.apps,APPS);}
 function localDeleteApp(id){APPS=APPS.filter(a=>a.id!==id);saveAC(CACHE_KEYS.apps,APPS);}
-function localUpdateSub(id,data){const idx=SUBS.findIndex(s=>s.id===id);if(idx>=0)SUBS[idx]={...SUBS[idx],...data};saveAC(CACHE_KEYS.subs,SUBS);}
 function localUpdateCp(id,data){const idx=CP_M.findIndex(m=>m.id===id);if(idx>=0)CP_M[idx]={...CP_M[idx],...data};saveAC(CACHE_KEYS.cp,CP_M);}
 function localAddTalent(id,data){TALENT_M.push({id,...data});saveAC(CACHE_KEYS.talent,TALENT_M);}
 function localUpdateTalent(id,data){const idx=TALENT_M.findIndex(m=>m.id===id);if(idx>=0)TALENT_M[idx]={...TALENT_M[idx],...data};saveAC(CACHE_KEYS.talent,TALENT_M);}
@@ -469,8 +471,10 @@ window.approveSub=async function(id){
 };
 window.rejectSub=async function(id){
   if(!confirm('却下しますか？'))return;
-  await updateDoc(doc(db,'location_submissions',id),{status:'却下'});
-  await loadAll(); showPage(currentPage);
+  try{
+    await updateDoc(doc(db,'location_submissions',id),{status:'却下'});
+    await loadAll(true); showPage(currentPage);
+  }catch(e){alert('エラー: '+e.message);}
 };
 
 // ── Spots（場所＋紐付けまとめ） ─────────────────────────────────
