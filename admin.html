@@ -154,7 +154,7 @@ html,body{height:100%;font-family:'Noto Sans JP',sans-serif;background:var(--bg)
 @keyframes scaleIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
 </style>
 <!-- Leaflet CSS for admin coordinate picker -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-sA+e2j6kLw3w8nE2b5YwQb0p2h0h6v3Qxj3tP0u5r3s=" crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
   /* small map in edit modal */
   #el-map{width:100%;height:220px;border-radius:8px;border:1px solid var(--border);margin-top:8px}
@@ -440,8 +440,9 @@ function pendingCardHTML(s){
 }
 // 承認：投稿の種類（新規スポット／紐付け追加／メモ追加）ごとに反映先を変える
 window.approveSub=async function(id){
+  console.log('[approveSub] クリック id=',id);
   const s=SUBS.find(x=>x.id===id);
-  if(!s)return;
+  if(!s){alert('この投稿が見つかりません。ページを再読み込みしてください。');return;}
   const isApp=s.submission_type==='appearance_add';
   const isMemo=s.submission_type==='memo_add';
   try{
@@ -466,15 +467,18 @@ window.approveSub=async function(id){
       await addDoc(collection(db,'appearances'),{location_id:ref.id,cp:s.cp||'',series:s.series||'',scene_desc:s.scene_desc||'',sns_url:s.sns_url||'',status:'公開'});
     }
     await updateDoc(doc(db,'location_submissions',id),{status:'承認済み'});
-    clearC(); await loadAll(); showPage(currentPage);
-  }catch(e){alert('エラー: '+e.message);}
+    console.log('[approveSub] 承認完了');
+    clearC(); await loadAll(true); showPage(currentPage);
+  }catch(e){console.error('[approveSub] 失敗:',e);alert('承認に失敗しました：'+(e.code?e.code+'\n':'')+e.message);}
 };
 window.rejectSub=async function(id){
+  console.log('[rejectSub] クリック id=',id);
   if(!confirm('却下しますか？'))return;
   try{
     await updateDoc(doc(db,'location_submissions',id),{status:'却下'});
-    await loadAll(true); showPage(currentPage);
-  }catch(e){alert('エラー: '+e.message);}
+    console.log('[rejectSub] 却下完了');
+    clearC(); await loadAll(true); showPage(currentPage);
+  }catch(e){console.error('[rejectSub] 失敗:',e);alert('却下に失敗しました：'+(e.code?e.code+'\n':'')+e.message);}
 };
 
 // ── Spots（場所＋紐付けまとめ） ─────────────────────────────────
@@ -2363,6 +2367,6 @@ function clearC(){['tsmap_loc_v2','tsmap_app_v2','tsmap_series_v2','tsmap_cp_v1'
 window.closeModal=function(){document.getElementById('modal').style.display='none';};
 </script>
 <!-- Leaflet JS for admin coordinate picker -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-o9N1j7k1bQYg3sM2gYk3k2nYq3b1Y9k3Q2Z5vYv+0HY=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </body>
 </html>
