@@ -572,8 +572,9 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
       <input class="form-input" id="f-sns" placeholder="https://x.com/...">
     </div>
     <div class="form-group">
-      <label class="form-label" data-i18n="l_gurl">GoogleマップURL（任意）</label>
+      <label class="form-label"><span data-i18n="l_gurl">GoogleマップURL</span> <span style="color:#DC2626">*</span></label>
       <input class="form-input" id="f-url" placeholder="https://maps.app.goo.gl/...">
+      <div class="form-hint" data-i18n="hint_gurl">場所を特定するため必須です。Googleマップでスポットを開き「共有」→リンクをコピーして貼り付けてください。</div>
     </div>
     <div class="form-group">
       <label class="form-label" data-i18n="l_memo">訪問メモ（任意）</label>
@@ -962,7 +963,9 @@ l_scene:['シーン説明','Scene description','場景說明','คำอธิ�
 ph_scene:['例: Monの家として使用されたスタジオ','e.g. Studio used as Mon’s house','例：作為 Mon 家的攝影棚','เช่น สตูดิโอที่ใช้เป็นบ้านของ Mon'],
 ph_scene2:['例: 別CPのロケ地として使用','e.g. Also used for another couple’s scenes','例：另一對 CP 的取景地','เช่น ใช้เป็นโลเคชั่นของคู่อื่น'],
 l_sns:['SNSリンク（任意）','Social link (optional)','社群連結（選填）','ลิงก์โซเชียล (ไม่บังคับ)'],
-l_gurl:['GoogleマップURL（任意）','Google Maps URL (optional)','Google 地圖網址（選填）','ลิงก์ Google Maps (ไม่บังคับ)'],
+l_gurl:['GoogleマップURL','Google Maps URL','Google 地圖網址','ลิงก์ Google Maps'],
+hint_gurl:['場所を特定するため必須です。Googleマップでスポットを開き「共有」→リンクをコピーして貼り付けてください。','Required to locate the spot. In Google Maps, open the place → Share → copy link and paste here.','為了定位地點為必填。在 Google 地圖開啟該地點 →「分享」→ 複製連結後貼上。','จำเป็นเพื่อระบุตำแหน่ง เปิดสถานที่ใน Google Maps → แชร์ → คัดลอกลิงก์มาวาง'],
+m_url_required:['※ GoogleマップURLを入力してください（場所の特定に必要です）','※ Please enter the Google Maps URL (needed to locate the spot)','※ 請輸入 Google 地圖網址（用於定位地點）','※ กรุณากรอกลิงก์ Google Maps (ใช้ระบุตำแหน่ง)'],
 l_memo:['訪問メモ（任意）','Visit notes (optional)','造訪筆記（選填）','บันทึกการไปเยือน (ไม่บังคับ)'],
 ph_memo:['例: 入場500B、事前予約必要','e.g. Entry 500B, booking required','例：門票 500B、需預約','เช่น ค่าเข้า 500B ต้องจองล่วงหน้า'],
 btn_submit:['投稿する（管理者確認後に公開）','Submit (published after review)','送出（審核後公開）','ส่ง (เผยแพร่หลังตรวจสอบ)'],
@@ -1112,10 +1115,13 @@ let SERIES_MAP = {
 };
 // カテゴリー → 絵文字
 let CAT_MAP = {
-  "カフェ":"☕","レストラン":"🍖","ホテル":"🏨","スタジオ":"🎬",
-  "ショッピング":"🛍️","観光地":"📍","邸宅/スタジオ":"🏛️","寺院":"⛩️",
-  "大学":"🎓","図書館":"📚","アート":"🎨","病院":"🏥",
-  "スポーツ":"⚽","放送局":"📺","国立公園":"🏞️",
+  "カフェ":"☕","レストラン":"🍖","ホテル":"🏨","名所":"🗼",
+  "寺院・神社":"⛩️","ショッピング":"🛍️","スタジオ・ロケ地":"🎬",
+  "大学・図書館":"🎓","スパ・サロン":"💆","スポーツ":"⚽","病院":"🏥",
+  // 旧カテゴリー（移行前データ・後方互換のフォールバック）
+  "スタジオ":"🎬","観光地":"🗼","邸宅/スタジオ":"🎬","寺院":"⛩️",
+  "大学":"🎓","図書館":"🎓","アート":"🗼","放送局":"🎬",
+  "国立公園":"🗼","市場":"🛍️","リフレッシュ":"💆",
 };
 
 // 自動CP色割り当て
@@ -2050,6 +2056,7 @@ window.submitSpot=async()=>{
   const msgEl=document.getElementById('submit-msg');
   if(!currentUser){msgEl.style.color='#DC2626';msgEl.textContent=t('m_login');return;}
   if(!name||!series||!scene){msgEl.style.color='#DC2626';msgEl.textContent=t('m_required');return;}
+  if(!url){msgEl.style.color='#DC2626';msgEl.textContent=t('m_url_required');return;}
   // リンク欄は https:// 形式のみ受け付ける（無効なURLの投稿を防ぐ）
   if((sns&&!/^https?:\/\//i.test(sns))||(url&&!/^https?:\/\//i.test(url))){msgEl.style.color='#DC2626';msgEl.textContent=t('m_bad_url');return;}
   msgEl.style.color='#9333EA';msgEl.textContent=t('m_sending');
