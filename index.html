@@ -557,9 +557,11 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
       <div class="form-hint" data-i18n="hint_series">一覧に無い新しい作品は、そのまま入力してOKです</div>
     </div>
     <div class="form-group">
-      <label class="form-label"><span data-i18n="l_talent">タレント</span> <span style="font-weight:400;color:#999;font-size:12px" data-i18n="talent_note">／任意（おすすめ等は空欄でOK）</span></label>
+      <label class="form-label"><span data-i18n="l_talent">タレント</span> <span style="font-weight:400;color:#999;font-size:12px" data-i18n="talent_note_multi">／複数選択OK・任意（おすすめ等は空欄でOK）</span></label>
+      <input type="hidden" id="f-cp-multi" value="[]">
+      <div class="ms-chips" id="f-cp-chips" style="margin-bottom:5px"></div>
       <div class="combo">
-        <input class="form-input" id="f-cp" data-i18n-ph="ph_talent" placeholder="なし（入力して検索・任意）" autocomplete="off">
+        <input class="form-input" id="f-cp" data-i18n-ph="ph_talent_multi" placeholder="タレントを検索して追加（複数可）" autocomplete="off">
         <div class="combo-list" id="f-cp-list" style="display:none"></div>
       </div>
     </div>
@@ -608,9 +610,11 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
         <div class="form-hint" data-i18n="hint_series">一覧に無い新しい作品は、そのまま入力してOKです</div>
       </div>
       <div class="form-group">
-        <label class="form-label"><span data-i18n="l_talent">タレント</span> <span style="font-weight:400;color:#999;font-size:12px" data-i18n="talent_note">／任意（おすすめ等は空欄でOK）</span></label>
+        <label class="form-label"><span data-i18n="l_talent">タレント</span> <span style="font-weight:400;color:#999;font-size:12px" data-i18n="talent_note_multi">／複数選択OK・任意（おすすめ等は空欄でOK）</span></label>
+        <input type="hidden" id="ai-cp-multi" value="[]">
+        <div class="ms-chips" id="ai-cp-chips" style="margin-bottom:5px"></div>
         <div class="combo">
-          <input class="form-input" id="ai-cp" data-i18n-ph="ph_talent" placeholder="なし（入力して検索・任意）" autocomplete="off">
+          <input class="form-input" id="ai-cp" data-i18n-ph="ph_talent_multi" placeholder="タレントを検索して追加（複数可）" autocomplete="off">
           <div class="combo-list" id="ai-cp-list" style="display:none"></div>
         </div>
       </div>
@@ -958,6 +962,8 @@ l_series:['中カテゴリ（作品）','Series','作品','ซีรีส์'],
 hint_series:['一覧に無い新しい作品は、そのまま入力してOKです','Not in the list? Just type the new title','清單裡沒有的新作品可直接輸入','ไม่มีในรายการ? พิมพ์ชื่อใหม่ได้เลย'],
 l_talent:['タレント','Talent','演員','นักแสดง'],
 talent_note:['／任意（おすすめ等は空欄でOK）','(optional)','（選填）','(ไม่บังคับ)'],
+talent_note_multi:['／複数選択OK・任意（おすすめ等は空欄でOK）','(multiple OK, optional)','（可複選・選填）','(เลือกได้หลายคน, ไม่บังคับ)'],
+ph_talent_multi:['タレントを検索して追加（複数可）','Search to add talents (multiple)','搜尋以新增演員（可複選）','ค้นหาเพื่อเพิ่มนักแสดง (หลายคน)'],
 ph_talent:['なし（入力して検索・任意）','None (type to search, optional)','無（輸入搜尋・選填）','ไม่มี (พิมพ์ค้นหา ไม่บังคับ)'],
 l_scene:['シーン説明','Scene description','場景說明','คำอธิบายฉาก'],
 ph_scene:['例: Monの家として使用されたスタジオ','e.g. Studio used as Mon’s house','例：作為 Mon 家的攝影棚','เช่น สตูดิโอที่ใช้เป็นบ้านของ Mon'],
@@ -2019,11 +2025,24 @@ function cpOptionsForSeries(series){
   return rows;
 }
 // 投稿フォーム・表フィルターのコンボボックスを初期化（loadAllから一度だけ呼ぶ）
+// ── 投稿フォームの複数タレント選択（f-cp / ai-cp）─────────────
+// 選択したタレント名を hidden input に JSON 配列で保持し、チップで表示する
+function msTalents(field){try{const v=document.getElementById(field+'-multi')?.value;return v?(JSON.parse(v)||[]):[];}catch(e){return[];}}
+function msTalentsSet(field,arr){const el=document.getElementById(field+'-multi');if(el)el.value=JSON.stringify([...new Set(arr.filter(Boolean))]);msChipRender(field);}
+function msChipRender(field){
+  const box=document.getElementById(field+'-chips'); if(!box)return;
+  const arr=msTalents(field);
+  box.innerHTML=arr.map((nm,i)=>{const c=cpCfg(nm);
+    return`<button type="button" class="ms-chip" style="background:${c.color};color:#fff" onclick="msTalentRemove('${field}',${i})">${c.emoji||'⭐'} ${esc(nm)} ✕</button>`;}).join('');
+}
+window.msTalentRemove=function(field,i){const a=msTalents(field);a.splice(i,1);msTalentsSet(field,a);};
+// コンボで選んだタレントを配列に追加（検索欄はクリアして続けて選べるようにする）
+function msTalentAdd(field,v){if(!v)return;msTalentsSet(field,[...msTalents(field),v]);const el=document.getElementById(field);if(el)el.value='';}
 function setupFormCombos(){
   setupCombo('f-series',seriesComboOptions,{allowFree:true});
-  setupCombo('f-cp',()=>cpComboOptions('f-series'),{emptyKey:'none_opt',allowFree:true});
+  setupCombo('f-cp',()=>cpComboOptions('f-series'),{allowFree:true,onSelect:v=>msTalentAdd('f-cp',v),getCurrent:()=>''});
   setupCombo('ai-series',seriesComboOptions,{allowFree:true});
-  setupCombo('ai-cp',()=>cpComboOptions('ai-series'),{emptyKey:'none_opt',allowFree:true});
+  setupCombo('ai-cp',()=>cpComboOptions('ai-series'),{allowFree:true,onSelect:v=>msTalentAdd('ai-cp',v),getCurrent:()=>''});
   // 表ビューの項目別フィルター（作品を選ぶと、タレント候補はその出演者が先頭に並ぶ）
   setupCombo('tf-series',()=>getUniqueSeries().map(s=>({value:s})),
     {emptyKey:'f_series_all',onSelect:v=>window._tableFilter('series',v),getCurrent:()=>tableFilters.series});
@@ -2040,6 +2059,7 @@ function setupFormCombos(){
 window.openSubmitModal=()=>{
   if(!currentUser){toggleUserMenuClose();requireLogin();return;}
   ['f-name','f-scene','f-sns','f-url','f-memo','f-cp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  msTalentsSet('f-cp',[]);
   document.getElementById('f-series').value='プライベート';
   document.getElementById('submit-msg').textContent='';
   document.getElementById('submit-modal').style.display='flex';
@@ -2051,7 +2071,8 @@ window.closeSubmitModal=e=>{
 };
 window.submitSpot=async()=>{
   const name=document.getElementById('f-name').value.trim();
-  const cp=document.getElementById('f-cp').value.trim();
+  const cpList=msTalents('f-cp');
+  const cp=cpList[0]||'';
   const series=document.getElementById('f-series').value.trim();
   const scene=document.getElementById('f-scene').value.trim();
   const sns=document.getElementById('f-sns').value.trim();
@@ -2066,7 +2087,7 @@ window.submitSpot=async()=>{
   msgEl.style.color='#9333EA';msgEl.textContent=t('m_sending');
   try{
     await addDoc(collection(db,'location_submissions'),{
-      name,series,cp,scene_desc:scene,sns_url:sns||'',googleMapsUrl:url||'',memo:memo||'',
+      name,series,cp,cp_list:cpList,scene_desc:scene,sns_url:sns||'',googleMapsUrl:url||'',memo:memo||'',
       status:'未承認',submittedBy:currentUser.email,submittedAt:serverTimestamp()
     });
     msgEl.style.color='#059669';msgEl.textContent=t('m_sent');
@@ -2086,6 +2107,7 @@ window.openAddInfoModal=function(){
   document.getElementById('add-info-title').innerHTML=tf('ai_title',{name:esc(loc.name)});
   // フォームリセット
   ['ai-scene','ai-sns','ai-memo','ai-sns-memo','ai-cp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  msTalentsSet('ai-cp',[]);
   document.getElementById('ai-series').value='プライベート';
   document.getElementById('add-info-msg').textContent='';
   switchAddInfoTab('appearance');
@@ -2108,7 +2130,8 @@ window.submitAddInfo=async function(){
   msgEl.style.color='#9333EA';msgEl.textContent=t('m_sending');
   try{
     if(isAppearance){
-      const cp=document.getElementById('ai-cp').value.trim();
+      const cpList=msTalents('ai-cp');
+      const cp=cpList[0]||'';
       const series=document.getElementById('ai-series').value.trim();
       const scene=document.getElementById('ai-scene').value.trim();
       const sns=document.getElementById('ai-sns').value.trim();
@@ -2117,7 +2140,7 @@ window.submitAddInfo=async function(){
       await addDoc(collection(db,'location_submissions'),{
         target_location_id:addInfoTargetId,
         submission_type:'appearance_add',
-        cp,series,scene_desc:scene,sns_url:sns||'',
+        cp,cp_list:cpList,series,scene_desc:scene,sns_url:sns||'',
         status:'未承認',submittedBy:currentUser.email,submittedAt:serverTimestamp()
       });
     } else {

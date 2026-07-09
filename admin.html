@@ -417,7 +417,9 @@ function pendingCardHTML(s){
   const targetNote=(isApp||isMemo)&&target&&target.address?`<div style="font-size:11px;color:#bbb;margin-bottom:2px">📌 ${esc(target.address)}</div>`:'';
   // 詳細行（入っている項目だけ表示）
   const rows=[];
-  if(s.series||s.cp)rows.push(`🎬 <b>${esc(s.series||'（作品未指定）')}</b>${s.cp?` ／ ⭐ ${esc(s.cp)}`:''}`);
+  const whoList=(Array.isArray(s.cp_list)&&s.cp_list.length)?s.cp_list.filter(Boolean):(s.cp?[s.cp]:[]);
+  const whoStr=whoList.map(esc).join('・');
+  if(s.series||whoStr)rows.push(`🎬 <b>${esc(s.series||'（作品未指定）')}</b>${whoStr?` ／ ⭐ ${whoStr}${whoList.length>1?`（${whoList.length}名）`:''}`:''}`);
   if(s.scene_desc)rows.push(`📝 ${esc(s.scene_desc)}`);
   if(s.memo)rows.push(`💡 ${esc(s.memo)}`);
   if(s.sns_url)rows.push(safeUrl(s.sns_url)?`🔗 <a href="${esc(safeUrl(s.sns_url))}" target="_blank" rel="noopener" style="color:#4F46E5;word-break:break-all">${esc(s.sns_url)}</a>`:`⚠ 不正なSNSリンク: ${esc(s.sns_url)}`);
@@ -446,14 +448,18 @@ window.approveSub=async function(id){
   const isApp=s.submission_type==='appearance_add';
   const isMemo=s.submission_type==='memo_add';
   let newLocId=null; // 新規スポット承認時に、続けて詳細設定モーダルを開くためのID
+  // 複数タレント対応：cp_list があれば各タレントごとに紐付けを作る。無ければ従来どおり単一 cp（空=おすすめ/なし）
+  const cpNames=(Array.isArray(s.cp_list)&&s.cp_list.length)?s.cp_list:(s.cp?[s.cp]:['']);
   try{
     if(isApp||isMemo){
       // 既存スポットへの追加情報
       const loc=LOCS.find(l=>l.id===s.target_location_id);
       if(!loc){alert('対象スポットが見つかりません（削除された可能性があります）。却下してください。');return;}
       if(isApp){
-        if(!confirm(`「${loc.name}」に紐付けを追加しますか？\n${s.series||''}${s.cp?' / '+s.cp:''}\n${s.scene_desc||''}`))return;
-        await addDoc(collection(db,'appearances'),{location_id:loc.id,cp:s.cp||'',series:s.series||'',scene_desc:s.scene_desc||'',sns_url:s.sns_url||'',status:'公開'});
+        const who=cpNames.filter(Boolean).join('・')||'（なし）';
+        if(!confirm(`「${loc.name}」に紐付けを追加しますか？\n${s.series||''} / ${who}\n${s.scene_desc||''}`))return;
+        for(const cp of cpNames)
+          await addDoc(collection(db,'appearances'),{location_id:loc.id,cp:cp||'',series:s.series||'',scene_desc:s.scene_desc||'',sns_url:s.sns_url||'',status:'公開'});
       }else{
         const add=[s.memo||'',s.sns_url||''].filter(Boolean).join(' ');
         if(!confirm(`「${loc.name}」の訪問メモに追記しますか？\n追記内容: ${add}`))return;
@@ -465,8 +471,9 @@ window.approveSub=async function(id){
       // 座標は承認直後に開く「詳細設定」モーダルで設定する運用（承認 → 詳細設定 → 公開）。
       if(!confirm('「'+(s.name||'')+'」を承認して詳細（座標など）を設定しますか？'))return;
       const ref=doc(collection(db,'locations'));
-      await setDoc(ref,{name:s.name,lat:s.lat||0,lng:s.lng||0,category:s.category||'観光地',address:s.address||'',googleMapsUrl:s.googleMapsUrl||'',memo:s.memo||''});
-      await addDoc(collection(db,'appearances'),{location_id:ref.id,cp:s.cp||'',series:s.series||'',scene_desc:s.scene_desc||'',sns_url:s.sns_url||'',status:'公開'});
+      await setDoc(ref,{name:s.name,lat:s.lat||0,lng:s.lng||0,category:s.category||'名所',address:s.address||'',googleMapsUrl:s.googleMapsUrl||'',memo:s.memo||''});
+      for(const cp of cpNames)
+        await addDoc(collection(db,'appearances'),{location_id:ref.id,cp:cp||'',series:s.series||'',scene_desc:s.scene_desc||'',sns_url:s.sns_url||'',status:'公開'});
       newLocId=ref.id;
     }
     await updateDoc(doc(db,'location_submissions',id),{status:'承認済み'});
