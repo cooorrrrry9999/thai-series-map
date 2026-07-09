@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2026-07-09T12:42:22.908Z",
+  "exportedAt": "2026-07-09T13:25:14.834Z",
   "locations": [
     {
       "id": "0CU8mboRZEYEhtPleUTV",
@@ -2980,6 +2980,26 @@
       "lng": 100.5320207,
       "lat": 13.7505658,
       "category": "ホテル"
+    },
+    {
+      "id": "PRJYrGmXNv6FKMIAVqhQ",
+      "name": "Shark fin soup",
+      "lat": 13.739873,
+      "lng": 100.5104477,
+      "category": "レストラン",
+      "address": "456 Phadung Dao Rd, Samphanthawong, Bangkok 10100",
+      "googleMapsUrl": "https://maps.app.goo.gl/NM3r6C3RCpK6AgNJ6",
+      "memo": ""
+    },
+    {
+      "id": "Ji7OhPJFbkMrKx860paU",
+      "name": "Wat Suthat Thepwararam Ratchaworamahawihan",
+      "lat": 13.7510446,
+      "lng": 100.5010927,
+      "category": "寺院・神社",
+      "address": "146 Bamrung Mueang Rd, Wat Ratchabophit, Phra Nakhon, Bangkok 10200",
+      "googleMapsUrl": "https://maps.app.goo.gl/naRs4DLFeJqNmapy8",
+      "memo": ""
     }
   ],
   "appearances": [
@@ -11033,6 +11053,39 @@
       "cp": "Becky",
       "scene_desc": "Freenのお母様のカフェ。バンコクから車で3時間。",
       "series": "プライベート",
+      "status": "公開"
+    },
+    {
+      "id": "48EOYzpByFTgM1JVUJcN",
+      "location_id": "PRJYrGmXNv6FKMIAVqhQ",
+      "talent_id": "Kapook_1773988452177",
+      "talent": "Kapook",
+      "cp": "Kapook",
+      "series": "プライベート",
+      "scene_desc": "Kapookさんのお父さんのお店",
+      "sns_url": "",
+      "status": "公開"
+    },
+    {
+      "id": "LZQX2QkIZS3GYL7FrO13",
+      "location_id": "Ji7OhPJFbkMrKx860paU",
+      "talent_id": "Freen_1773762472626",
+      "talent": "Freen",
+      "cp": "Freen",
+      "series": "The Loyal Pin",
+      "scene_desc": "赤いブランコ",
+      "sns_url": "https://youtu.be/j2SPeBnDNtE?si=8pvQ2fWYaESV73xb&t=1",
+      "status": "公開"
+    },
+    {
+      "id": "P6Bp4UbOkePifejOzY7a",
+      "location_id": "Ji7OhPJFbkMrKx860paU",
+      "talent_id": "Becky_1773762644249",
+      "talent": "Becky",
+      "cp": "Becky",
+      "series": "The Loyal Pin",
+      "scene_desc": "赤いブランコ",
+      "sns_url": "https://youtu.be/j2SPeBnDNtE?si=8pvQ2fWYaESV73xb&t=1",
       "status": "公開"
     }
   ],
