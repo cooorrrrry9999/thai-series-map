@@ -203,7 +203,7 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 .appearances-title{font-size:12px;font-weight:700;color:#999;margin-bottom:8px;letter-spacing:.06em}
 .appearance-item{border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1.5px solid}
 .appearance-series{font-size:12px;font-weight:700;margin-bottom:3px}
-.appearance-cp{font-size:11px;margin-bottom:4px}
+.appearance-cp{font-size:11px;margin-bottom:4px;display:flex;flex-wrap:wrap;gap:2px 12px}
 .appearance-scene{font-size:12px;color:#444;line-height:1.6;margin-bottom:8px}
 .drama-link-btn{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:6px 12px;border-radius:10px;text-decoration:none;transition:opacity .15s}
 .drama-link-btn:active{opacity:.8}
@@ -1710,10 +1710,14 @@ function fillDetail(loc){
   const appsEl=document.getElementById('detail-apps');
   if(apps.length){
     titleEl.style.display='block';
-    // 作品（series）ごとにまとめる：同じ作品なら人物（cp）が複数あっても1枚のカードに統合
+    // 作品（series）ごとにまとめる：同じ作品なら人物（cp）が複数あっても1枚のカードに統合。
+    // ただしプライベート/来日などの共通タグ・おすすめは、訪問（シーン説明）ごとに別カードにする
+    // ＝同じ場所でも違うタイミング・違うグループの訪問を分けて表示する。
     const groups=[],gmap={};
     apps.forEach(a=>{
-      const key=a.series||REC_TAG;
+      const ser=a.series||REC_TAG;
+      const splitByScene=COMMON_TAGS.has(a.series)||!a.series;
+      const key=splitByScene?ser+'␟'+(a.scene_desc||''):ser;
       if(!gmap[key]){gmap[key]={series:a.series,items:[]};groups.push(gmap[key]);}
       gmap[key].items.push(a);
     });
@@ -1723,7 +1727,7 @@ function fillDetail(loc){
       const ac=first&&first.cp?cpCfg(first.cp):FB;
       // 人物一覧（重複除去）：それぞれ自分の推し色で表示
       const people=[...new Set(g.items.map(x=>x.cp).filter(Boolean))];
-      const peopleHtml=people.map(cp=>{const c=cpCfg(cp);return`<span style="color:${c.color};opacity:.85;margin-right:10px;white-space:nowrap">${c.emoji||'💗'} ${esc(cp)}</span>`;}).join('');
+      const peopleHtml=people.map(cp=>{const c=cpCfg(cp);return`<span style="color:${c.color};opacity:.85;white-space:nowrap">${c.emoji||'💗'} ${esc(cp)}</span>`;}).join('');
       // シーン説明（重複除去）
       const scenes=[...new Set(g.items.map(x=>x.scene_desc).filter(Boolean))];
       const scenesHtml=scenes.map(s=>`<div class="appearance-scene">${esc(s)}</div>`).join('');
