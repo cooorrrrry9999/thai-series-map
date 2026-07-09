@@ -2222,7 +2222,8 @@ window.renderCategory=function(){
   const NEWSET=Object.keys(DEFAULT_CAT_EMOJI);
   const pendingLocs=LOCS.filter(l=>{const nw=CAT_SHRINE_IDS.includes(l.id)?'寺院・神社':(CAT_MIGRATION_MAP[l.category]||l.category);return nw!==l.category;}).length;
   const staleCats=CAT_M.filter(m=>!NEWSET.includes(m.name)).length;
-  const migrateBanner=(pendingLocs||staleCats)?`
+  const emojiCats=CAT_M.filter(m=>NEWSET.includes(m.name)&&m.emoji!==DEFAULT_CAT_EMOJI[m.name]).length;
+  const migrateBanner=(pendingLocs||staleCats||emojiCats)?`
     <div style="background:#FEF3C7;border:1.5px solid #FDE68A;border-radius:10px;padding:12px 14px;margin-bottom:14px">
       <div style="font-weight:700;color:#92400E;font-size:13px;margin-bottom:4px">🔧 カテゴリーの一括整理が可能です</div>
       <div style="font-size:11px;color:#92400E;line-height:1.7;margin-bottom:8px">旧カテゴリーを新体系（${NEWSET.length}種）へまとめます。付け替え対象 <b>${pendingLocs}件</b>のスポット、削除する旧定義 <b>${staleCats}件</b>。<br>実行後は「公開用 data.json を書き出す」→ deploy.sh で公開してください。</div>
@@ -2266,12 +2267,14 @@ window.migrateCategories=async function(){
   });
   const staleDocs=CAT_M.filter(m=>!NEW.includes(m.name));
   const missing=NEW.filter(n=>!CAT_M.some(m=>m.name===n));
-  if(!confirm(`カテゴリーを新体系（${NEW.length}種）へ一括整理します。\n・スポットの付け替え: ${updates.length}件\n・古い定義の削除: ${staleDocs.length}件\n・新定義の追加: ${missing.length}件\n\n実行しますか？（元に戻すにはバックアップから復元）`))return;
+  const emojiFix=CAT_M.filter(m=>NEW.includes(m.name)&&m.emoji!==DEFAULT_CAT_EMOJI[m.name]);
+  if(!confirm(`カテゴリーを新体系（${NEW.length}種）へ一括整理します。\n・スポットの付け替え: ${updates.length}件\n・古い定義の削除: ${staleDocs.length}件\n・新定義の追加: ${missing.length}件\n・絵文字の修正: ${emojiFix.length}件\n\n実行しますか？（元に戻すにはバックアップから復元）`))return;
   try{
     const batch=writeBatch(db);
     updates.forEach(([id,nw])=>batch.update(doc(db,'locations',id),{category:nw}));
     staleDocs.forEach(m=>batch.delete(doc(db,'category_master',m.id)));
     missing.forEach(n=>batch.set(doc(collection(db,'category_master')),{name:n,emoji:DEFAULT_CAT_EMOJI[n]}));
+    emojiFix.forEach(m=>batch.update(doc(db,'category_master',m.id),{emoji:DEFAULT_CAT_EMOJI[m.name]}));
     await batch.commit();
     clearC(); await loadAll(true); renderCategory();
     alert(`✅ 完了：スポット${updates.length}件を付け替え、カテゴリーを${NEW.length}種に整理しました。\n\nこのあと「公開用 data.json を書き出す」→ deploy.sh で公開してください。`);
@@ -2377,7 +2380,7 @@ window.delMaster=async function(col,id,type){
 };
 
 // ── Helpers ────────────────────────────────────────────────────
-const DEFAULT_CAT_EMOJI={'カフェ':'☕','レストラン':'🍖','ホテル':'🏨','名所':'🗼','寺院・神社':'⛩️','ショッピング':'🛍️','スタジオ・ロケ地':'🎬','大学・図書館':'🎓','スパ・サロン':'💆','スポーツ':'⚽','病院':'🏥'};
+const DEFAULT_CAT_EMOJI={'カフェ':'☕','レストラン':'🍖','ホテル':'🏨','名所':'📍','寺院・神社':'⛩️','ショッピング':'🛍️','スタジオ・ロケ地':'🎬','大学・図書館':'🎓','スパ・サロン':'💆','スポーツ':'⚽','病院':'🏥'};
 function getCatEmoji(cat){const m=CAT_M.find(x=>x.name===cat);return m?.emoji||DEFAULT_CAT_EMOJI[cat]||'📍';}
 function buildCatOpts(sel){
   const defs=Object.keys(DEFAULT_CAT_EMOJI);
