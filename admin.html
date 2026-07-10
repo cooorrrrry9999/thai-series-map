@@ -2387,7 +2387,7 @@ window.delMaster=async function(col,id,type){
 };
 
 // ── Helpers ────────────────────────────────────────────────────
-const DEFAULT_CAT_EMOJI={'カフェ':'☕','レストラン':'🍖','ホテル':'🏨','名所':'📍','寺院・神社':'⛩️','ショッピング':'🛍️','スタジオ・ロケ地':'🎬','大学・図書館':'🎓','スパ・サロン':'💆','スポーツ':'⚽','病院':'🏥'};
+const DEFAULT_CAT_EMOJI={'カフェ':'☕','レストラン':'🍽️','ホテル':'🏨','名所':'📍','寺院・神社':'⛩️','ショッピング':'🛍️','スタジオ・ロケ地':'🎬','大学・図書館':'🎓','スパ・サロン':'💆','スポーツ':'⚽','病院':'🏥'};
 function getCatEmoji(cat){const m=CAT_M.find(x=>x.name===cat);return m?.emoji||DEFAULT_CAT_EMOJI[cat]||'📍';}
 function buildCatOpts(sel){
   const defs=Object.keys(DEFAULT_CAT_EMOJI);

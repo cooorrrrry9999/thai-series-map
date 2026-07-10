@@ -502,16 +502,6 @@
       "memo": ""
     },
     {
-      "id": "DRApoAu5ULHk7ns0yOHz",
-      "googleMapsUrl": "https://maps.app.goo.gl/3YowA7kg2uS2nA1X7",
-      "lat": 12.6441283,
-      "address": "215, JJVV+H2Q, 3, Laem Mae Phim, Klaeng District, Rayong 21190 Thailand",
-      "lng": 101.6426019,
-      "memo": "",
-      "category": "ホテル",
-      "name": "Q Resort Rayong"
-    },
-    {
       "id": "DXCVzVJpnTX9gINDOBLn",
       "memo": "",
       "name": "Sailom Sangdad Homey Studio",
@@ -660,26 +650,6 @@
       "googleMapsUrl": "https://maps.app.goo.gl/QujK5TgJCjDCbAXS9",
       "address": "Krit Building, 1032/1-5 Rama IV Rd, Thung Maha Mek, Sathon, Bangkok 10120 Thao",
       "lng": 100.5481235
-    },
-    {
-      "id": "Fkb7oDM46Bhjf0SzfGmv",
-      "lat": 13.30949,
-      "googleMapsUrl": "https://maps.app.goo.gl/JhooEZ1oBy9p7o3q7",
-      "lng": 100.9048128,
-      "address": "",
-      "memo": "",
-      "name": "Khao Sam Muk Viewpoint",
-      "category": "名所"
-    },
-    {
-      "id": "Fqoyl11LfrEz7MRrBAU5",
-      "category": "カフェ",
-      "name": "Kraft Kaffe",
-      "memo": "",
-      "address": "",
-      "lng": 100.6094314,
-      "lat": 13.8102365,
-      "googleMapsUrl": "https://maps.app.goo.gl/xvGdMyWz1tnJykpEA"
     },
     {
       "id": "GHZtpRFt2Wg5ZX0A5gOq",
@@ -1007,7 +977,7 @@
       "address": "2194 Charoen Krung Rd, Bang Kho Laem, Bangkok",
       "googleMapsUrl": "https://maps.app.goo.gl/19qpUzcxyJcickgs6",
       "lat": 13.7052576,
-      "name": "Wheel Sky（Asiatiaqe）",
+      "name": "Wheel Sky（Asiatique）",
       "category": "名所",
       "memo": "屋外なので雨・酷暑注意。"
     },
@@ -1342,16 +1312,6 @@
       "lng": 139.1535136
     },
     {
-      "id": "Oe3EvVJ3SevfIbwtNqjd",
-      "memo": "現金 or QR 大人数向け 美味しい",
-      "name": "After Yum",
-      "category": "レストラン",
-      "lat": 12.9280202,
-      "googleMapsUrl": "https://maps.app.goo.gl/P1mZ54rNRdprjL4H7",
-      "lng": 100.9000446,
-      "address": ""
-    },
-    {
       "id": "Oh1Kta41PeXF7fydh4H7",
       "memo": "",
       "category": "名所",
@@ -1532,16 +1492,6 @@
       "googleMapsUrl": "https://maps.app.goo.gl/Dp85FQexEZqX23Vs8"
     },
     {
-      "id": "SBY0ij4Bql54gDwbVmUi",
-      "memo": "",
-      "name": "Luca Cafe",
-      "category": "カフェ",
-      "lat": 13.7215785,
-      "googleMapsUrl": "https://www.google.com/maps/place/%E3%83%AB%E3%82%AB+%E3%82%AB%E3%83%95%E3%82%A7/@13.7215785,100.5228852,19z/data=!4m10!1m3!11m2!2s4k5VcrO94dnT35BSpXUblE-afJ7cCw!3e3!3m5!1s0x30e298ce76687585:0xd25dd21a100ebbfa!8m2!3d13.7215785!4d100.5237934!16s%2Fg%2F11bwkyjxr5?entry=ttu&g_ep=EgoyMDI2MDYxMC4wIKXMDSoASAFQAw%3D%3D",
-      "lng": 100.5237934,
-      "address": ""
-    },
-    {
       "id": "SH1h2nzncxyD42pe7bUH",
       "lat": 13.7192844,
       "googleMapsUrl": "https://maps.app.goo.gl/2wniburiaWpEFZGG9",
@@ -1549,7 +1499,7 @@
       "address": "60 Chuea Phloeng 2 Alley, Thung Maha Mek, Sathon, Bangkok 10120 Thai",
       "memo": "",
       "name": "Baan Suan Sathorn Craft & Cafe",
-      "category": "レストラン"
+      "category": "カフェ"
     },
     {
       "id": "Sb08tXOF8FjV03OgOPKN",
@@ -1822,16 +1772,6 @@
       "memo": ""
     },
     {
-      "id": "ZPWKJpYWKafTeDCVjBFR",
-      "lat": 13.8241918,
-      "googleMapsUrl": "https://maps.app.goo.gl/ZSEDxuxVDnVag3Q7A",
-      "address": "",
-      "lng": 100.7131054,
-      "memo": "",
-      "category": "スタジオ・ロケ地",
-      "name": "บ้าน 168 house รามอินทรา 117"
-    },
-    {
       "id": "ZV1sJIlkOkov3QTDER3I",
       "address": "",
       "lng": 100.5672803,
@@ -1902,16 +1842,6 @@
       "lng": 100.4767393
     },
     {
-      "id": "awqGCyoJEJ0YiHHKgiMi",
-      "category": "カフェ",
-      "name": "FRIEND FRIEND",
-      "memo": "入り口が厄介、頑張って",
-      "address": "",
-      "lng": 100.5681141,
-      "lat": 13.7298343,
-      "googleMapsUrl": "https://maps.app.goo.gl/oanpA3fGGpAWFYxc8"
-    },
-    {
       "id": "bMKtCXzpmTKF6X6niQl0",
       "name": "ことびあクリニック@Bio House | Cotovia Clinic",
       "category": "病院",
@@ -1930,16 +1860,6 @@
       "googleMapsUrl": "https://maps.app.goo.gl/9WBowQxMEmcNpFWK7",
       "lng": 101.526634,
       "address": "141 Chakphong, Klaeng District, Rayong 21190 Thai"
-    },
-    {
-      "id": "c0g6ifjopMplYuMjU8tg",
-      "memo": "",
-      "name": "Thamsuea Party House",
-      "category": "レストラン",
-      "lat": 13.7939987,
-      "googleMapsUrl": "https://maps.app.goo.gl/bBGPBaisQcLttMjN7",
-      "lng": 100.6111149,
-      "address": ""
     },
     {
       "id": "c2jFVxVx9z8cxtDOFwu1",
@@ -1980,16 +1900,6 @@
       "memo": "",
       "name": "Akiba Drift Trike",
       "category": "スポーツ"
-    },
-    {
-      "id": "dTNUK7FfmAZ6DIUzo74u",
-      "lng": 100.5081794,
-      "address": "",
-      "googleMapsUrl": "https://maps.app.goo.gl/MFSBikkdMFYSaGh39",
-      "lat": 13.737678,
-      "name": "Bad Poutine",
-      "category": "名所",
-      "memo": ""
     },
     {
       "id": "eAihAPKPCYQBeRdUSp08",
@@ -2252,16 +2162,6 @@
       "memo": ""
     },
     {
-      "id": "jB1QStYt4njXJTCymI5b",
-      "lat": 13.7052576,
-      "googleMapsUrl": "https://maps.app.goo.gl/4RNYoSVRWbpPkVVq7",
-      "address": "PG43+482, Wat Phraya Krai, Bang Kho Laem, Bangkok 10120 Thai",
-      "lng": 100.5032729,
-      "memo": "",
-      "category": "名所",
-      "name": "SKY Ferris wheel"
-    },
-    {
       "id": "jB3FLikqbeYMBM512taJ",
       "category": "ショッピング",
       "name": "Don Quijote Fukuoka Tenjin Main Store ドン・キホーテ 福岡天神本店",
@@ -2412,16 +2312,6 @@
       "memo": ""
     },
     {
-      "id": "oJ6R6mYz8jZKkyY76EEp",
-      "lat": 13.7425121,
-      "googleMapsUrl": "https://maps.app.goo.gl/sVfMDcZqMbeCaumF7",
-      "lng": 100.5419701,
-      "address": "",
-      "memo": "",
-      "name": "Renaissance Bangkok Ratchaprasong Hotel",
-      "category": "ホテル"
-    },
-    {
       "id": "oKqyKt4uuA0UBrMNRL0d",
       "lat": 13.309259,
       "googleMapsUrl": "https://maps.app.goo.gl/fUaEWi9tjHbcshLe8",
@@ -2430,16 +2320,6 @@
       "memo": "",
       "category": "名所",
       "name": "KimWan Beach scene"
-    },
-    {
-      "id": "olCrqJZ106UdVbIl8zZA",
-      "lng": 100.5857758,
-      "address": "107 Soi Sukhumvit 63, Khlong Tan Nuea, Watthana, Bangkok 10110 Thai",
-      "lat": 13.7309077,
-      "googleMapsUrl": "https://maps.app.goo.gl/1KfwRXYTSAJEHLmD8",
-      "name": "D-Sports Stadium",
-      "category": "スポーツ",
-      "memo": ""
     },
     {
       "id": "pEKWSMAU5zmQ2eGBDsiz",
@@ -2542,16 +2422,6 @@
       "lng": 100.5709123
     },
     {
-      "id": "sEDSJvHi6Fpzksqap0Wl",
-      "memo": "",
-      "name": "Colonel Kanit Moo Kata",
-      "category": "レストラン",
-      "lat": 13.8370341,
-      "googleMapsUrl": "https://maps.app.goo.gl/ao3ecaajnLC5RbQ16",
-      "lng": 100.5940745,
-      "address": "หมูกะทะผู้พันคณิต ปาก Soi Lat Pla Khao 14, Chorakhe Bua, Lat Phrao, Bangkok 10230 Thai"
-    },
-    {
       "id": "sT1nXNfYvqlSZr3mvTv2",
       "memo": "土日祝休み、受付でパスポート預けると上のグッズショップへ行けます。品揃えは...(察)",
       "name": "GMM Grammy Place Building",
@@ -2584,8 +2454,8 @@
     {
       "id": "srNGRXHAkhNv1pGG8SiM",
       "address": "518, 8 Phloen Chit Rd, Lumphini, Pathum Wan, Bangkok 10330 タイ",
-      "lng": 100.2370995,
-      "lat": 13.7425121,
+      "lng": 100.54197,
+      "lat": 13.74251,
       "googleMapsUrl": "https://maps.app.goo.gl/pfrB3FnFRXAGtxgaA",
       "category": "ホテル",
       "name": "Renaissance Bangkok Ratchaprasong Hotel",
@@ -2662,16 +2532,6 @@
       "googleMapsUrl": "https://maps.app.goo.gl/VqzMfwiiAFtmftNS9"
     },
     {
-      "id": "uIzcWxPOPLNExzNnOhks",
-      "memo": "",
-      "name": "Baan Suan Sathorn Craft & Cafe",
-      "category": "カフェ",
-      "googleMapsUrl": "https://maps.app.goo.gl/ujHXYeTrfuHf4PC19",
-      "lat": 13.711984,
-      "lng": 100.5586863,
-      "address": "60 Chuea Phloeng 2 Alley, Thung Maha Mek, Sathon, Bangkok 10120"
-    },
-    {
       "id": "uUAo4rwL7v5kfBp1dGu3",
       "googleMapsUrl": "https://maps.app.goo.gl/AQXUXaLatpSJQAoq7",
       "lat": 13.9631489,
@@ -2742,16 +2602,6 @@
       "address": "FJ86+4H5, Nakhon Luang, Nakhon Luang District, Phra Nakhon Si Ayutthaya 13260 Thailand"
     },
     {
-      "id": "veC78j3KHnW1yFTPN1T7",
-      "category": "カフェ",
-      "name": "Nonna & Son Pattaya",
-      "memo": "",
-      "address": "",
-      "lng": 100.8778031,
-      "lat": 12.9298427,
-      "googleMapsUrl": "https://maps.app.goo.gl/nuoCGTa8PZA5CPTaA"
-    },
-    {
       "id": "wDWp6mnpdhVs0EgnXpOt",
       "memo": "",
       "name": "Central Rama 9",
@@ -2766,7 +2616,7 @@
       "category": "ホテル",
       "name": "Centara Q Resort Rayong",
       "memo": "",
-      "address": "",
+      "address": "215, JJVV+H2Q, 3, Laem Mae Phim, Klaeng District, Rayong 21190 Thailand",
       "lng": 101.6426019,
       "lat": 12.6441283,
       "googleMapsUrl": "https://www.google.com/maps/place/%E3%82%BB%E3%83%B3%E3%82%BF%E3%83%A9+Q+%E3%83%AA%E3%82%BE%E3%83%BC%E3%83%88+%E3%83%A9%E3%83%A8%E3%83%BC%E3%83%B3/@12.4029401,101.1051181,9z/data=!4m9!3m8!1s0x31030f65a4bdb501:0x24b75245e17ca865!5m2!4m1!1i2!8m2!3d12.6441283!4d101.6426019!16s%2Fg%2F1v3dpl48?entry=ttu&g_ep=EgoyMDI2MDUyNy4wIKXMDSoASAFQAw%3D%3D"
@@ -2910,16 +2760,6 @@
       "category": "スパ・サロン",
       "name": "Bare Nail Spa - Ekkamai",
       "memo": ""
-    },
-    {
-      "id": "yLOVywfmiaoGbAnQtdzO",
-      "memo": "",
-      "name": "Luggaw Emsphere",
-      "category": "カフェ",
-      "lat": 13.732218,
-      "googleMapsUrl": "https://maps.app.goo.gl/7ukVbdR73shhz7Nz9",
-      "lng": 100.5668572,
-      "address": "628 Sukhumvit Rd, Khlong Tan, Khlong Toei, Bangkok 10110 Thai"
     },
     {
       "id": "ySmy93jYoUz69OMnKsUi",
@@ -3157,11 +2997,22 @@
     {
       "id": "1ERAx477EEPxVU3ONoX7",
       "status": "公開",
-      "location_id": "yLOVywfmiaoGbAnQtdzO",
+      "location_id": "KPhdVDuGqm3kcrckE4cP",
       "cp": "Love",
       "talent_id": "Love_1773764267582",
       "scene_desc": "オススメジュース",
       "sns_url": "",
+      "talent": "Love",
+      "series": "プライベート"
+    },
+    {
+      "id": "9hoBHIzc5OpNjaEwg8fy",
+      "sns_url": "",
+      "scene_desc": "Loveちゃんおすすめのジュース屋さん ここだけでなく、バンコク各地にあります グアバミックスジュース+酸っぱい砂糖あり",
+      "talent_id": "Love_1773764267582",
+      "cp": "Love",
+      "location_id": "KPhdVDuGqm3kcrckE4cP",
+      "status": "公開",
       "talent": "Love",
       "series": "プライベート"
     },
@@ -3323,7 +3174,7 @@
       "id": "2KvWfAdDFsKmMZ6flicY",
       "cp": "May",
       "status": "公開",
-      "location_id": "Fkb7oDM46Bhjf0SzfGmv",
+      "location_id": "8EQIvnkZoD3p40kj5WJQ",
       "scene_desc": "",
       "sns_url": "https://youtu.be/o4Qobq7XDpc?si=MpCyBrhtvFb33doH&t=285",
       "talent_id": "May_1773763577024",
@@ -3687,17 +3538,6 @@
       "location_id": "sT1nXNfYvqlSZr3mvTv2"
     },
     {
-      "id": "50E1VfckstdU5HiCaWLM",
-      "talent": "Becky",
-      "series": "プライベート",
-      "location_id": "fsWWfqqaA5GSFOK8Y01D",
-      "status": "公開",
-      "cp": "Becky",
-      "talent_id": "Becky_1773762644249",
-      "sns_url": "https://www.instagram.com/p/CbhxPk2JIf4/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
-      "scene_desc": ""
-    },
-    {
       "id": "51SzJEtnEsM4iRbYsAKw",
       "talent": "Film",
       "series": "プライベート",
@@ -3946,7 +3786,7 @@
       "scene_desc": "",
       "sns_url": "https://youtu.be/WI5Mcuvwf34?si=5zj1iEzH1HuIUbId&t=281",
       "status": "公開",
-      "location_id": "dTNUK7FfmAZ6DIUzo74u",
+      "location_id": "1l2EAG7UUKsnoTHCGqr6",
       "cp": "Emi",
       "series": "EmiBonnie Vlog(2025April)",
       "talent": "Emi"
@@ -4133,7 +3973,7 @@
       "talent_id": "Fay_1773763416117",
       "sns_url": "https://www.instagram.com/p/DLzeIZxPOyi/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
       "scene_desc": "",
-      "location_id": "awqGCyoJEJ0YiHHKgiMi",
+      "location_id": "0rt1k2YzTnbOyXs9fzBM",
       "type": "プライベート",
       "talent": "Fay",
       "series": "プライベート",
@@ -4167,7 +4007,7 @@
       "type": "作品",
       "series": "Somewhere Somehow",
       "talent": "Fay",
-      "location_id": "c0g6ifjopMplYuMjU8tg",
+      "location_id": "POvVZjemPq48sEc2blQZ",
       "talent_id": "Fay_1773763416117",
       "sns_url": "",
       "scene_desc": "工学部御用達のバー",
@@ -4305,17 +4145,6 @@
       "location_id": "eNmegdCwaBz9iGh2dvDe",
       "status": "公開",
       "cp": ""
-    },
-    {
-      "id": "9hoBHIzc5OpNjaEwg8fy",
-      "sns_url": "",
-      "scene_desc": "Loveちゃんおすすめのジュース屋さん ここだけでなく、バンコク各地にあります グアバミックスジュース+酸っぱい砂糖あり",
-      "talent_id": "Love_1773764267582",
-      "cp": "Love",
-      "location_id": "KPhdVDuGqm3kcrckE4cP",
-      "status": "公開",
-      "talent": "Love",
-      "series": "プライベート"
     },
     {
       "id": "9koXHyHDntvZLWPWycGt",
@@ -5064,7 +4893,7 @@
       "talent_id": "Bonnie_1773979155434",
       "scene_desc": "",
       "sns_url": "https://youtu.be/WI5Mcuvwf34?si=5zj1iEzH1HuIUbId&t=281",
-      "location_id": "dTNUK7FfmAZ6DIUzo74u",
+      "location_id": "1l2EAG7UUKsnoTHCGqr6",
       "status": "公開",
       "cp": "Bonnie",
       "talent": "Bonnie",
@@ -5095,7 +4924,7 @@
     {
       "id": "DjVjDZn8S9mSdQ7Qup7o",
       "cp": "Becky",
-      "location_id": "sEDSJvHi6Fpzksqap0Wl",
+      "location_id": "rCLAhkQzRkjFVrjRBBB4",
       "status": "公開",
       "scene_desc": "",
       "sns_url": "",
@@ -6109,17 +5938,6 @@
       "status": "公開"
     },
     {
-      "id": "LFHH6aMlnZ63Fi34w5up",
-      "scene_desc": "",
-      "sns_url": "",
-      "talent_id": "Bmine_1773842228274",
-      "cp": "Bmine",
-      "status": "公開",
-      "location_id": "olCrqJZ106UdVbIl8zZA",
-      "talent": "Bmine",
-      "series": "Lucky My Love"
-    },
-    {
       "id": "LRCxvGIRKMW9J3TRmhjG",
       "scene_desc": "",
       "sns_url": "",
@@ -6137,7 +5955,7 @@
       "sns_url": "",
       "scene_desc": "",
       "talent_id": "Fay_1773763416117",
-      "location_id": "ZPWKJpYWKafTeDCVjBFR",
+      "location_id": "1qZ2PyUGangQgVFzQr90",
       "series": "My Marvellous Dream is You",
       "talent": "Fay",
       "type": "作品"
@@ -6189,7 +6007,7 @@
     {
       "id": "LozThTkL5q96Dl2z6UDA",
       "cp": "",
-      "location_id": "sEDSJvHi6Fpzksqap0Wl",
+      "location_id": "rCLAhkQzRkjFVrjRBBB4",
       "status": "公開",
       "scene_desc": "",
       "sns_url": "",
@@ -6321,7 +6139,7 @@
     },
     {
       "id": "Mp2tS2QaZ82BIhZZH8WV",
-      "location_id": "sEDSJvHi6Fpzksqap0Wl",
+      "location_id": "rCLAhkQzRkjFVrjRBBB4",
       "status": "公開",
       "cp": "Freen",
       "talent_id": "Freen_1773762472626",
@@ -6417,17 +6235,6 @@
       "talent_id": "Becky_1773762644249",
       "talent": "Becky",
       "series": "プライベート"
-    },
-    {
-      "id": "NepF9ucroU53MgRnGrUm",
-      "talent": "Emi",
-      "series": "EmiBonnie Vlog(2025April)",
-      "scene_desc": "",
-      "sns_url": "",
-      "talent_id": "Emi_1773979085427",
-      "cp": "Emi",
-      "location_id": "1l2EAG7UUKsnoTHCGqr6",
-      "status": "公開"
     },
     {
       "id": "NoNZipwUoP5vgqAM4Dtr",
@@ -6762,17 +6569,6 @@
       "cp": "Mer"
     },
     {
-      "id": "PisEhvzTNCiaBIlzevqD",
-      "scene_desc": "",
-      "sns_url": "https://youtu.be/o4Qobq7XDpc?si=ddt-hod0bnq33isl",
-      "talent_id": "May_1773763577024",
-      "cp": "May",
-      "location_id": "8EQIvnkZoD3p40kj5WJQ",
-      "status": "公開",
-      "talent": "May",
-      "series": "FayMayNeen"
-    },
-    {
       "id": "PpOoVmpMWonrY0gfyC1p",
       "talent": "",
       "series": "オススメスポット：観光地",
@@ -6812,7 +6608,7 @@
       "talent_id": "Charlotte_1773762879993",
       "cp": "Charlotte",
       "status": "公開",
-      "location_id": "Fqoyl11LfrEz7MRrBAU5",
+      "location_id": "zPsBxzA7801eMJDXs4VK",
       "talent": "Charlotte",
       "series": "Petrichor"
     },
@@ -7005,17 +6801,6 @@
       "status": "公開"
     },
     {
-      "id": "RSsMgdpnptTmTsTR2ihQ",
-      "scene_desc": "",
-      "sns_url": "",
-      "talent_id": "Near_1773842313469",
-      "cp": "Near",
-      "location_id": "olCrqJZ106UdVbIl8zZA",
-      "status": "公開",
-      "talent": "Near",
-      "series": "Lucky My Love"
-    },
-    {
       "id": "RTdbGRRXhA4VQ6v8DOV9",
       "scene_desc": "",
       "sns_url": "",
@@ -7039,7 +6824,7 @@
     },
     {
       "id": "RZG7FqPIFQOmrQ2H5hZb",
-      "location_id": "oJ6R6mYz8jZKkyY76EEp",
+      "location_id": "srNGRXHAkhNv1pGG8SiM",
       "talent_id": "Lingling_1773841466780",
       "sns_url": "",
       "scene_desc": "",
@@ -7059,18 +6844,6 @@
       "sns_url": "",
       "talent": "Fay",
       "series": "Somewhere Somehow"
-    },
-    {
-      "id": "RfZEFfDykJk2NxihVE1P",
-      "talent": "Fay",
-      "series": "プライベート",
-      "type": "プライベート",
-      "scene_desc": "",
-      "sns_url": "https://www.instagram.com/p/DQl6WSQkrnh/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
-      "talent_id": "Fay_1773763416117",
-      "location_id": "veC78j3KHnW1yFTPN1T7",
-      "cp": "Fay",
-      "status": "公開"
     },
     {
       "id": "RgabU5Zn3QVsFyT7XEQW",
@@ -7117,18 +6890,6 @@
       "scene_desc": ""
     },
     {
-      "id": "Rw7arp7K3NWpfHmOpgf8",
-      "location_id": "Fqoyl11LfrEz7MRrBAU5",
-      "talent_id": "Engfa_1773762803485",
-      "scene_desc": "",
-      "sns_url": "",
-      "type": "作品",
-      "talent": "Engfa",
-      "series": "Petrichor",
-      "status": "公開",
-      "cp": "Engfa"
-    },
-    {
       "id": "S0qQFFchOOIdLf0VqUNc",
       "talent_id": "Namwan_1774008823158",
       "scene_desc": "",
@@ -7166,7 +6927,7 @@
       "talent_id": "",
       "scene_desc": "",
       "sns_url": "",
-      "location_id": "uIzcWxPOPLNExzNnOhks",
+      "location_id": "SH1h2nzncxyD42pe7bUH",
       "status": "公開",
       "cp": "",
       "talent": "",
@@ -7287,7 +7048,7 @@
       "id": "TdLwhVkrkyHsGLK1QCiA",
       "cp": "Fay",
       "status": "公開",
-      "location_id": "Fkb7oDM46Bhjf0SzfGmv",
+      "location_id": "8EQIvnkZoD3p40kj5WJQ",
       "scene_desc": "",
       "sns_url": "https://youtu.be/o4Qobq7XDpc?si=MpCyBrhtvFb33doH&t=285",
       "talent_id": "Fay_1773763416117",
@@ -7539,18 +7300,6 @@
       "cp": "Gene"
     },
     {
-      "id": "VRFivuc7lHSTfLJUOImJ",
-      "status": "公開",
-      "cp": "Lingling",
-      "type": "作品",
-      "series": "The Secret Of Us",
-      "talent": "Lingling",
-      "location_id": "srNGRXHAkhNv1pGG8SiM",
-      "talent_id": "Lingling_1773841466780",
-      "scene_desc": "",
-      "sns_url": ""
-    },
-    {
       "id": "VSuuuqWCHgEJ0rvFXHnj",
       "talent": "Mer",
       "series": "My Only Sunshine",
@@ -7624,7 +7373,7 @@
       "talent_id": "Emi_1773979085427",
       "scene_desc": "Oatのバー",
       "sns_url": "",
-      "location_id": "c0g6ifjopMplYuMjU8tg",
+      "location_id": "POvVZjemPq48sEc2blQZ",
       "status": "公開",
       "cp": "Emi"
     },
@@ -7741,7 +7490,7 @@
     {
       "id": "XFMVTylrwwJbTUf5Rk2i",
       "status": "公開",
-      "location_id": "DRApoAu5ULHk7ns0yOHz",
+      "location_id": "wEbBlXhsTWf50PnrlptW",
       "cp": "Fay",
       "talent_id": "Fay_1773763416117",
       "scene_desc": "",
@@ -7759,17 +7508,6 @@
       "location_id": "Q0Ozg6F7MPUXObEAmYYs",
       "talent": "Fay",
       "series": "Somewhere Somehow"
-    },
-    {
-      "id": "XL9g8jsOXler4ZPSvAKP",
-      "scene_desc": "",
-      "sns_url": "",
-      "talent_id": "Freen_1773762472626",
-      "cp": "Freen",
-      "location_id": "rCLAhkQzRkjFVrjRBBB4",
-      "status": "公開",
-      "talent": "Freen",
-      "series": "プライベート"
     },
     {
       "id": "XOFc2yxQHpMpOZcYR1W7",
@@ -7926,17 +7664,6 @@
       "status": "公開"
     },
     {
-      "id": "YMxJGD0DXPwxiwQBhS5A",
-      "cp": "May",
-      "location_id": "ZPWKJpYWKafTeDCVjBFR",
-      "status": "公開",
-      "sns_url": "",
-      "scene_desc": "",
-      "talent_id": "May_1773763577024",
-      "talent": "May",
-      "series": "My Marvellous Dream is You"
-    },
-    {
       "id": "YPNLZmFfeVgwz2cAYN1i",
       "talent_id": "May_1773763577024",
       "scene_desc": "",
@@ -8064,7 +7791,7 @@
       "talent_id": "May_1773763577024",
       "scene_desc": "工学部御用達のバー",
       "sns_url": "",
-      "location_id": "c0g6ifjopMplYuMjU8tg",
+      "location_id": "POvVZjemPq48sEc2blQZ",
       "status": "公開",
       "cp": "May"
     },
@@ -8383,7 +8110,7 @@
       "sns_url": "",
       "talent_id": "Bonnie_1773979155434",
       "cp": "Bonnie",
-      "location_id": "c0g6ifjopMplYuMjU8tg",
+      "location_id": "POvVZjemPq48sEc2blQZ",
       "status": "公開",
       "talent": "Bonnie",
       "series": "Us"
@@ -8540,23 +8267,11 @@
       "talent": "May",
       "series": "プライベート",
       "cp": "May",
-      "location_id": "veC78j3KHnW1yFTPN1T7",
+      "location_id": "Gfl3ajdpw2R9tPKdzeaw",
       "status": "公開",
       "sns_url": "https://www.instagram.com/p/DQl6WSQkrnh/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
       "scene_desc": "",
       "talent_id": "May_1773763577024"
-    },
-    {
-      "id": "dj7kVlAH5gIIYjlvGqFf",
-      "series": "FayMayNeen",
-      "talent": "Fay",
-      "type": "作品",
-      "sns_url": "https://youtu.be/o4Qobq7XDpc?si=Wf5PPjpO1bkZb6lf&t=1244",
-      "scene_desc": "",
-      "talent_id": "Fay_1773763416117",
-      "location_id": "Oe3EvVJ3SevfIbwtNqjd",
-      "cp": "Fay",
-      "status": "公開"
     },
     {
       "id": "dsbg3kcwN2h1wBnrnN5b",
@@ -8636,17 +8351,6 @@
       "cp": "May"
     },
     {
-      "id": "eChKRHxk0zhBcXm5A61w",
-      "talent_id": "May_1773763577024",
-      "sns_url": "https://www.instagram.com/p/DLzeIZxPOyi/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
-      "scene_desc": "",
-      "location_id": "awqGCyoJEJ0YiHHKgiMi",
-      "status": "公開",
-      "cp": "May",
-      "talent": "May",
-      "series": "プライベート"
-    },
-    {
       "id": "eGLcnut8EmHKfv40Nmdp",
       "talent": "Near",
       "series": "Lucky My Love",
@@ -8712,17 +8416,6 @@
       "cp": "Aomsin",
       "talent": "Aomsin",
       "series": "Chasing Love"
-    },
-    {
-      "id": "evoZaolIoHjqqtfCxRGk",
-      "location_id": "1l2EAG7UUKsnoTHCGqr6",
-      "status": "公開",
-      "cp": "Bonnie",
-      "talent_id": "Bonnie_1773979155434",
-      "scene_desc": "",
-      "sns_url": "",
-      "talent": "Bonnie",
-      "series": "EmiBonnie Vlog(2025April)"
     },
     {
       "id": "fAn0EjkzCFEe8VLr4H0d",
@@ -8866,28 +8559,6 @@
       "talent_id": "Becky_1773762644249",
       "scene_desc": "各ドラマに登場する宮殿。",
       "sns_url": ""
-    },
-    {
-      "id": "gFiXws9fllWO8BI91LSc",
-      "talent_id": "Fay_1773763416117",
-      "scene_desc": "",
-      "sns_url": "https://youtu.be/o4Qobq7XDpc?si=ddt-hod0bnq33isl",
-      "location_id": "8EQIvnkZoD3p40kj5WJQ",
-      "status": "公開",
-      "cp": "Fay",
-      "talent": "Fay",
-      "series": "FayMayNeen"
-    },
-    {
-      "id": "gJWe1hjTcRcJ2CZihnA3",
-      "scene_desc": "",
-      "sns_url": "",
-      "talent_id": "Freen_1773762472626",
-      "cp": "Freen",
-      "location_id": "jB1QStYt4njXJTCymI5b",
-      "status": "公開",
-      "talent": "Freen",
-      "series": "プライベート"
     },
     {
       "id": "gM8DUNuMBfJmARXJOIW1",
@@ -9188,17 +8859,6 @@
       "talent_id": "Looknam_1773977399337"
     },
     {
-      "id": "iORbI63hEVTM8HWkv5QE",
-      "talent": "Fay",
-      "series": "My Marvellous Dream is You",
-      "talent_id": "Fay_1773763416117",
-      "scene_desc": "",
-      "sns_url": "",
-      "status": "公開",
-      "location_id": "1qZ2PyUGangQgVFzQr90",
-      "cp": "Fay"
-    },
-    {
       "id": "iQFInD4yMiwTZJHuZ8KA",
       "talent": "Becky",
       "series": "FreenBeckyFayMay 2025年10月来日",
@@ -9408,17 +9068,6 @@
       "series": "Fulfill"
     },
     {
-      "id": "kDssy6bvR3QHTmZPLIqd",
-      "scene_desc": "",
-      "sns_url": "https://youtu.be/o4Qobq7XDpc?si=Wf5PPjpO1bkZb6lf&t=1244",
-      "talent_id": "May_1773763577024",
-      "cp": "May",
-      "status": "公開",
-      "location_id": "Oe3EvVJ3SevfIbwtNqjd",
-      "talent": "May",
-      "series": "FayMayNeen"
-    },
-    {
       "id": "kJu4yOvsBaXvev1QRshy",
       "talent": "Lingling",
       "series": "プライベート",
@@ -9431,15 +9080,15 @@
       "status": "公開"
     },
     {
-      "id": "kTpwmOhnundmKIkziIlj",
+      "id": "tlH3JJA1SolpDiTV7c1q",
       "talent": "Becky",
       "series": "プライベート",
-      "scene_desc": "",
-      "sns_url": "",
       "talent_id": "Becky_1773762644249",
-      "cp": "Becky",
-      "location_id": "jB1QStYt4njXJTCymI5b",
-      "status": "公開"
+      "scene_desc": "伝説のデート場所。",
+      "sns_url": "",
+      "location_id": "LOC014",
+      "status": "公開",
+      "cp": "Becky"
     },
     {
       "id": "kXnasxojv10jYmXpJviw",
@@ -9528,17 +9177,6 @@
       "talent_id": "May_1773763577024",
       "talent": "May",
       "series": "Somewhere Somehow"
-    },
-    {
-      "id": "l6M5cU8gT1KDlhiu0AuA",
-      "talent": "Fay",
-      "series": "Somewhere Somehow",
-      "cp": "Fay",
-      "status": "公開",
-      "location_id": "wEbBlXhsTWf50PnrlptW",
-      "scene_desc": "",
-      "sns_url": "",
-      "talent_id": "Fay_1773763416117"
     },
     {
       "id": "lHwXOC1o0mLaMjrKE4AO",
@@ -9772,17 +9410,6 @@
       "cp": "May",
       "talent": "May",
       "series": "FayMayNeen"
-    },
-    {
-      "id": "msI7JiJFe8yoZGbbICy6",
-      "scene_desc": "",
-      "sns_url": "https://www.instagram.com/p/DQl6WSQkrnh/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
-      "talent_id": "May_1773763577024",
-      "cp": "May",
-      "location_id": "Gfl3ajdpw2R9tPKdzeaw",
-      "status": "公開",
-      "talent": "May",
-      "series": "プライベート"
     },
     {
       "id": "n7EbT2LjA96UqJzfT8mf",
@@ -10263,7 +9890,7 @@
       "talent": "May",
       "series": "Somewhere Somehow",
       "cp": "May",
-      "location_id": "DRApoAu5ULHk7ns0yOHz",
+      "location_id": "wEbBlXhsTWf50PnrlptW",
       "status": "公開",
       "scene_desc": "",
       "sns_url": "",
@@ -10305,7 +9932,7 @@
     {
       "id": "sSyfvvMXNLjebJzXCKIb",
       "cp": "Orm",
-      "location_id": "oJ6R6mYz8jZKkyY76EEp",
+      "location_id": "srNGRXHAkhNv1pGG8SiM",
       "status": "公開",
       "sns_url": "",
       "scene_desc": "",
@@ -10423,28 +10050,6 @@
       "cp": "Milk"
     },
     {
-      "id": "tjugco7KKNW5jy9zGOXG",
-      "scene_desc": "",
-      "sns_url": "",
-      "talent_id": "May_1773763577024",
-      "cp": "May",
-      "status": "公開",
-      "location_id": "wEbBlXhsTWf50PnrlptW",
-      "talent": "May",
-      "series": "Somewhere Somehow"
-    },
-    {
-      "id": "tlH3JJA1SolpDiTV7c1q",
-      "talent": "Becky",
-      "series": "プライベート",
-      "talent_id": "Becky_1773762644249",
-      "scene_desc": "伝説のデート場所。",
-      "sns_url": "",
-      "location_id": "LOC014",
-      "status": "公開",
-      "cp": "Becky"
-    },
-    {
       "id": "tlZkpwvMOAfGfLuTJlcw",
       "location_id": "qDD5yBU5FVJ0aI9WH8Ob",
       "status": "公開",
@@ -10454,17 +10059,6 @@
       "sns_url": "",
       "talent": "Fay",
       "series": "Somewhere Somehow"
-    },
-    {
-      "id": "tnCp4wtYeBIAjfsMS3Kk",
-      "talent": "Orm",
-      "series": "The Secret Of Us",
-      "scene_desc": "",
-      "sns_url": "",
-      "talent_id": "Orm_1773841538128",
-      "cp": "Orm",
-      "location_id": "srNGRXHAkhNv1pGG8SiM",
-      "status": "公開"
     },
     {
       "id": "toE6NdHIqBz7BF9kRgzT",
@@ -10527,21 +10121,10 @@
       "scene_desc": "",
       "talent_id": "Looknam_1773977399337",
       "cp": "Looknam",
-      "location_id": "DRApoAu5ULHk7ns0yOHz",
+      "location_id": "wEbBlXhsTWf50PnrlptW",
       "status": "公開",
       "talent": "Looknam",
       "series": "Somewhere Somehow"
-    },
-    {
-      "id": "uJ6ey8qNgoCK4yqKfTh2",
-      "talent_id": "Charlotte_1773762879993",
-      "sns_url": "",
-      "scene_desc": "",
-      "location_id": "zPsBxzA7801eMJDXs4VK",
-      "status": "公開",
-      "cp": "Charlotte",
-      "talent": "Charlotte",
-      "series": "Petrichor"
     },
     {
       "id": "uJY4S0iruBMLnYnQIZ1i",
@@ -10564,17 +10147,6 @@
       "status": "公開",
       "talent": "",
       "series": "オススメスポット：レストラン"
-    },
-    {
-      "id": "uZb8dmpL0TRrTZdn4WVG",
-      "talent": "",
-      "series": "オススメスポット：ムーカタ",
-      "talent_id": "",
-      "sns_url": "",
-      "scene_desc": "",
-      "location_id": "rCLAhkQzRkjFVrjRBBB4",
-      "status": "公開",
-      "cp": ""
     },
     {
       "id": "uixMpWkXQCa2UxdPAbar",
@@ -10652,17 +10224,6 @@
       "talent_id": "Gift_1781971570961",
       "scene_desc": "",
       "sns_url": ""
-    },
-    {
-      "id": "v5ZlXE5If1yJ3OLL1jfx",
-      "talent_id": "Becky_1773762644249",
-      "scene_desc": "",
-      "sns_url": "",
-      "location_id": "SBY0ij4Bql54gDwbVmUi",
-      "status": "公開",
-      "cp": "Becky",
-      "talent": "Becky",
-      "series": "プライベート"
     },
     {
       "id": "v8AB1plajT19aLlXkBZl",
@@ -10986,17 +10547,6 @@
       "series": "Affair"
     },
     {
-      "id": "xio3eNVXSjxeSht0OsJs",
-      "talent_id": "Becky_1773762644249",
-      "scene_desc": "",
-      "sns_url": "",
-      "status": "公開",
-      "location_id": "rCLAhkQzRkjFVrjRBBB4",
-      "cp": "Becky",
-      "talent": "Becky",
-      "series": "プライベート"
-    },
-    {
       "id": "y3Y8jgLRCldumFffIwya",
       "talent": "Lookkaew",
       "series": "Sunset x Vibes",
@@ -11195,28 +10745,6 @@
       "series": "プライベート"
     },
     {
-      "id": "es3tCjPsmw28GYHpVcQr",
-      "location_id": "POvVZjemPq48sEc2blQZ",
-      "talent_id": "Emi_1773979085427",
-      "talent": "Emi",
-      "cp": "Emi",
-      "series": "Us",
-      "scene_desc": "",
-      "sns_url": "",
-      "status": "公開"
-    },
-    {
-      "id": "pilTOijDA3uH7WsxPyZC",
-      "location_id": "POvVZjemPq48sEc2blQZ",
-      "talent_id": "Bonnie_1773979155434",
-      "talent": "Bonnie",
-      "cp": "Bonnie",
-      "series": "Us",
-      "scene_desc": "",
-      "sns_url": "",
-      "status": "公開"
-    },
-    {
       "id": "sF8Sann3FiIzjTQ29K7R",
       "location_id": "POvVZjemPq48sEc2blQZ",
       "talent_id": "View_1773974351076",
@@ -11234,28 +10762,6 @@
       "talent": "Mim",
       "cp": "Mim",
       "series": "Us",
-      "scene_desc": "",
-      "sns_url": "",
-      "status": "公開"
-    },
-    {
-      "id": "9kZHST4ovpOHOrZ5aGTO",
-      "location_id": "POvVZjemPq48sEc2blQZ",
-      "talent_id": "Fay_1773763416117",
-      "talent": "Fay",
-      "cp": "Fay",
-      "series": "Somewhere Somehow",
-      "scene_desc": "",
-      "sns_url": "",
-      "status": "公開"
-    },
-    {
-      "id": "h2IuEQa6uEH0PIg5eztb",
-      "location_id": "POvVZjemPq48sEc2blQZ",
-      "talent_id": "May_1773763577024",
-      "talent": "May",
-      "cp": "May",
-      "series": "Somewhere Somehow",
       "scene_desc": "",
       "sns_url": "",
       "status": "公開"
@@ -12884,7 +12390,7 @@
     {
       "id": "UtgPXzbQVeGQV3yBcrPW",
       "name": "レストラン",
-      "emoji": "🍖"
+      "emoji": "🍽️"
     },
     {
       "id": "YGiHJcoF8LTUvK3KoExz",

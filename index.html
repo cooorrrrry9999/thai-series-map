@@ -29,6 +29,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="La Map">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="preconnect" href="https://a.basemaps.cartocdn.com">
+<link rel="preconnect" href="https://b.basemaps.cartocdn.com">
+<link rel="preconnect" href="https://www.gstatic.com">
+<link rel="dns-prefetch" href="https://firestore.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
@@ -68,6 +75,16 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 .app-logo{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#F9A8D4,#C4B5FD);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:var(--shadow);flex-shrink:0}
 .search-box{flex:1;min-width:0;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-radius:24px;padding:9px 14px;font-size:14px;border:none;box-shadow:var(--shadow);font-family:inherit;outline:none;color:var(--text)}
 .search-box::placeholder{color:#bbb}
+/* ── 検索サジェスト（候補リスト） ── */
+.search-suggest{position:fixed;top:calc(max(env(safe-area-inset-top),10px) + 48px);left:56px;right:56px;z-index:130;background:#fff;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.20);max-height:55vh;overflow-y:auto;display:none;overscroll-behavior:contain}
+@media(min-width:768px){.search-suggest{left:58px;right:auto;width:380px}}
+.sug-head{font-size:10px;font-weight:700;color:#bbb;letter-spacing:.08em;padding:8px 12px 3px}
+.sug-row{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:10px 12px;border:none;border-bottom:1px solid #F5F5F5;background:#fff;font-size:13px;font-weight:600;color:#444;cursor:pointer;font-family:inherit}
+.sug-row:last-child{border-bottom:none}
+.sug-row:hover{background:#F8FAFC}
+.sug-ico{flex-shrink:0}
+.sug-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sug-sub{color:#aaa;font-size:11px;font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:45%;flex-shrink:0}
 .top-btn{width:38px;height:38px;min-width:38px;border-radius:50%;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border:none;cursor:pointer;font-size:18px;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .15s}
 .top-btn:active{transform:scale(.9)}
 
@@ -405,6 +422,9 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
   <input class="search-box" id="search-box" data-i18n-ph="search_ph" placeholder="場所・作品・CPを検索..." oninput="onSearch(this.value)"><button class="top-btn" onclick="openFilterDrawer()" id="filter-btn" title="Filter" style="display:none">🔍</button>
   <button class="top-btn" id="user-btn" onclick="toggleUserMenu()" title="メニュー">👤</button>
 </div>
+
+<!-- 検索サジェスト（候補から選ぶとそのスポットへジャンプ） -->
+<div class="search-suggest" id="search-suggest"></div>
 
 <!-- フィルターバー -->
 <!-- アクティブフィルター表示バー（常時表示） -->
@@ -750,8 +770,8 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
     <!-- 2. フィルター -->
     <div class="gd-eyebrow"><div class="gd-num">2</div><h4 data-i18n="g_h2">推しで絞り込む</h4></div>
     <div class="gd-body">
-      <div class="gd-p" data-i18n-html="g_p2">画面左上の<b>フィルターボタン</b>から、<b>作品</b>（GAP・23.5・The Loyal Pin など）や<b>カップル</b>（FreenBecky・MilkLove など）で絞れます。選んだ条件は上部にチップで出て、件数も表示されます。</div>
-      <div class="gd-note tip"><span class="gd-ni">💡</span><span data-i18n-html="g_tip2">作品ごとにピンの色が変わります。<b>GAPはピンク、23.5はグリーン、The Loyal Pinはゴールド</b>。色でどの作品の聖地かひと目で分かります。</span></div>
+      <div class="gd-p" data-i18n-html="g_p2">検索バー横の<b>🔍フィルターボタン</b>から、<b>作品</b>（GAP・23.5・The Loyal Pin など）や<b>タレント・カップル</b>（FreenBecky・MilkLove など）で絞れます。選んだ条件は上部にチップで表示され、件数もその場で分かります。</div>
+      <div class="gd-note tip"><span class="gd-ni">💡</span><span data-i18n-html="g_tip2">ピンの色は<b>タレント・カップルごとの推し色</b>（例：FreenBeckyはピンク）。ピンの中の絵文字は☕カフェ・🍽️レストランなど<b>場所の種類</b>です。色と絵文字で、誰の聖地でどんな場所かひと目で分かります。</span></div>
     </div>
 
     <div class="howto-divider"></div>
@@ -830,7 +850,7 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
       <div class="gd-feat"><div class="gd-fico">📋</div><div><div class="gd-ft" data-i18n="g_f_tbl_t">表形式のスポット一覧</div><div class="gd-fd" data-i18n="g_f_tbl_d">スポット一覧の「表で見る」から、全スポットを表でチェック。検索・並べ替え・マーク付けもここでできます。旅の計画づくりに。</div></div></div>
       <div class="gd-feat"><div class="gd-fico">💖</div><div><div class="gd-ft" data-i18n="g_f_mark_t">行きたい！／行った！マーク</div><div class="gd-fd" data-i18n="g_f_mark_d">詳細カードでマークすると地図のピンに💖✅が付きます。フィルターの「マイマーク」で自分のリストだけ表示。ログインすると他の端末とも同期されます。</div></div></div>
       <div class="gd-feat"><div class="gd-fico">🔗</div><div><div class="gd-ft" data-i18n="g_f_share_t">スポットを共有</div><div class="gd-fd" data-i18n="g_f_share_d">詳細カードの🔗ボタンで、そのスポットへの直リンクをコピー・共有できます。</div></div></div>
-      <div class="gd-feat"><div class="gd-fico">🔎</div><div><div class="gd-ft" data-i18n="g_f_srch_t">検索</div><div class="gd-fd" data-i18n="g_f_srch_d">上部の検索バーで、場所・住所・作品・カップル名から探せます。</div></div></div>
+      <div class="gd-feat"><div class="gd-fico">🔎</div><div><div class="gd-ft" data-i18n="g_f_srch_t">検索</div><div class="gd-fd" data-i18n="g_f_srch_d">検索バーに入力すると候補がすぐ表示されます。スポット候補をタップするとその場所へ地図がジャンプして詳細が開き、作品・タレント候補を選ぶとそのままフィルターがかかります。</div></div></div>
       <div class="gd-feat"><div class="gd-fico">📍</div><div><div class="gd-ft" data-i18n="g_f_loc_t">現在地</div><div class="gd-fd" data-i18n="g_f_loc_d">いまいる場所を地図に表示。近くの聖地が分かります。</div></div></div>
       <div class="gd-feat"><div class="gd-fico">＋</div><div><div class="gd-ft" data-i18n="g_f_post_t">スポットを投稿</div><div class="gd-fd" data-i18n="g_f_post_d">まだ載っていない聖地を自分で追加。Googleマップに出てこない隠れロケ地もここに。</div></div></div>
     </div>
@@ -895,6 +915,9 @@ const t=k=>{const e=I18N[k];if(!e)return k;return e[LIDX[LANG]]??e[0];};
 const tf=(k,v)=>t(k).replace(/\{(\w+)\}/g,(m,p)=>v[p]??m);
 const I18N={
 search_ph:['場所・作品・CPを検索...','Search places, series, CPs...','搜尋地點、作品、CP…','ค้นหาสถานที่ ซีรีส์ CP...'],
+sug_spots:['スポット','Spots','地點','สถานที่'],
+sug_series:['作品で絞り込む','Filter by series','以作品篩選','กรองตามซีรีส์'],
+sug_talent:['タレントで絞り込む','Filter by talent','以演員篩選','กรองตามนักแสดง'],
 filter:['フィルター','Filter','篩選','ตัวกรอง'],
 filter_title:['🔍 絞り込み','🔍 Filters','🔍 篩選','🔍 ตัวกรอง'],
 sec_talent:['タレント（複数選択OK）','Talents (multi-select OK)','演員（可複選）','นักแสดง (เลือกได้หลายคน)'],
@@ -1029,8 +1052,8 @@ g_q2d:['地図のピンを押すと、下から詳細カードが出ます。','
 g_q3t:['Googleマップで開く','Open in Google Maps','用 Google 地圖開啟','เปิดใน Google Maps'],
 g_q3d:['「行く」と決めたら、使い慣れたGoogleマップで案内。','Decided to go? Let Google Maps guide you.','決定要去，就交給熟悉的 Google 地圖導航。','ถ้าจะไป ให้ Google Maps นำทางได้เลย'],
 g_h2:['推しで絞り込む','Filter by your fave','用本命篩選','กรองตามคนโปรด'],
-g_p2:['画面左上の<b>フィルターボタン</b>から、<b>作品</b>（GAP・23.5・The Loyal Pin など）や<b>カップル</b>（FreenBecky・MilkLove など）で絞れます。選んだ条件は上部にチップで出て、件数も表示されます。','Use the <b>filter button</b> at the top left to filter by <b>series</b> (GAP, 23.5, The Loyal Pin…) or <b>couple</b> (FreenBecky, MilkLove…). Selected filters appear as chips with a spot count.','用左上角的<b>篩選按鈕</b>，可以依<b>作品</b>（GAP、23.5、The Loyal Pin 等）或 <b>CP</b>（FreenBecky、MilkLove 等）篩選。選好的條件會以標籤顯示在上方，並顯示件數。','ใช้<b>ปุ่มตัวกรอง</b>มุมซ้ายบน กรองตาม<b>ซีรีส์</b> (GAP, 23.5, The Loyal Pin…) หรือ<b>คู่จิ้น</b> (FreenBecky, MilkLove…) เงื่อนไขที่เลือกจะแสดงเป็นชิปพร้อมจำนวน'],
-g_tip2:['作品ごとにピンの色が変わります。<b>GAPはピンク、23.5はグリーン、The Loyal Pinはゴールド</b>。色でどの作品の聖地かひと目で分かります。','Pin colors differ by series — <b>pink for GAP, green for 23.5, gold for The Loyal Pin</b> — so you can tell at a glance.','不同作品的圖釘顏色不同：<b>GAP 是粉紅、23.5 是綠色、The Loyal Pin 是金色</b>，一眼就能分辨。','สีหมุดต่างกันตามเรื่อง — <b>GAP สีชมพู, 23.5 สีเขียว, The Loyal Pin สีทอง</b> — ดูปุ๊บรู้เลย'],
+g_p2:['検索バー横の<b>🔍フィルターボタン</b>から、<b>作品</b>（GAP・23.5・The Loyal Pin など）や<b>タレント・カップル</b>（FreenBecky・MilkLove など）で絞れます。選んだ条件は上部にチップで表示され、件数もその場で分かります。','Tap the <b>🔍 filter button</b> next to the search bar to filter by <b>series</b> (GAP, 23.5, The Loyal Pin…) or <b>talent / couple</b> (FreenBecky, MilkLove…). Selected filters appear as chips at the top with a live spot count.','點搜尋列旁的<b>🔍篩選按鈕</b>，即可依<b>作品</b>（GAP、23.5、The Loyal Pin 等）或<b>演員／CP</b>（FreenBecky、MilkLove 等）篩選。選好的條件會以標籤顯示在上方，並即時顯示件數。','แตะ<b>ปุ่มตัวกรอง 🔍</b>ข้างแถบค้นหา เพื่อกรองตาม<b>ซีรีส์</b> (GAP, 23.5, The Loyal Pin…) หรือ<b>นักแสดง/คู่จิ้น</b> (FreenBecky, MilkLove…) เงื่อนไขที่เลือกจะแสดงเป็นชิปด้านบนพร้อมจำนวน'],
+g_tip2:['ピンの色は<b>タレント・カップルごとの推し色</b>（例：FreenBeckyはピンク）。ピンの中の絵文字は☕カフェ・🍽️レストランなど<b>場所の種類</b>です。色と絵文字で、誰の聖地でどんな場所かひと目で分かります。','Pin colors follow each <b>talent / couple’s color</b> (e.g. pink for FreenBecky), and the emoji inside shows the <b>type of place</b> (☕ cafe, 🍽️ restaurant…). One glance tells you whose spot it is and what kind of place.','圖釘顏色代表<b>演員／CP 的代表色</b>（例如 FreenBecky 是粉紅色），圖釘內的表情符號代表<b>地點類型</b>（☕咖啡廳、🍽️餐廳等）。一眼就知道是誰的聖地、什麼樣的地方。','สีหมุดคือ<b>สีประจำของนักแสดง/คู่</b> (เช่น FreenBecky สีชมพู) ส่วนอีโมจิในหมุดบอก<b>ประเภทสถานที่</b> (☕ คาเฟ่, 🍽️ ร้านอาหาร…) มองแวบเดียวก็รู้ว่าเป็นจุดของใคร ที่แบบไหน'],
 g_h3:['ピンをタップして詳細を見る','Tap a pin for details','點圖釘看詳情','แตะหมุดเพื่อดูรายละเอียด'],
 g_fig_tag:['🍰 カフェ','🍰 Cafe','🍰 咖啡廳','🍰 คาเฟ่'],
 g_fig_btn:['🧭 Googleマップで開く','🧭 Open in Google Maps','🧭 用 Google 地圖開啟','🧭 เปิดใน Google Maps'],
@@ -1072,7 +1095,7 @@ g_f_mark_d:['詳細カードでマークすると地図のピンに💖✅が付
 g_f_share_t:['スポットを共有','Share a spot','分享地點','แชร์สถานที่'],
 g_f_share_d:['詳細カードの🔗ボタンで、そのスポットへの直リンクをコピー・共有できます。','The 🔗 button on the detail card copies a direct link to that spot.','詳情卡上的🔗按鈕可複製、分享該地點的連結。','ปุ่ม 🔗 บนการ์ดคัดลอกลิงก์ตรงไปยังจุดนั้นเพื่อแชร์ได้'],
 g_f_srch_t:['検索','Search','搜尋','ค้นหา'],
-g_f_srch_d:['上部の検索バーで、場所・住所・作品・カップル名から探せます。','Search by place, address, series or couple in the top bar.','用上方搜尋列，以地點、地址、作品、CP 名稱搜尋。','ค้นหาจากแถบด้านบน ด้วยชื่อสถานที่ ที่อยู่ ซีรีส์ หรือคู่'],
+g_f_srch_d:['検索バーに入力すると候補がすぐ表示されます。スポット候補をタップするとその場所へ地図がジャンプして詳細が開き、作品・タレント候補を選ぶとそのままフィルターがかかります。','Type in the search bar and suggestions appear instantly. Tap a spot to jump right to it with details open, or tap a series / talent to apply it as a filter.','在搜尋列輸入即會顯示候選清單。點地點候選會直接跳到該位置並開啟詳情；點作品或演員則會套用篩選。','พิมพ์ในแถบค้นหาแล้วคำแนะนำจะแสดงทันที แตะสถานที่เพื่อกระโดดไปยังจุดนั้นพร้อมรายละเอียด หรือแตะซีรีส์/นักแสดงเพื่อใช้เป็นตัวกรอง'],
 g_f_loc_t:['現在地','My location','目前位置','ตำแหน่งของฉัน'],
 g_f_loc_d:['いまいる場所を地図に表示。近くの聖地が分かります。','Show where you are and find nearby spots.','在地圖上顯示所在位置，找出附近的聖地。','แสดงตำแหน่งปัจจุบัน หาจุดใกล้ตัวได้ง่าย'],
 g_f_post_t:['スポットを投稿','Submit a spot','投稿地點','ส่งสถานที่'],
@@ -1121,7 +1144,7 @@ let SERIES_MAP = {
 };
 // カテゴリー → 絵文字
 let CAT_MAP = {
-  "カフェ":"☕","レストラン":"🍖","ホテル":"🏨","名所":"📍",
+  "カフェ":"☕","レストラン":"🍽️","ホテル":"🏨","名所":"📍",
   "寺院・神社":"⛩️","ショッピング":"🛍️","スタジオ・ロケ地":"🎬",
   "大学・図書館":"🎓","スパ・サロン":"💆","スポーツ":"⚽","病院":"🏥",
   // 旧カテゴリー（移行前データ・後方互換のフォールバック）
@@ -1191,7 +1214,22 @@ let cpSearchQ="", seriesSearchQ="";
 const COMMON_TAGS=new Set(['プライベート']);
 let drawerOpen=true;
 
-const locApps=id=>APPS.filter(a=>a.location_id===id&&a.status==='公開');
+// location_id → 公開appearances のインデックス（毎描画でAPPS全件を舐めない）
+// APPSを差し替えたら必ず buildAppsIndex() を呼ぶこと
+let APPS_BY_LOC=new Map(), UNIQ_CPS=[], UNIQ_SERIES=[];
+function buildAppsIndex(){
+  APPS_BY_LOC=new Map();
+  const cps=new Set(), series=new Set();
+  APPS.forEach(a=>{
+    if(a.status!=='公開')return;
+    const arr=APPS_BY_LOC.get(a.location_id);
+    arr?arr.push(a):APPS_BY_LOC.set(a.location_id,[a]);
+    if(a.cp)cps.add(a.cp);
+    if(a.series)series.add(a.series);
+  });
+  UNIQ_CPS=[...cps].sort(); UNIQ_SERIES=[...series].sort();
+}
+const locApps=id=>APPS_BY_LOC.get(id)||[];
 const primaryCfg=id=>{const a=locApps(id)[0];return a&&a.cp?cpCfg(a.cp):FB;};
 
 // CP↔タグの対応を動的に取得
@@ -1235,8 +1273,8 @@ function getFiltered(){
     return true;
   });
 }
-function getUniqueCPs(){return[...new Set(APPS.map(a=>a.cp).filter(Boolean))].sort();}
-function getUniqueSeries(){return[...new Set(APPS.map(a=>a.series).filter(Boolean))].sort();}
+function getUniqueCPs(){return UNIQ_CPS;}
+function getUniqueSeries(){return UNIQ_SERIES;}
 
 // ── Auth ──────────────────────────────────────────────────────
 window.doLogin=async()=>{
@@ -1392,6 +1430,7 @@ async function loadAll(){
   // ② data.jsonが無い/壊れている場合だけ、従来どおりFirestoreから読む
   if(!ok) await loadFromFirestore();
 
+  buildAppsIndex();
   initMap(); renderFilters(); renderDrawer();
   // 投稿フォームの作品・タレント入力ドロップダウンを初期化
   setupFormCombos();
@@ -1433,37 +1472,46 @@ window._switchTile=function(key){
   renderTileBtn();
 };
 
+// ピンのdivIconを生成
+function buildPinIcon(loc,cfg,n,isSel){
+  const scale=isSel?1.35:1;
+  const icon_emoji=catEmoji(loc.category);
+  const pinColor=cfg.color;
+  const borderColor=isSel?'#fff':cfg.border;
+  const html=`
+    <div style="position:relative;transform:scale(${scale});transform-origin:bottom center;transition:transform .15s">
+      <svg width="36" height="46" viewBox="0 0 36 46" xmlns="http://www.w3.org/2000/svg" style="display:block;filter:drop-shadow(0 3px 6px rgba(0,0,0,.30))">
+        <path d="M18 2 C9 2 2 9 2 18 C2 30 18 44 18 44 C18 44 34 30 34 18 C34 9 27 2 18 2Z" fill="${pinColor}" stroke="${borderColor}" stroke-width="${isSel?2.5:1.5}"/>
+        <circle cx="18" cy="18" r="10" fill="rgba(255,255,255,0.92)"/>
+      </svg>
+      <div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:13px;line-height:1;pointer-events:none">${icon_emoji}</div>
+      ${n>1?`<div style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:#EC4899;border:2px solid white;font-size:8px;color:white;display:flex;align-items:center;justify-content:center;font-weight:900;line-height:1">${n}</div>`:''}
+      ${MARKS[loc.id]?`<div style="position:absolute;top:-6px;left:-7px;font-size:13px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));pointer-events:none">${MARKS[loc.id]==='want'?'💖':'✅'}</div>`:''}
+    </div>`;
+  return L.divIcon({html,className:'',iconSize:[36,46],iconAnchor:[18,46],popupAnchor:[0,-46]});
+}
+// 差分更新：マーカーは使い回し、見た目が変わったものだけアイコンを作り直す
 function renderMarkers(){
   if(!map)return;
-  Object.values(markers).forEach(m=>map.removeLayer(m));
-  markers={};
   const filteredIds=new Set(getFiltered().map(l=>l.id));
   LOCS.forEach(loc=>{
     if(!loc.lat||!loc.lng)return;
+    let m=markers[loc.id];
+    if(!filteredIds.has(loc.id)){ if(m&&map.hasLayer(m))map.removeLayer(m); return; }
     const apps=locApps(loc.id);
-    const isRec=isRecSpot(loc);
-    const cfg=isRec?REC_CFG:primaryCfg(loc.id), n=new Set(apps.map(a=>a.series||REC_TAG)).size, inF=filteredIds.has(loc.id), isSel=loc.id===selId;
-    // フィルター対象外は非表示
-    const scale=isSel?1.35:1;
-    // ピン形SVG + ラベル
-    const icon_emoji=catEmoji(loc.category);
-    const pinColor=cfg.color;
-    const borderColor=isSel?'#fff':cfg.border;
-    const html=`
-      <div style="position:relative;transform:scale(${scale});transform-origin:bottom center;transition:transform .15s">
-        <svg width="36" height="46" viewBox="0 0 36 46" xmlns="http://www.w3.org/2000/svg" style="display:block;filter:drop-shadow(0 3px 6px rgba(0,0,0,.30))">
-          <path d="M18 2 C9 2 2 9 2 18 C2 30 18 44 18 44 C18 44 34 30 34 18 C34 9 27 2 18 2Z" fill="${pinColor}" stroke="${borderColor}" stroke-width="${isSel?2.5:1.5}"/>
-          <circle cx="18" cy="18" r="10" fill="rgba(255,255,255,0.92)"/>
-        </svg>
-        <div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:13px;line-height:1;pointer-events:none">${icon_emoji}</div>
-        ${n>1?`<div style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:#EC4899;border:2px solid white;font-size:8px;color:white;display:flex;align-items:center;justify-content:center;font-weight:900;line-height:1">${n}</div>`:''}
-        ${MARKS[loc.id]?`<div style="position:absolute;top:-6px;left:-7px;font-size:13px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));pointer-events:none">${MARKS[loc.id]==='want'?'💖':'✅'}</div>`:''}
-      </div>`;
-    const icon=L.divIcon({html,className:'',iconSize:[36,46],iconAnchor:[18,46],popupAnchor:[0,-46]});
-    if(!inF)return; // フィルター外は表示しない
-    const m=L.marker([loc.lat,loc.lng],{icon}).addTo(map);
-    m.on('click',e=>{L.DomEvent.stopPropagation(e);window._sel(loc.id,true);});
-    markers[loc.id]=m;
+    const cfg=isRecSpot(loc)?REC_CFG:primaryCfg(loc.id);
+    const n=new Set(apps.map(a=>a.series||REC_TAG)).size;
+    const isSel=loc.id===selId;
+    // 見た目を決める要素のキー。変わったときだけsetIconする
+    const key=`${cfg.color}|${cfg.border}|${catEmoji(loc.category)}|${n}|${isSel?1:0}|${MARKS[loc.id]||''}`;
+    if(!m){
+      m=L.marker([loc.lat,loc.lng],{icon:buildPinIcon(loc,cfg,n,isSel)});
+      m.on('click',e=>{L.DomEvent.stopPropagation(e);window._sel(loc.id,true);});
+      m._k=key; markers[loc.id]=m; m.addTo(map);
+    }else{
+      if(m._k!==key){m.setIcon(buildPinIcon(loc,cfg,n,isSel));m._k=key;}
+      if(!map.hasLayer(m))m.addTo(map);
+    }
   });
 }
 
@@ -1932,14 +1980,92 @@ window._setCp=cp=>{
   applyFilterChange();
 };
 // 上部の検索窓（場所・作品・CP名で絞り込み）
-window.onSearch=function(v){
+// 入力ごとの全再描画は重いので、候補リストだけ即時表示し、絞り込み反映は160msデバウンス
+let _searchT=null;
+function applySearch(v){
   searchQ=(v||'').trim();
   renderActiveFilterBar();
   renderMapOverlayInfo();
   renderMarkers();
   renderDrawer();
   renderSpotTable();
+}
+window.onSearch=function(v){
+  renderSearchSuggest(v);
+  clearTimeout(_searchT);
+  _searchT=setTimeout(()=>applySearch(v),160);
 };
+// ── 検索サジェスト：候補から選ぶとスポットへジャンプ／作品・タレントはフィルター適用 ──
+function hideSuggest(){const el=document.getElementById('search-suggest');if(el){el.style.display='none';el.innerHTML='';}}
+function renderSearchSuggest(v){
+  const el=document.getElementById('search-suggest'); if(!el)return;
+  const q=(v||'').toLowerCase().trim();
+  if(!q){hideSuggest();return;}
+  // スポット候補：名前の前方一致 > 名前部分一致 > 住所・作品・タレント・メモの一致
+  const starts=[],mid=[],other=[];
+  LOCS.forEach(loc=>{
+    const name=(loc.name||'').toLowerCase();
+    if(name.startsWith(q))starts.push(loc);
+    else if(name.includes(q))mid.push(loc);
+    else{
+      const apps=locApps(loc.id);
+      if((loc.address||'').toLowerCase().includes(q)||(loc.memo||'').toLowerCase().includes(q)||
+         apps.some(a=>(a.series||'').toLowerCase().includes(q)||(a.cp||'').toLowerCase().includes(q)))other.push(loc);
+    }
+  });
+  const spots=[...starts,...mid,...other].slice(0,8);
+  const series=msMatch(getUniqueSeries(),q).slice(0,3);
+  const cps=msMatch(getUniqueCPs(),q).slice(0,3);
+  if(!spots.length&&!series.length&&!cps.length){el.innerHTML=`<div class="ms-empty">${t('no_match')}</div>`;el.style.display='block';return;}
+  let html='';
+  if(spots.length){
+    html+=`<div class="sug-head">${t('sug_spots')}</div>`;
+    html+=spots.map(loc=>{
+      const a0=locApps(loc.id)[0];
+      const sub=(a0&&a0.series)||loc.address||'';
+      return`<button type="button" class="sug-row" onmousedown="event.preventDefault();window._sugSpot('${enc(loc.id)}')"><span class="sug-ico">${catEmoji(loc.category)}</span><span class="sug-name">${esc(loc.name)}</span>${sub?`<span class="sug-sub">${esc(sub)}</span>`:''}</button>`;
+    }).join('');
+  }
+  if(series.length){
+    html+=`<div class="sug-head">${t('sug_series')}</div>`;
+    html+=series.map(s=>`<button type="button" class="sug-row" onmousedown="event.preventDefault();window._sugSeries('${enc(s)}')"><span class="sug-ico">🎬</span><span class="sug-name">${esc(s)}</span></button>`).join('');
+  }
+  if(cps.length){
+    html+=`<div class="sug-head">${t('sug_talent')}</div>`;
+    html+=cps.map(cp=>{const c=cpCfg(cp);return`<button type="button" class="sug-row" onmousedown="event.preventDefault();window._sugCp('${enc(cp)}')"><span class="sug-ico">${c.emoji||'💗'}</span><span class="sug-name">${esc(cp)}</span></button>`;}).join('');
+  }
+  el.innerHTML=html; el.style.display='block';
+}
+window._sugSpot=function(encId){
+  hideSuggest();
+  clearTimeout(_searchT);
+  applySearch(document.getElementById('search-box').value); // 入力中の絞り込みを確定してから選択
+  const id=decodeURIComponent(encId);
+  if(selId===id){const loc=LOCS.find(l=>l.id===id);if(loc){focusSpot(loc);fillDetail(loc);}return;}
+  window._sel(id); // 一覧からの選択と同じ：ズーム15までなめらかに移動して詳細を開く
+  document.getElementById('search-box').blur();
+};
+window._sugSeries=function(s){
+  hideSuggest();
+  clearTimeout(_searchT);
+  document.getElementById('search-box').value=''; searchQ='';
+  const v=decodeURIComponent(s);
+  if(!activeTypes.has(v))window._setType(v); else applyFilterChange();
+};
+window._sugCp=function(s){
+  hideSuggest();
+  clearTimeout(_searchT);
+  document.getElementById('search-box').value=''; searchQ='';
+  const v=decodeURIComponent(s);
+  if(!activeCps.has(v))window._setCp(v); else applyFilterChange();
+};
+// フォーカスで候補を再表示、フォーカスが外れたら閉じる（候補タップはmousedownで先に確定）
+(()=>{
+  const sb=document.getElementById('search-box');
+  if(!sb)return;
+  sb.addEventListener('focus',()=>renderSearchSuggest(sb.value));
+  sb.addEventListener('blur',()=>setTimeout(hideSuggest,150));
+})();
 // ── User menu ─────────────────────────────────────────────────
 window.toggleUserMenu=()=>document.getElementById('user-menu').classList.toggle('open');
 window.toggleUserMenuClose=()=>document.getElementById('user-menu').classList.remove('open');
