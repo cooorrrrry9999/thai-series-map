@@ -106,6 +106,10 @@ html,body{height:100%;font-family:'Noto Sans JP',sans-serif;background:var(--bg)
 .btn-primary{background:linear-gradient(135deg,var(--pb),var(--purple));color:white;padding:8px 18px;font-size:13px;border-radius:9px}
 .btn-sm{padding:3px 8px;font-size:11px}
 
+/* ── 処理結果トースト ── */
+.adm-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:12px 22px;border-radius:12px;font-size:13px;font-weight:700;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:90vw;animation:tfade 3.5s forwards;pointer-events:none}
+@keyframes tfade{0%{opacity:0;transform:translate(-50%,10px)}8%{opacity:1;transform:translate(-50%,0)}85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,0)}}
+
 /* ── Form panel ── */
 .form-panel{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:18px 22px;max-width:700px}
 .form-section{font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.07em;margin:14px 0 8px;padding-top:12px;border-top:1px solid var(--border)}
@@ -223,7 +227,7 @@ html,body{height:100%;font-family:'Noto Sans JP',sans-serif;background:var(--bg)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, addDoc, setDoc, updateDoc, deleteDoc, writeBatch }
+import { getFirestore, collection, getDocs, doc, addDoc, setDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const FB={apiKey:"AIzaSyARPFANz5DZa6KpEBiw77PCCYPPZghMGeg",authDomain:"thai-gl-works-2c835.firebaseapp.com",databaseURL:"https://thai-gl-works-2c835-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"thai-gl-works-2c835",storageBucket:"thai-gl-works-2c835.firebasestorage.app",messagingSenderId:"71290080508",appId:"1:71290080508:web:47de06018b8617225bdb79"};
@@ -308,9 +312,19 @@ async function loadAll(forceRefresh=false){
   if(results[5])saveAC(CACHE_KEYS.cat,CAT_M);
   if(results[6])saveAC(CACHE_KEYS.talent,TALENT_M);
 
+  updatePendingBadge();
+}
+function updatePendingBadge(){
   const n=SUBS.filter(s=>s.status==='未承認').length;
   const badge=document.getElementById('pending-badge');
   if(badge){badge.style.display=n?'inline':'none';badge.textContent=n;}
+}
+// 処理結果を画面下部に一時表示（alertと違い操作を止めない）
+function toast(msg){
+  const el=document.createElement('div');
+  el.className='adm-toast';el.textContent=msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),3600);
 }
 
 // ── ローカルデータ更新（Firestore再取得なし）───────────────────
@@ -389,9 +403,20 @@ window.renderDashboard=function(){
 };
 
 // ── Pending ────────────────────────────────────────────────────
+// タブ：未承認（処理待ちキュー）／承認済み・却下（処理履歴）
+let pendingTab='未承認';
+window.setPendingTab=function(t){pendingTab=t;renderPending();};
 window.renderPending=function(){
-  const list=SUBS.filter(s=>s.status==='未承認');
-  setBody(list.length?list.map(s=>pendingCardHTML(s)).join(''):'<div style="text-align:center;color:var(--sub);padding:60px">承認待ちの投稿はありません 🎉</div>');
+  const TABS=[['未承認','📬'],['承認済み','✅'],['却下','🗂']];
+  const counts={};TABS.forEach(([t])=>counts[t]=SUBS.filter(s=>s.status===t).length);
+  const tabsHtml=TABS.map(([t,ico])=>
+    `<button class="btn ${pendingTab===t?'btn-approve':'btn-edit'}" style="${pendingTab===t?'box-shadow:inset 0 0 0 1.5px var(--green);':''}" onclick="setPendingTab('${t}')">${ico} ${t}（${counts[t]}）</button>`).join('');
+  const ts=x=>{const v=pendingTab==='未承認'?x.submittedAt:(x.processedAt||x.submittedAt);return(v&&v.seconds)||0;};
+  // 未承認は古い順（先着処理）、履歴は新しい順
+  const list=SUBS.filter(s=>s.status===pendingTab).sort((a,b)=>pendingTab==='未承認'?ts(a)-ts(b):ts(b)-ts(a));
+  const empty=pendingTab==='未承認'?'承認待ちの投稿はありません 🎉':'まだ履歴はありません';
+  setBody(`<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">${tabsHtml}</div>`+
+    (list.length?list.map(s=>pendingCardHTML(s)).join(''):`<div style="text-align:center;color:var(--sub);padding:60px">${empty}</div>`));
 };
 // 投稿日時（Firestore Timestamp / キャッシュ経由のJSON どちらでも表示できるように）
 function subWhen(s){
@@ -425,7 +450,19 @@ function pendingCardHTML(s){
   if(s.sns_url)rows.push(safeUrl(s.sns_url)?`🔗 <a href="${esc(safeUrl(s.sns_url))}" target="_blank" rel="noopener" style="color:#4F46E5;word-break:break-all">${esc(s.sns_url)}</a>`:`⚠ 不正なSNSリンク: ${esc(s.sns_url)}`);
   if(s.googleMapsUrl)rows.push(safeUrl(s.googleMapsUrl)?`🗺 <a href="${esc(safeUrl(s.googleMapsUrl))}" target="_blank" rel="noopener" style="color:#059669;word-break:break-all">${esc(s.googleMapsUrl)}</a>`:`⚠ 不正なマップURL: ${esc(s.googleMapsUrl)}`);
   const when=subWhen(s);
-  return`<div class="pending-card">
+  // 処理済み（承認済み・却下）は履歴として結果を表示する
+  const processed=s.status==='承認済み'||s.status==='却下';
+  if(processed){
+    const pWhen=subWhen({submittedAt:s.processedAt});
+    rows.push(`${s.status==='承認済み'?'✅':'🗂'} <b>${s.status}</b>${pWhen?`（${pWhen}）`:''}${s.resultNote?`：${esc(s.resultNote)}`:''}`);
+    if(s.rejectReason)rows.push(`📝 却下メモ: ${esc(s.rejectReason)}`);
+  }
+  const buttons=processed
+    ?`${s.resultLocationId?`<button class="btn btn-edit" onclick="editLocModal('${s.resultLocationId}')">📍 反映先を開く</button>`:''}
+      ${s.status==='却下'?`<button class="btn btn-edit" onclick="restoreSub('${s.id}')">↩ 未承認に戻す</button>`:''}`
+    :`<button class="btn btn-approve" onclick="approveSub('${s.id}')">✅ 承認</button>
+      <button class="btn btn-del" onclick="rejectSub('${s.id}')">✕ 却下</button>`;
+  return`<div class="pending-card"${processed?' style="opacity:.85"':''}>
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
       <div style="min-width:0">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">${badge}<span style="font-size:14px;font-weight:700">${title}</span></div>
@@ -433,23 +470,53 @@ function pendingCardHTML(s){
         <div style="font-size:12px;color:var(--sub);line-height:1.9">${rows.join('<br>')||'（詳細情報なし）'}</div>
         <div style="font-size:10px;color:#bbb;margin-top:6px">投稿: ${esc(s.submittedBy||'不明')}${when?` ・ ${when}`:''}</div>
       </div>
-      <div style="display:flex;gap:6px;flex-shrink:0">
-        <button class="btn btn-approve" onclick="approveSub('${s.id}')">✅ 承認</button>
-        <button class="btn btn-del" onclick="rejectSub('${s.id}')">✕ 却下</button>
+      <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
+        ${buttons}
       </div>
     </div>
   </div>`;
 }
-// 承認：投稿の種類（新規スポット／紐付け追加／メモ追加）ごとに反映先を変える
+// GoogleマップURLから座標を抽出（@lat,lng / !3d..!4d.. / q=lat,lng 形式。goo.gl短縮URLからは取れない）
+function coordsFromGmapsUrl(u){
+  if(!u)return null;
+  const m=u.match(/@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/)
+       ||u.match(/!3d(-?\d{1,2}\.\d+)!4d(-?\d{1,3}\.\d+)/)
+       ||u.match(/[?&]q=(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
+  return m?{lat:parseFloat(m[1]),lng:parseFloat(m[2])}:null;
+}
+// 既存スポットとの重複候補を探す（同名＝大文字小文字無視、または約100m以内）
+function findDupLoc(name,coords){
+  const nm=(name||'').trim().toLowerCase();
+  return LOCS.find(l=>{
+    if(nm&&(l.name||'').trim().toLowerCase()===nm)return true;
+    if(coords&&l.lat&&l.lng){
+      const dy=(l.lat-coords.lat)*111320;
+      const dx=(l.lng-coords.lng)*111320*Math.cos(coords.lat*Math.PI/180);
+      if(Math.hypot(dx,dy)<100)return true;
+    }
+    return false;
+  });
+}
+// 承認：投稿の種類（新規スポット／紐付け追加／メモ追加）ごとに反映先を変える。
+// 反映内容は投稿ドキュメントに resultLocationId / resultAppearanceIds / resultNote / processedAt として記録し、
+// 「承認済み」タブから後で確認・反映先ジャンプできるようにする。
 window.approveSub=async function(id){
-  console.log('[approveSub] クリック id=',id);
   const s=SUBS.find(x=>x.id===id);
   if(!s){alert('この投稿が見つかりません。ページを再読み込みしてください。');return;}
   const isApp=s.submission_type==='appearance_add';
   const isMemo=s.submission_type==='memo_add';
-  let newLocId=null; // 新規スポット承認時に、続けて詳細設定モーダルを開くためのID
   // 複数タレント対応：cp_list があれば各タレントごとに紐付けを作る。無ければ従来どおり単一 cp（空=おすすめ/なし）
   const cpNames=(Array.isArray(s.cp_list)&&s.cp_list.length)?s.cp_list:(s.cp?[s.cp]:['']);
+  let newLocId=null, resLocId=null, appIds=[], resultNote='';
+  // 指定スポットへ紐付け（appearances）を作成し、ローカルにも反映
+  async function addApps(locId){
+    for(const cp of cpNames){
+      const data={location_id:locId,cp:cp||'',series:s.series||'',scene_desc:s.scene_desc||'',sns_url:s.sns_url||'',status:'公開'};
+      const ref=await addDoc(collection(db,'appearances'),data);
+      appIds.push(ref.id);
+      localAddApp(ref.id,data);
+    }
+  }
   try{
     if(isApp||isMemo){
       // 既存スポットへの追加情報
@@ -458,28 +525,52 @@ window.approveSub=async function(id){
       if(isApp){
         const who=cpNames.filter(Boolean).join('・')||'（なし）';
         if(!confirm(`「${loc.name}」に紐付けを追加しますか？\n${s.series||''} / ${who}\n${s.scene_desc||''}`))return;
-        for(const cp of cpNames)
-          await addDoc(collection(db,'appearances'),{location_id:loc.id,cp:cp||'',series:s.series||'',scene_desc:s.scene_desc||'',sns_url:s.sns_url||'',status:'公開'});
+        await addApps(loc.id);
+        resLocId=loc.id;
+        resultNote=`「${loc.name}」に紐付け${appIds.length}件を追加`;
       }else{
         const add=[s.memo||'',s.sns_url||''].filter(Boolean).join(' ');
         if(!confirm(`「${loc.name}」の訪問メモに追記しますか？\n追記内容: ${add}`))return;
         const merged=loc.memo?loc.memo+' ／ '+add:add;
         await updateDoc(doc(db,'locations',loc.id),{memo:merged});
+        localUpdateLoc(loc.id,{memo:merged});
+        resLocId=loc.id;
+        resultNote=`「${loc.name}」の訪問メモに追記`;
       }
     }else{
-      // 新規スポット投稿 → locations + appearances を作成。
-      // 座標は承認直後に開く「詳細設定」モーダルで設定する運用（承認 → 詳細設定 → 公開）。
-      if(!confirm('「'+(s.name||'')+'」を承認して詳細（座標など）を設定しますか？'))return;
-      const ref=doc(collection(db,'locations'));
-      await setDoc(ref,{name:s.name,lat:s.lat||0,lng:s.lng||0,category:s.category||'名所',address:s.address||'',googleMapsUrl:s.googleMapsUrl||'',memo:s.memo||''});
-      for(const cp of cpNames)
-        await addDoc(collection(db,'appearances'),{location_id:ref.id,cp:cp||'',series:s.series||'',scene_desc:s.scene_desc||'',sns_url:s.sns_url||'',status:'公開'});
-      newLocId=ref.id;
+      // 新規スポット投稿 → locations + appearances を作成
+      if(!confirm('「'+(s.name||'')+'」を承認しますか？'))return;
+      // GoogleマップURLに座標が含まれていれば自動設定（短縮URLの場合は従来どおり詳細設定モーダルで）
+      const coords=coordsFromGmapsUrl(s.googleMapsUrl||'');
+      // 既存スポットとの重複チェック（今回の重複データ混入の再発防止）
+      const dup=findDupLoc(s.name,coords);
+      let useExisting=false;
+      if(dup)useExisting=confirm(`⚠ 既存スポット「${dup.name}」と重複している可能性があります。\n\nOK：既存スポットへの紐付けとして反映（新規スポットは作りません）\nキャンセル：このまま新規スポットとして作成`);
+      if(useExisting){
+        await addApps(dup.id);
+        resLocId=dup.id;
+        resultNote=`既存スポット「${dup.name}」への紐付けとして反映`;
+      }else{
+        const data={name:s.name,lat:coords?coords.lat:0,lng:coords?coords.lng:0,category:s.category||'名所',address:s.address||'',googleMapsUrl:s.googleMapsUrl||'',memo:s.memo||''};
+        const ref=doc(collection(db,'locations'));
+        await setDoc(ref,data);
+        localAddLoc(ref.id,data);
+        await addApps(ref.id);
+        resLocId=newLocId=ref.id;
+        resultNote=coords
+          ?`新規スポット「${s.name}」を作成（URLから座標を自動設定）`
+          :`新規スポット「${s.name}」を作成（⚠座標未設定・詳細設定が必要）`;
+      }
     }
-    await updateDoc(doc(db,'location_submissions',id),{status:'承認済み'});
-    console.log('[approveSub] 承認完了');
-    clearC(); await loadAll(true);
-    // 新規スポットは続けて詳細設定（座標・カテゴリ）モーダルを開く＝「承認 → 詳細設定 → 公開」
+    // 投稿ドキュメントに処理結果を記録（履歴タブで確認できる）
+    const done={status:'承認済み',processedAt:serverTimestamp(),resultLocationId:resLocId||'',resultAppearanceIds:appIds,resultNote};
+    await updateDoc(doc(db,'location_submissions',id),done);
+    Object.assign(s,done,{processedAt:{seconds:Math.floor(Date.now()/1000)}}); // ローカルにも即反映
+    // 公開サイトのFirestoreフォールバックキャッシュだけ無効化（adminキャッシュはlocalAdd/Updateで維持済み）
+    ['tsmap_loc_v2','tsmap_app_v2'].forEach(k=>localStorage.removeItem(k));
+    updatePendingBadge();
+    toast('✅ 承認しました：'+resultNote);
+    // 座標未設定の新規スポットは続けて詳細設定（座標・カテゴリ）モーダルを開く＝「承認 → 詳細設定 → 公開」
     if(newLocId){
       showPage('spots');
       setTimeout(()=>{ editLocModal(newLocId); alertCoordReminder(newLocId); },150);
@@ -496,14 +587,33 @@ function alertCoordReminder(locId){
     if(msg){msg.style.color='var(--amber)';msg.textContent='📍 承認しました。GoogleマップURLを貼るか地図をクリックして座標を設定し、保存してください。';}
   }
 }
+// 却下：削除はせず status を変えて履歴に残す（理由メモも記録できる）
 window.rejectSub=async function(id){
-  console.log('[rejectSub] クリック id=',id);
-  if(!confirm('却下しますか？'))return;
+  const s=SUBS.find(x=>x.id===id);
+  if(!s){alert('この投稿が見つかりません。ページを再読み込みしてください。');return;}
+  const reason=prompt('この投稿を却下します。理由をメモできます（空欄でもOK。管理画面の履歴タブにだけ残ります）','');
+  if(reason===null)return; // キャンセル
   try{
-    await updateDoc(doc(db,'location_submissions',id),{status:'却下'});
-    console.log('[rejectSub] 却下完了');
-    clearC(); await loadAll(true); showPage(currentPage);
+    const done={status:'却下',rejectReason:reason||'',processedAt:serverTimestamp()};
+    await updateDoc(doc(db,'location_submissions',id),done);
+    Object.assign(s,done,{processedAt:{seconds:Math.floor(Date.now()/1000)}});
+    updatePendingBadge();
+    toast('🗂 却下しました（「却下」タブに履歴が残ります）');
+    showPage(currentPage);
   }catch(e){console.error('[rejectSub] 失敗:',e);alert('却下に失敗しました：'+(e.code?e.code+'\n':'')+e.message);}
+};
+// 却下した投稿を未承認に戻す（間違えて却下したとき用）
+window.restoreSub=async function(id){
+  const s=SUBS.find(x=>x.id===id);
+  if(!s)return;
+  if(!confirm('この投稿を「未承認」に戻しますか？'))return;
+  try{
+    await updateDoc(doc(db,'location_submissions',id),{status:'未承認'});
+    Object.assign(s,{status:'未承認'});
+    updatePendingBadge();
+    toast('↩ 未承認に戻しました');
+    showPage(currentPage);
+  }catch(e){console.error('[restoreSub] 失敗:',e);alert('操作に失敗しました：'+(e.code?e.code+'\n':'')+e.message);}
 };
 
 // ── Spots（場所＋紐付けまとめ） ─────────────────────────────────
