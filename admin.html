@@ -326,7 +326,43 @@ async function loadAll(forceRefresh=false){
       }catch(e){console.warn('[migrate] 絵文字の自動更新に失敗:',e);}
     }
   }
+
+  // 処理済み投稿（承認済み・却下）の自動掃除：データが際限なく溜まらないようにする
+  cleanupOldSubs().catch(e=>console.warn('[cleanup] 失敗:',e));
 }
+
+// 処理済み投稿を保存しておく日数（この期間は履歴タブで確認・却下の復元ができる）
+const SUB_RETENTION_DAYS=30;
+async function cleanupOldSubs(){
+  const cutoff=Date.now()/1000-SUB_RETENTION_DAYS*86400;
+  const old=SUBS.filter(s=>{
+    if(s.status!=='承認済み'&&s.status!=='却下')return false;
+    const ts=(s.processedAt&&s.processedAt.seconds)||(s.submittedAt&&s.submittedAt.seconds)||0;
+    return ts>0&&ts<cutoff;
+  });
+  if(!old.length)return;
+  const batch=writeBatch(db);
+  old.forEach(s=>batch.delete(doc(db,'location_submissions',s.id)));
+  await batch.commit();
+  const oldIds=new Set(old.map(s=>s.id));
+  SUBS=SUBS.filter(s=>!oldIds.has(s.id));
+  console.log(`[cleanup] 処理から${SUB_RETENTION_DAYS}日を過ぎた投稿 ${old.length}件を削除しました`);
+}
+// 履歴の手動一括削除（承認済み／却下タブのボタンから）
+window.clearSubHistory=async function(status){
+  const list=SUBS.filter(s=>s.status===status);
+  if(!list.length)return;
+  if(!confirm(`「${status}」の履歴 ${list.length}件をすべて削除しますか？\n（承認で作成済みのスポット・紐付けデータには影響しません）`))return;
+  try{
+    const batch=writeBatch(db);
+    list.forEach(s=>batch.delete(doc(db,'location_submissions',s.id)));
+    await batch.commit();
+    SUBS=SUBS.filter(s=>s.status!==status);
+    updatePendingBadge();
+    toast(`🧹 ${status}の履歴 ${list.length}件を削除しました`);
+    renderPending();
+  }catch(e){alert('削除に失敗しました：'+(e.code?e.code+'\n':'')+e.message);}
+};
 function updatePendingBadge(){
   const n=SUBS.filter(s=>s.status==='未承認').length;
   const badge=document.getElementById('pending-badge');
@@ -428,7 +464,14 @@ window.renderPending=function(){
   // 未承認は古い順（先着処理）、履歴は新しい順
   const list=SUBS.filter(s=>s.status===pendingTab).sort((a,b)=>pendingTab==='未承認'?ts(a)-ts(b):ts(b)-ts(a));
   const empty=pendingTab==='未承認'?'承認待ちの投稿はありません 🎉':'まだ履歴はありません';
-  setBody(`<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">${tabsHtml}</div>`+
+  // 履歴タブ：自動削除の説明＋手動一括削除ボタン（反映済みデータが溜まり続けないように）
+  const histBar=pendingTab!=='未承認'
+    ?`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin:-4px 0 10px">
+        <span style="font-size:11px;color:var(--sub)">反映結果の記録です。処理から${SUB_RETENTION_DAYS}日を過ぎると自動で削除されます。</span>
+        ${list.length?`<button class="btn btn-del btn-sm" onclick="clearSubHistory('${pendingTab}')">🧹 今すぐすべて削除（${list.length}件）</button>`:''}
+      </div>`
+    :'';
+  setBody(`<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">${tabsHtml}</div>`+histBar+
     (list.length?list.map(s=>pendingCardHTML(s)).join(''):`<div style="text-align:center;color:var(--sub);padding:60px">${empty}</div>`));
 };
 // 投稿日時（Firestore Timestamp / キャッシュ経由のJSON どちらでも表示できるように）
