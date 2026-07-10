@@ -1153,6 +1153,35 @@ let CAT_MAP = {
   "国立公園":"📍","市場":"🛍️","リフレッシュ":"💆",
 };
 
+// カテゴリー表示名の多言語対応（データ上のカテゴリーは日本語キーのまま、表示だけ翻訳）
+// [ja, en, zh, th] の順。未登録カテゴリーはそのまま表示
+const CAT_I18N={
+  "カフェ":['カフェ','Cafe','咖啡廳','คาเฟ่'],
+  "レストラン":['レストラン','Restaurant','餐廳','ร้านอาหาร'],
+  "ホテル":['ホテル','Hotel','飯店','โรงแรม'],
+  "名所":['名所','Landmark','景點','แลนด์มาร์ก'],
+  "寺院・神社":['寺院・神社','Temple & Shrine','寺廟・神社','วัด/ศาลเจ้า'],
+  "ショッピング":['ショッピング','Shopping','購物','ช้อปปิ้ง'],
+  "スタジオ・ロケ地":['スタジオ・ロケ地','Studio & Set','攝影棚・取景地','สตูดิโอ/โลเคชั่น'],
+  "大学・図書館":['大学・図書館','University & Library','大學・圖書館','มหาวิทยาลัย/ห้องสมุด'],
+  "スパ・サロン":['スパ・サロン','Spa & Salon','SPA・沙龍','สปา/ซาลอน'],
+  "スポーツ":['スポーツ','Sports','運動','กีฬา'],
+  "病院":['病院','Hospital','醫院','โรงพยาบาล'],
+  // 旧カテゴリー（移行前データ用）
+  "スタジオ":['スタジオ','Studio','攝影棚','สตูดิโอ'],
+  "観光地":['観光地','Sightseeing','觀光景點','ที่เที่ยว'],
+  "邸宅/スタジオ":['邸宅/スタジオ','House & Studio','宅邸/攝影棚','บ้าน/สตูดิโอ'],
+  "寺院":['寺院','Temple','寺廟','วัด'],
+  "大学":['大学','University','大學','มหาวิทยาลัย'],
+  "図書館":['図書館','Library','圖書館','ห้องสมุด'],
+  "アート":['アート','Art','藝術','อาร์ต'],
+  "放送局":['放送局','TV Station','電視台','สถานีโทรทัศน์'],
+  "国立公園":['国立公園','National Park','國家公園','อุทยานแห่งชาติ'],
+  "市場":['市場','Market','市場','ตลาด'],
+  "リフレッシュ":['リフレッシュ','Wellness','放鬆','ผ่อนคลาย'],
+};
+function catLabel(cat){const e=CAT_I18N[cat];return e?(e[LIDX[LANG]]??cat):(cat||'');}
+
 // 自動CP色割り当て
 const AUTO_CP_COLORS=["#EC4899","#3B82F6","#D97706","#0891B2","#65A30D","#DC2626","#9333EA","#059669","#EA580C","#8B5CF6","#F97316","#14B8A6"];
 let autoCpIdx=0, autoCpMap={};
@@ -1267,6 +1296,8 @@ function getFiltered(){
       const hit=loc.name.toLowerCase().includes(q)||
         (loc.memo||'').toLowerCase().includes(q)||
         (loc.address||'').toLowerCase().includes(q)||
+        (loc.category||'').toLowerCase().includes(q)||
+        catLabel(loc.category).toLowerCase().includes(q)||
         apps.some(a=>(a.series||'').toLowerCase().includes(q)||(a.cp||'').toLowerCase().includes(q)||(a.scene_desc||'').toLowerCase().includes(q));
       if(!hit)return false;
     }
@@ -1391,8 +1422,8 @@ function applyMasters(sMaster,cpMaster,tMaster,catMaster){
   TALENTS=(tMaster||[]).filter(m=>m.name).map(m=>({name:m.name,real_name:m.real_name||'',color:m.color||'#888',emoji:m.emoji||'⭐'}))
     .sort((a,b)=>a.name.localeCompare(b.name));
   (tMaster||[]).forEach(m=>{if(m.name){CP_MAP[m.name]={color:m.color||'#888',light:(m.color||'#888')+'22',border:(m.color||'#888')+'88',emoji:m.emoji||'⭐'}}});
-  // category_master（カテゴリー絵文字）
-  (catMaster||[]).forEach(m=>{if(m.name&&m.emoji)CAT_MAP[m.name]=m.emoji;});
+  // category_master（カテゴリー絵文字）※🍖は🍽️へ移行済み（未移行の古いデータが来ても正規化する）
+  (catMaster||[]).forEach(m=>{if(m.name&&m.emoji)CAT_MAP[m.name]=m.emoji==='🍖'?'🍽️':m.emoji;});
 }
 
 // 従来どおりFirestoreから読む（data.jsonが無いときのフォールバック専用）
@@ -1752,7 +1783,7 @@ function fillDetail(loc){
   document.getElementById('detail-tags').innerHTML=
     (isRec&&!apps.some(a=>a.series)?`<span class="detail-tag" style="background:${REC_CFG.light};color:${REC_CFG.color};border-color:${REC_CFG.border}">${recLabel()}</span>`:'')+
     [...new Set(apps.map(a=>a.series).filter(Boolean))].map(s=>`<span class="detail-tag" style="background:#F3F4F6;color:#555;border-color:#E5E7EB">${esc(s)}</span>`).join('')+
-    `<span class="detail-tag" style="background:${cfg.light};color:${cfg.color};border-color:${cfg.border}">${catEmoji(loc.category)} ${esc(loc.category)}</span>`;
+    `<span class="detail-tag" style="background:${cfg.light};color:${cfg.color};border-color:${cfg.border}">${catEmoji(loc.category)} ${esc(catLabel(loc.category))}</span>`;
   document.getElementById('detail-name').textContent=loc.name;
   document.getElementById('detail-address').innerHTML=loc.address?`<span>📌</span> ${esc(loc.address)}`:'';
   updateMarkBtns();
@@ -1892,7 +1923,7 @@ function renderSpotTable(){
       series:[...new Set(apps.map(a=>a.series).filter(Boolean))],
       cps:[...new Set(apps.map(a=>a.cp).filter(Boolean))]};
   });
-  if(q)rows=rows.filter(r=>[r.loc.name,r.loc.address,r.loc.category,r.loc.memo,...r.series,...r.cps].join(' ').toLowerCase().includes(q));
+  if(q)rows=rows.filter(r=>[r.loc.name,r.loc.address,r.loc.category,catLabel(r.loc.category),r.loc.memo,...r.series,...r.cps].join(' ').toLowerCase().includes(q));
   // 項目別フィルター
   if(tableFilters.series)rows=rows.filter(r=>r.series.includes(tableFilters.series));
   if(tableFilters.cp)rows=rows.filter(r=>r.cps.includes(tableFilters.cp));
@@ -2010,6 +2041,7 @@ function renderSearchSuggest(v){
     else{
       const apps=locApps(loc.id);
       if((loc.address||'').toLowerCase().includes(q)||(loc.memo||'').toLowerCase().includes(q)||
+         (loc.category||'').toLowerCase().includes(q)||catLabel(loc.category).toLowerCase().includes(q)||
          apps.some(a=>(a.series||'').toLowerCase().includes(q)||(a.cp||'').toLowerCase().includes(q)))other.push(loc);
     }
   });

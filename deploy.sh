@@ -85,7 +85,14 @@ else
   fi
 fi
 
-# ── ②b sitemap.xml を data.json から自動生成（SEO：全スポットの直リンクを検索エンジンに知らせる）──
+# ── ②b 既知の重複統合・絵文字正規化（Firestore側が掃除されるまでの保険）──────
+# エクスポートし直すたびに重複・旧絵文字が復活するのを防ぐ。詳細は scripts/clean_data.py 参照
+if [ -f "data.json" ] && [ -f "scripts/clean_data.py" ] && command -v python3 &> /dev/null; then
+  echo "🧹 data.json をクリーンアップしています..."
+  python3 scripts/clean_data.py data.json
+fi
+
+# ── ②c sitemap.xml を data.json から自動生成（SEO：全スポットの直リンクを検索エンジンに知らせる）──
 if [ -f "data.json" ] && command -v python3 &> /dev/null; then
   python3 - <<'PYEOF'
 import json, datetime

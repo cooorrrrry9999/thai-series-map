@@ -313,6 +313,19 @@ async function loadAll(forceRefresh=false){
   if(results[6])saveAC(CACHE_KEYS.talent,TALENT_M);
 
   updatePendingBadge();
+
+  // 🍖→🍽️ 絵文字移行：Firestore側に古い絵文字が残っていたら自動で更新する。
+  // （管理者ログイン中しか loadAll は走らないので権限は常にある。移行済みなら何もしない）
+  for(const m of CAT_M){
+    if(m.emoji==='🍖'){
+      try{
+        await updateDoc(doc(db,'category_master',m.id),{emoji:'🍽️'});
+        m.emoji='🍽️';
+        saveAC(CACHE_KEYS.cat,CAT_M);
+        console.log('[migrate] category_master「'+m.name+'」の絵文字を 🍖→🍽️ に更新しました');
+      }catch(e){console.warn('[migrate] 絵文字の自動更新に失敗:',e);}
+    }
+  }
 }
 function updatePendingBadge(){
   const n=SUBS.filter(s=>s.status==='未承認').length;
