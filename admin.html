@@ -48,6 +48,23 @@ html,body{height:100%;font-family:'Noto Sans JP',sans-serif;background:var(--bg)
 .page-title{font-size:18px;font-weight:900;flex:1}
 .page-body{padding:20px 24px;flex:1}
 
+/* ── モバイル対応：サイドバーはハンバーガーから開くドロワーにする ── */
+.sb-open-btn{display:none}
+.sb-overlay{position:fixed;inset:0;z-index:190;background:rgba(0,0,0,.35);display:none}
+@media(max-width:767px){
+  .sb-open-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border:1.5px solid var(--border);border-radius:9px;background:var(--white);font-size:16px;cursor:pointer;flex-shrink:0;font-family:inherit}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:200;height:100dvh;width:min(78vw,280px);transform:translateX(-100%);transition:transform .25s cubic-bezier(.22,1,.36,1);box-shadow:4px 0 24px rgba(0,0,0,.18)}
+  .sidebar.open{transform:translateX(0)}
+  .sb-overlay.open{display:block}
+  .sb-footer{padding-bottom:max(env(safe-area-inset-bottom),10px)}
+  .page-header{padding:10px 12px 8px}
+  .page-title{font-size:15px}
+  .page-body{padding:14px 12px calc(env(safe-area-inset-bottom) + 14px)}
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .form-grid,.form-grid.three{grid-template-columns:1fr}
+  .search-input{min-width:0;flex:1}
+}
+
 /* ── Stat cards ── */
 .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
 .stat-card{background:var(--white);border-radius:12px;padding:14px 16px;border:1px solid var(--border)}
@@ -152,7 +169,7 @@ html,body{height:100%;font-family:'Noto Sans JP',sans-serif;background:var(--bg)
 
 /* ── Modal ── */
 .modal-bg{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;animation:fadeIn .15s}
-.modal-box{background:var(--white);border-radius:14px;padding:22px 26px;width:440px;max-height:80vh;overflow-y:auto;animation:scaleIn .2s cubic-bezier(.22,1,.36,1)}
+.modal-box{background:var(--white);border-radius:14px;padding:22px 26px;width:min(440px,92vw);max-height:80vh;overflow-y:auto;animation:scaleIn .2s cubic-bezier(.22,1,.36,1)}
 .modal-title{font-size:15px;font-weight:900;margin-bottom:14px}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes scaleIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
@@ -204,8 +221,12 @@ html,body{height:100%;font-family:'Noto Sans JP',sans-serif;background:var(--bg)
     </div>
   </nav>
 
+  <!-- モバイル：ドロワーを閉じる用の背景 -->
+  <div class="sb-overlay" id="sb-overlay" onclick="toggleSbDrawer(false)"></div>
+
   <div class="main">
     <div class="page-header">
+      <button class="sb-open-btn" onclick="toggleSbDrawer(true)" title="メニュー">☰</button>
       <div class="page-title" id="page-title">ダッシュボード</div>
       <a href="index.html" style="font-size:12px;color:var(--purple);text-decoration:none;font-weight:700;flex-shrink:0">← 地図に戻る</a>
     </div>
@@ -402,8 +423,14 @@ function localDeleteCat(id){CAT_M=CAT_M.filter(m=>m.id!==id);saveAC(CACHE_KEYS.c
 
 // ── Navigation ─────────────────────────────────────────────────
 const PAGE_TITLES={dashboard:'📊 ダッシュボード',pending:'📬 承認待ち',spots:'📍 スポット一覧',add:'➕ 新規追加',cp:'💗 CP管理',talent:'🧑 タレント管理',migrate:'🔄 CP→タレント移行',series:'🎬 作品設定',category:'📂 カテゴリー'};
+// モバイル：サイドバードロワーの開閉（PCではCSSが効かないだけなので呼んでも無害）
+window.toggleSbDrawer=function(open){
+  document.querySelector('.sidebar')?.classList.toggle('open',open);
+  document.getElementById('sb-overlay')?.classList.toggle('open',open);
+};
 window.showPage=function(name){
   currentPage=name;
+  toggleSbDrawer(false); // モバイルではメニュー選択でドロワーを閉じる
   document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
   document.getElementById('nav-'+name)?.classList.add('active');
   document.getElementById('page-title').textContent=PAGE_TITLES[name]||name;
