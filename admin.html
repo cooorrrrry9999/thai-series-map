@@ -9,17 +9,23 @@
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --sw:200px;--white:#fff;--bg:#F8FAFC;--text:#111827;--sub:#6B7280;
-  --border:#E5E7EB;--hover:#F3F4F6;
-  --purple:#9333EA;--pl:#FAF5FF;--pb:#D8B4FE;
+  --sw:200px;--white:#fff;--bg:#F7F7FA;--text:#232138;--sub:#726F8E;
+  --border:#E9E8F1;--hover:#EFEEF6;
+  /* 公開アプリと同じ夜藍。旧--purpleの名前は残しつつ値だけ夜藍に差し替え＝ツール全体が一度に揃う。
+     status色（green/red/amber）は意味を持つので触らない。 */
+  --purple:#2D2A4A;--pl:#EFEEF6;--pb:#C9C6DE;--ink-soft:#413D66;
   --green:#059669;--red:#DC2626;--blue:#3B82F6;--amber:#D97706;
-  --pink:#EC4899;
+  --pink:#EC4899;--needle:#D6455D;
 }
 html,body{height:100%;font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+/* ブランドの声は「ワードマーク」と「ページ見出し」の2か所だけに明朝を効かせる（ツールの可読性は保つ） */
+.sb-logo-title,.page-title{font-family:'Shippori Mincho','Noto Sans JP',serif;letter-spacing:.01em}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
 /* ── Auth gate ── */
 #auth-gate{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
@@ -123,11 +129,12 @@ html,body{height:100%;font-family:'Noto Sans JP',sans-serif;background:var(--bg)
 .btn-del{background:#FEE2E2;color:var(--red)}
 .btn-approve{background:#D1FAE5;color:var(--green)}
 .btn-pub{background:#D1FAE5;color:var(--green)}
-.btn-primary{background:linear-gradient(135deg,var(--pb),var(--purple));color:white;padding:8px 18px;font-size:13px;border-radius:9px}
+.btn-primary{background:var(--purple);color:white;padding:8px 18px;font-size:13px;border-radius:9px;transition:background .12s,opacity .1s}
+.btn-primary:hover{background:var(--ink-soft)}
 .btn-sm{padding:3px 8px;font-size:11px}
 
 /* ── 処理結果トースト ── */
-.adm-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:12px 22px;border-radius:12px;font-size:13px;font-weight:700;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:90vw;animation:tfade 3.5s forwards;pointer-events:none}
+.adm-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--purple);color:#fff;padding:12px 22px;border-radius:12px;font-size:13px;font-weight:700;z-index:999;box-shadow:0 8px 24px rgba(45,42,74,.4);max-width:90vw;animation:tfade 3.5s forwards;pointer-events:none}
 @keyframes tfade{0%{opacity:0;transform:translate(-50%,10px)}8%{opacity:1;transform:translate(-50%,0)}85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,0)}}
 
 /* ── Form panel ── */
@@ -188,8 +195,8 @@ html,body{height:100%;font-family:'Noto Sans JP',sans-serif;background:var(--bg)
 <body>
 
 <div id="auth-gate">
-  <div style="font-size:44px">🌸</div>
-  <div style="font-size:20px;font-weight:900">Thai Series Map 管理者画面</div>
+  <img src="icon-192.png" alt="" style="width:64px;height:64px;border-radius:18px;box-shadow:0 6px 20px rgba(45,42,74,.28)">
+  <div style="font-size:20px;font-weight:900;font-family:'Shippori Mincho','Noto Sans JP',serif">Thai Series Map 管理者画面</div>
   <div style="font-size:13px;color:var(--sub)">管理者アカウントでログインしてください</div>
   <button class="g-btn" onclick="doLogin()">
     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">Googleでログイン
@@ -198,9 +205,12 @@ html,body{height:100%;font-family:'Noto Sans JP',sans-serif;background:var(--bg)
 
 <div id="admin-wrap">
   <nav class="sidebar">
-    <div class="sb-logo">
-      <div class="sb-logo-title">🌸 Thai Series Map</div>
-      <div class="sb-logo-sub">管理者画面</div>
+    <div class="sb-logo" style="display:flex;align-items:center;gap:8px">
+      <img src="icon-192.png" alt="" style="width:26px;height:26px;border-radius:8px;flex-shrink:0">
+      <div>
+        <div class="sb-logo-title">Thai Series Map</div>
+        <div class="sb-logo-sub">管理者画面</div>
+      </div>
     </div>
     <div class="sb-nav">
       <div class="sb-section">メイン</div>
