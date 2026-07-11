@@ -1949,7 +1949,7 @@ function populateTableFilters(){
   }
   const cp=document.getElementById('tf-cp');
   if(cp){
-    cp.value=tableFilters.cp;
+    cp.value=tableFilters.cp?whoLabel(tableFilters.cp):'';
     cp.classList.toggle('on',!!tableFilters.cp);
   }
   const mk=document.getElementById('tf-mark');
@@ -2001,12 +2001,12 @@ function renderSpotTable(){
   document.getElementById('th-series').textContent=tableSortKey==='series'?(tableSortDir>0?' ▲':' ▼'):'';
   document.getElementById('table-count').textContent=tf('count',{n:rows.length});
   document.getElementById('table-body').innerHTML=rows.map(r=>{
-    const {loc,series,cps}=r;
+    const {loc,series,cpKeys}=r;
     const mk=MARKS[loc.id];
     const isRec=isRecSpot(loc);
     return`<tr onclick="window._tableSel('${enc(loc.id)}')">
       <td><div class="tname">${catEmoji(loc.category)} ${esc(loc.name)}</div>${loc.address?`<div class="taddr">${esc(loc.address)}</div>`:''}</td>
-      <td><div class="tser">${series.map(esc).join('、')||(isRec?recLabel():'—')}</div>${cps.length?`<div class="tcps">${cps.map(esc).join('、')}</div>`:''}</td>
+      <td><div class="tser">${series.map(esc).join('、')||(isRec?recLabel():'—')}</div>${cpKeys.length?`<div class="tcps">${cpKeys.map(k=>esc(whoLabel(k))).join('、')}</div>`:''}</td>
       <td onclick="event.stopPropagation()" style="white-space:nowrap">
         <button class="tmark-btn w${mk==='want'?' on':''}" onclick="window._tableMark('${enc(loc.id)}','want')" title="行きたい">💖</button><button class="tmark-btn g${mk==='went'?' on':''}" onclick="window._tableMark('${enc(loc.id)}','went')" title="行った">✅</button>
       </td>
@@ -2190,14 +2190,14 @@ function setupCombo(id,getOptions,{allowFree=false,emptyKey=null,onSelect=null,g
     const q=(input.value||'').toLowerCase().trim();
     const starts=[],contains=[];
     getOptions().forEach(o=>{
-      const l=(o.value+' '+(o.sub||'')).toLowerCase();
+      const l=(o.value+' '+(o.label||'')+' '+(o.sub||'')).toLowerCase();
       if(!q||l.startsWith(q))starts.push(o);
       else if(l.includes(q))contains.push(o);
     });
     const items=[...starts,...contains];
     let html='';
     if(emptyKey)html+=`<button type="button" class="combo-row combo-empty-row" data-v="">${t(emptyKey)}</button>`;
-    html+=items.map(o=>`<button type="button" class="combo-row" data-v="${escAttr(o.value)}">${o.emoji?o.emoji+' ':''}${esc(o.value)}${o.sub?`<span class="combo-sub">（${esc(o.sub)}）</span>`:''}${o.badge?`<span class="combo-badge">${o.badge}</span>`:''}</button>`).join('');
+    html+=items.map(o=>`<button type="button" class="combo-row" data-v="${escAttr(o.value)}">${o.emoji?o.emoji+' ':''}${esc(o.label||o.value)}${o.sub?`<span class="combo-sub">（${esc(o.sub)}）</span>`:''}${o.badge?`<span class="combo-badge">${o.badge}</span>`:''}</button>`).join('');
     if(!items.length&&q){
       html+=allowFree
         ?`<button type="button" class="combo-row" data-v="${escAttr(input.value.trim())}">${tf('new_free',{s:esc(input.value.trim())})}</button>`
@@ -2272,13 +2272,16 @@ function setupFormCombos(){
   setupCombo('tf-series',()=>getUniqueSeries().map(s=>({value:s})),
     {emptyKey:'f_series_all',onSelect:v=>window._tableFilter('series',v),getCurrent:()=>tableFilters.series});
   setupCombo('tf-cp',()=>{
-    // 実データに登場するタレントだけを候補に（マスタ情報で絵文字・本名を補完）
-    const inData=new Set(getUniqueCPs());
-    const rows=cpOptionsForSeries(tableFilters.series).filter(o=>inData.has(o.value));
-    const seen=new Set(rows.map(o=>o.value));
-    getUniqueCPs().filter(c=>!seen.has(c)).forEach(c=>rows.push({value:c,emoji:'⭐'}));
+    // 実データに登場するタレントを whoKey 単位で候補化（同名別人は本名付きで区別）。
+    // 選択中の作品があれば、その出演者を先頭に並べる。
+    const castKeys=tableFilters.series
+      ? new Set(APPS.filter(a=>a.series===tableFilters.series&&a.cp).map(a=>whoKey(a)))
+      : new Set();
+    const rows=[];
+    getUniqueCPs().forEach(k=>{const c=whoCfg(k);const o={value:k,label:whoLabel(k),emoji:c.emoji||'⭐'};if(castKeys.has(k))o.badge=esc(t('cast'));rows.push(o);});
+    rows.sort((a,b)=>(b.badge?1:0)-(a.badge?1:0));
     return rows;
-  },{emptyKey:'f_cp_all',onSelect:v=>window._tableFilter('cp',v),getCurrent:()=>tableFilters.cp});
+  },{emptyKey:'f_cp_all',onSelect:v=>window._tableFilter('cp',v),getCurrent:()=>tableFilters.cp?whoLabel(tableFilters.cp):''});
 }
 
 window.openSubmitModal=()=>{
@@ -2451,7 +2454,7 @@ window.exportKML=function(){
   const filtered=getFiltered();
   if(!filtered.length){alert(t('kml_none'));return;}
   let fname='thai-series-map';
-  if(activeCps.size>0)fname+='-'+[...activeCps].join('_');
+  if(activeCps.size>0)fname+='-'+[...activeCps].map(whoName).join('_');
   if(activeTypes.size>0)fname+='-'+[...activeTypes].join('_');
   fname+='.kml';
   const parts=filtered.map(function(loc){
