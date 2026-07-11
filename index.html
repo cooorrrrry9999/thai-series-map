@@ -931,6 +931,9 @@ const GL_URL = "https://thai-gl-works-2c835.web.app/index.html";
 // キャッシュ（開発中30分）
 const TTL=7*24*60*60*1000, CL='tsmap_loc_v2', CA='tsmap_app_v2', CS='tsmap_series_v2', CC='tsmap_cp_v1', CK='tsmap_cat_v1', CT='tsmap_talent_v1'; // 7日キャッシュ（公開用）
 let TALENTS=[]; // 投稿フォーム用のタレント一覧
+// 同名別人（同じチューレン＝ニックネームを持つ別女優）を区別するためのインデックス
+let TAL_BY_SID={};            // talent_id(src_id) → {name, real_name, color, emoji}
+let DUP_TAL_NAMES=new Set();  // 2人以上が使っているニックネーム（例: Fay, Atom, June, Orm…）
 const sc=(k,d)=>{try{localStorage.setItem(k,JSON.stringify({ts:Date.now(),data:d}))}catch(e){}};
 const lc=k=>{try{const r=localStorage.getItem(k);if(!r)return null;const{ts,data}=JSON.parse(r);if(Date.now()-ts>TTL){localStorage.removeItem(k);return null;}return data;}catch(e){return null;}};
 
@@ -1232,8 +1235,23 @@ const isRecSpot=loc=>{const a=locApps(loc.id);return a.every(x=>!x.cp&&!x.talent
 
 // CPの設定を取得（未登録は自動割り当て）
 function cpCfg(cpName){return CP_MAP[cpName]||(cpName?autoCpColor(cpName):FB);}
+// ── 人物識別（whoKey）──────────────────────────────────────────
+// 同名別人（同じチューレン）のいるニックネームだけ talent_id をキーにし、
+// それ以外は従来どおりニックネーム名をキーにする＝大多数のタレントは挙動不変。
+function whoKey(a){
+  if(a&&a.talent_id&&TAL_BY_SID[a.talent_id]&&DUP_TAL_NAMES.has(a.cp||a.talent))return a.talent_id;
+  return a?(a.cp||a.talent||''):'';
+}
+// キー→バニックネーム（本名なし）
+function whoName(key){const t=TAL_BY_SID[key];return t?t.name:key;}
+// キー→表示ラベル（同名別人がいるニックネームだけ「Fay（本名）」で区別）
+function whoLabel(key){const t=TAL_BY_SID[key];return t?(t.real_name?`${t.name}（${t.real_name}）`:t.name):key;}
+// キー→色設定
+function whoCfg(key){const t=TAL_BY_SID[key];return t?{color:t.color,light:t.color+'22',border:t.color+'88',emoji:t.emoji||'⭐'}:cpCfg(key);}
+// キー→出演作品一覧
+function getWhoSeries(key){return[...new Set(APPS.filter(a=>whoKey(a)===key).map(a=>a.series).filter(Boolean))];}
 // 場所の代表CPを取得してその色を返す
-function primaryCpCfg(locId){const a=locApps(locId)[0];return a&&a.cp?cpCfg(a.cp):FB;}
+function primaryCpCfg(locId){const a=locApps(locId)[0];return a&&a.cp?whoCfg(whoKey(a)):FB;}
 // カテゴリーの絵文字を取得
 function catEmoji(cat){return CAT_MAP[cat]||'📍';}
 // 作品のdrama_idを取得
@@ -1287,13 +1305,13 @@ function buildAppsIndex(){
     if(a.status!=='公開')return;
     const arr=APPS_BY_LOC.get(a.location_id);
     arr?arr.push(a):APPS_BY_LOC.set(a.location_id,[a]);
-    if(a.cp)cps.add(a.cp);
+    if(a.cp)cps.add(whoKey(a));
     if(a.series)series.add(a.series);
   });
-  UNIQ_CPS=[...cps].sort(); UNIQ_SERIES=[...series].sort();
+  UNIQ_CPS=[...cps].sort((x,y)=>whoName(x).localeCompare(whoName(y))); UNIQ_SERIES=[...series].sort();
 }
 const locApps=id=>APPS_BY_LOC.get(id)||[];
-const primaryCfg=id=>{const a=locApps(id)[0];return a&&a.cp?cpCfg(a.cp):FB;};
+const primaryCfg=id=>{const a=locApps(id)[0];return a&&a.cp?whoCfg(whoKey(a)):FB;};
 
 // CP↔タグの対応を動的に取得
 function getCpSeries(cp){return[...new Set(APPS.filter(a=>a.cp===cp).map(a=>a.series).filter(Boolean))];}
@@ -1303,7 +1321,7 @@ function getSeriesCps(series){return[...new Set(APPS.filter(a=>a.series===series
 function getVisibleTags(){
   if(activeCps.size===0) return getUniqueSeries();
   const cpTags=new Set();
-  activeCps.forEach(cp=>getCpSeries(cp).forEach(s=>cpTags.add(s)));
+  activeCps.forEach(cp=>getWhoSeries(cp).forEach(s=>cpTags.add(s)));
   // 共通タグは常に追加
   COMMON_TAGS.forEach(t=>{if(getUniqueSeries().includes(t))cpTags.add(t);});
   return [...cpTags].sort();
@@ -1316,7 +1334,7 @@ function getFiltered(){
     const apps=locApps(loc.id);
     const isRec=isRecSpot(loc); // 作品・タレント未設定のおすすめスポット
     // CPフィルター：おすすめスポットはCPに属さないので、CP絞り込み中は隠す
-    if(activeCps.size>0){ if(isRec||!apps.some(a=>activeCps.has(a.cp)))return false; }
+    if(activeCps.size>0){ if(isRec||!apps.some(a=>activeCps.has(whoKey(a))))return false; }
     // 中カテゴリ（作品）フィルター ＋ おすすめタグ
     if(realTypes.size>0||recActive){
       const hitType=apps.some(a=>realTypes.has(a.series));
@@ -1455,6 +1473,12 @@ function applyMasters(sMaster,cpMaster,tMaster,catMaster){
   TALENTS=(tMaster||[]).filter(m=>m.name).map(m=>({name:m.name,real_name:m.real_name||'',color:m.color||'#888',emoji:m.emoji||'⭐'}))
     .sort((a,b)=>a.name.localeCompare(b.name));
   (tMaster||[]).forEach(m=>{if(m.name){CP_MAP[m.name]={color:m.color||'#888',light:(m.color||'#888')+'22',border:(m.color||'#888')+'88',emoji:m.emoji||'⭐'}}});
+  // talent_id で人物を一意に引けるようにする＋同名（同じチューレン）が複数いるニックネームを検出
+  TAL_BY_SID={}; DUP_TAL_NAMES=new Set();
+  const _nameCnt={};
+  (tMaster||[]).forEach(m=>{if(m.src_id&&m.name){TAL_BY_SID[m.src_id]={name:m.name,real_name:m.real_name||'',color:m.color||'#888',emoji:m.emoji||'⭐'};}});
+  (tMaster||[]).forEach(m=>{if(m.name)_nameCnt[m.name]=(_nameCnt[m.name]||0)+1;});
+  Object.keys(_nameCnt).forEach(n=>{if(_nameCnt[n]>1)DUP_TAL_NAMES.add(n);});
   // category_master（カテゴリー絵文字）※🍖は🍽️へ移行済み（未移行の古いデータが来ても正規化する）
   (catMaster||[]).forEach(m=>{if(m.name&&m.emoji)CAT_MAP[m.name]=m.emoji==='🍖'?'🍽️':m.emoji;});
 }
@@ -1607,8 +1631,8 @@ function renderActiveFilterBar(){
   chips.push(`<button class="filter-open-btn" onclick="openFilterDrawer()">${filterIcon} ${t('filter')}</button>`);
   // CPチップ（優先・上）
   activeCps.forEach(cp=>{
-    const cfg=cpCfg(cp);
-    chips.push(`<button class="active-filter-chip" style="background:${cfg.color};color:white;border:none" onclick="window._setCpEnc('${enc(cp)}')">${cfg.emoji||'💗'} ${esc(cp)} ✕</button>`);
+    const cfg=whoCfg(cp);
+    chips.push(`<button class="active-filter-chip" style="background:${cfg.color};color:white;border:none" onclick="window._setCpEnc('${enc(cp)}')">${cfg.emoji||'💗'} ${esc(whoLabel(cp))} ✕</button>`);
   });
   // 中カテゴリチップ
   activeTypes.forEach(tg=>{
@@ -1659,8 +1683,8 @@ function updateApplyBtn(){
 
 function renderCpChips(){
   const box=document.getElementById('cp-chips'); if(!box)return;
-  box.innerHTML=[...activeCps].map(cp=>{const cfg=cpCfg(cp);
-    return`<button class="ms-chip" style="background:${cfg.color};color:#fff" onclick="window._setCpEnc('${enc(cp)}')">${cfg.emoji||'💗'} ${esc(cp)} ✕</button>`;}).join('');
+  box.innerHTML=[...activeCps].map(cp=>{const cfg=whoCfg(cp);
+    return`<button class="ms-chip" style="background:${cfg.color};color:#fff" onclick="window._setCpEnc('${enc(cp)}')">${cfg.emoji||'💗'} ${esc(whoLabel(cp))} ✕</button>`;}).join('');
 }
 function renderSeriesChips(){
   const box=document.getElementById('series-chips'); if(!box)return;
@@ -1685,11 +1709,11 @@ function renderCpList(){
   const box=document.getElementById('cp-list'); if(!box)return;
   const items=msMatch(getUniqueCPs(),cpSearchQ);
   if(!items.length){box.innerHTML=`<div class="ms-empty">${t('no_match')}</div>`;return;}
-  box.innerHTML=items.map(cp=>{const cfg=cpCfg(cp);const on=activeCps.has(cp);
+  box.innerHTML=items.map(cp=>{const cfg=whoCfg(cp);const on=activeCps.has(cp);
     return`<button class="ms-row${on?' on':''}" onclick="window._setCpEnc('${enc(cp)}')">
       <span class="ms-check">${on?'✓':''}</span>
       <span class="cp-dot" style="background:${cfg.color||'#888'}"></span>
-      <span>${cfg.emoji||'💗'} ${esc(cp)}</span></button>`;}).join('');
+      <span>${cfg.emoji||'💗'} ${esc(whoLabel(cp))}</span></button>`;}).join('');
 }
 function renderSeriesList(){
   const box=document.getElementById('series-list'); if(!box)return;
@@ -1727,7 +1751,7 @@ function renderMapOverlayInfo(){
   const el=document.getElementById('map-overlay-info');
   if(!el)return;
   const parts=[];
-  activeCps.forEach(cp=>{const cfg=cpCfg(cp);parts.push(`<span class="cp-dot" style="background:${cfg.color}"></span><span>${cfg.emoji||'💗'} ${esc(cp)}</span>`);});
+  activeCps.forEach(cp=>{const cfg=whoCfg(cp);parts.push(`<span class="cp-dot" style="background:${cfg.color}"></span><span>${cfg.emoji||'💗'} ${esc(whoLabel(cp))}</span>`);});
   activeTypes.forEach(tg=>parts.push(`<span>${tg===REC_TAG?recLabel():esc(tg)}</span>`));
   activeMarks.forEach(k=>parts.push(`<span style="color:${MARK_CFG[k].color}">${markLabel(k)}</span>`));
   if(!parts.length){el.style.display='none';el.innerHTML='';return;}
@@ -1764,7 +1788,7 @@ function renderDrawer(){
     return;
   }
   el.innerHTML=filtered.map(loc=>{
-    const apps=locApps(loc.id),a0=apps[0],isRec=isRecSpot(loc),cfg=isRec?REC_CFG:(a0&&a0.cp?cpCfg(a0.cp):FB),isSel=loc.id===selId,worksN=new Set(apps.map(a=>a.series||REC_TAG)).size;
+    const apps=locApps(loc.id),a0=apps[0],isRec=isRecSpot(loc),cfg=isRec?REC_CFG:(a0&&a0.cp?whoCfg(whoKey(a0)):FB),isSel=loc.id===selId,worksN=new Set(apps.map(a=>a.series||REC_TAG)).size;
     const mk=MARKS[loc.id];
     return`<div class="drawer-card${isSel?' selected':''}" style="${isSel?`border-color:${cfg.color};box-shadow:0 2px 12px ${cfg.border};`:''}" onclick="window._sel('${enc(loc.id)}')">
       <div class="drawer-card-icon" style="display:flex;justify-content:space-between;align-items:center">${catEmoji(loc.category)}${mk?`<span style="font-size:15px">${mk==='want'?'💖':'✅'}</span>`:''}</div>
@@ -1817,7 +1841,7 @@ function fillDetail(loc){
   setSpotTitle(loc,apps);
   // 色はCPで決まる（おすすめ＝タレント無しは金色）
   const primaryCp=apps[0]?.cp||'';
-  const cfg=isRec?REC_CFG:(primaryCp?cpCfg(primaryCp):FB);
+  const cfg=isRec?REC_CFG:(primaryCp?whoCfg(whoKey(apps[0])):FB);
   document.getElementById('detail-accent').style.background=`linear-gradient(90deg,${cfg.border},${cfg.color})`;
   document.getElementById('detail-tags').innerHTML=
     (isRec&&!apps.some(a=>a.series)?`<span class="detail-tag" style="background:${REC_CFG.light};color:${REC_CFG.color};border-color:${REC_CFG.border}">${recLabel()}</span>`:'')+
@@ -1848,10 +1872,10 @@ function fillDetail(loc){
     appsEl.innerHTML=groups.map(g=>{
       // カードの枠色は最初の人物の推し色
       const first=g.items.find(x=>x.cp)||g.items[0];
-      const ac=first&&first.cp?cpCfg(first.cp):FB;
-      // 人物一覧（重複除去）：それぞれ自分の推し色で表示
-      const people=[...new Set(g.items.map(x=>x.cp).filter(Boolean))];
-      const peopleHtml=people.map(cp=>{const c=cpCfg(cp);return`<span style="color:${c.color};opacity:.85;white-space:nowrap">${c.emoji||'💗'} ${esc(cp)}</span>`;}).join('');
+      const ac=first&&first.cp?whoCfg(whoKey(first)):FB;
+      // 人物一覧（重複除去）：talent_idで人物を区別し、同名別人（同じチューレン）は「Fay（本名）」で表示
+      const people=[...new Set(g.items.filter(x=>x.cp).map(x=>whoKey(x)))];
+      const peopleHtml=people.map(k=>{const c=whoCfg(k);return`<span style="color:${c.color};opacity:.85;white-space:nowrap">${c.emoji||'💗'} ${esc(whoLabel(k))}</span>`;}).join('');
       // シーン説明（重複除去）
       const scenes=[...new Set(g.items.map(x=>x.scene_desc).filter(Boolean))];
       const scenesHtml=scenes.map(s=>`<div class="appearance-scene">${esc(s)}</div>`).join('');
@@ -1960,12 +1984,12 @@ function renderSpotTable(){
     const apps=locApps(loc.id);
     return {loc,
       series:[...new Set(apps.map(a=>a.series).filter(Boolean))],
-      cps:[...new Set(apps.map(a=>a.cp).filter(Boolean))]};
+      cpKeys:[...new Set(apps.filter(a=>a.cp).map(a=>whoKey(a)))]};
   });
-  if(q)rows=rows.filter(r=>[r.loc.name,r.loc.address,r.loc.category,catLabel(r.loc.category),r.loc.memo,...r.series,...r.cps].join(' ').toLowerCase().includes(q));
+  if(q)rows=rows.filter(r=>[r.loc.name,r.loc.address,r.loc.category,catLabel(r.loc.category),r.loc.memo,...r.series,...r.cpKeys.map(whoLabel)].join(' ').toLowerCase().includes(q));
   // 項目別フィルター
   if(tableFilters.series)rows=rows.filter(r=>r.series.includes(tableFilters.series));
-  if(tableFilters.cp)rows=rows.filter(r=>r.cps.includes(tableFilters.cp));
+  if(tableFilters.cp)rows=rows.filter(r=>r.cpKeys.includes(tableFilters.cp));
   if(tableFilters.mark==='none')rows=rows.filter(r=>!MARKS[r.loc.id]);
   else if(tableFilters.mark)rows=rows.filter(r=>MARKS[r.loc.id]===tableFilters.mark);
   rows.sort((a,b)=>{
@@ -2033,7 +2057,7 @@ window._setCp=cp=>{
     activeTypes.forEach(t=>{
       if(!COMMON_TAGS.has(t)){
         // 他の選択中CPにも紐づくタグなら残す
-        const stillValid=[...activeCps].some(c=>getCpSeries(c).includes(t));
+        const stillValid=[...activeCps].some(c=>getWhoSeries(c).includes(t));
         if(!stillValid)activeTypes.delete(t);
       }
     });
@@ -2042,7 +2066,7 @@ window._setCp=cp=>{
     // そのCPに紐づかない（共通でもない）タグ選択を解除
     activeTypes.forEach(t=>{
       if(!COMMON_TAGS.has(t)){
-        const valid=[...activeCps].some(c=>getCpSeries(c).includes(t));
+        const valid=[...activeCps].some(c=>getWhoSeries(c).includes(t));
         if(!valid)activeTypes.delete(t);
       }
     });
@@ -2103,7 +2127,7 @@ function renderSearchSuggest(v){
   }
   if(cps.length){
     html+=`<div class="sug-head">${t('sug_talent')}</div>`;
-    html+=cps.map(cp=>{const c=cpCfg(cp);return`<button type="button" class="sug-row" onmousedown="event.preventDefault();window._sugCp('${enc(cp)}')"><span class="sug-ico">${c.emoji||'💗'}</span><span class="sug-name">${esc(cp)}</span></button>`;}).join('');
+    html+=cps.map(cp=>{const c=whoCfg(cp);return`<button type="button" class="sug-row" onmousedown="event.preventDefault();window._sugCp('${enc(cp)}')"><span class="sug-ico">${c.emoji||'💗'}</span><span class="sug-name">${esc(whoLabel(cp))}</span></button>`;}).join('');
   }
   el.innerHTML=html; el.style.display='block';
 }
