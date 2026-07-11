@@ -1470,7 +1470,7 @@ function applyMasters(sMaster,cpMaster,tMaster,catMaster){
   // cp_master（CP色）
   (cpMaster||[]).forEach(m=>{if(m.name){CP_MAP[m.name]={color:m.color||'#888',light:(m.color||'#888')+'22',border:(m.color||'#888')+'88',emoji:m.emoji||'💗'}}});
   // talent_master（タレント色・投稿フォーム用）※マーカー色の基準
-  TALENTS=(tMaster||[]).filter(m=>m.name).map(m=>({name:m.name,real_name:m.real_name||'',color:m.color||'#888',emoji:m.emoji||'⭐'}))
+  TALENTS=(tMaster||[]).filter(m=>m.name).map(m=>({name:m.name,src_id:m.src_id||'',real_name:m.real_name||'',color:m.color||'#888',emoji:m.emoji||'⭐'}))
     .sort((a,b)=>a.name.localeCompare(b.name));
   (tMaster||[]).forEach(m=>{if(m.name){CP_MAP[m.name]={color:m.color||'#888',light:(m.color||'#888')+'22',border:(m.color||'#888')+'88',emoji:m.emoji||'⭐'}}});
   // talent_id で人物を一意に引けるようにする＋同名（同じチューレン）が複数いるニックネームを検出
@@ -2233,16 +2233,22 @@ function seriesComboOptions(){
 function cpComboOptions(seriesInputId){
   return cpOptionsForSeries((document.getElementById(seriesInputId)?.value||'').trim());
 }
+// 投稿フォームで保存するタレント識別値：同名別人がいるニックネームは talent_id（src_id）、
+// それ以外は従来どおりニックネーム名。承認時に admin 側で cp/talent_id へ解決する。
+function talentPickKey(m){return (DUP_TAL_NAMES.has(m.name)&&m.src_id)?m.src_id:m.name;}
 function cpOptionsForSeries(series){
-  const master=TALENTS.length?TALENTS:Object.keys(CP_MAP).map(c=>({name:c,emoji:CP_MAP[c].emoji,real_name:''}));
-  const cast=series?getSeriesTalents(series):[];
-  const castSet=new Set(cast);
-  const rows=[];
-  cast.forEach(nm=>{
-    const tl=master.find(x=>x.name===nm)||{name:nm,emoji:'⭐',real_name:''};
-    rows.push({value:tl.name,sub:tl.real_name,emoji:tl.emoji||'⭐',badge:esc(t('cast'))});
+  const master=TALENTS.length?TALENTS:Object.keys(CP_MAP).map(c=>({name:c,src_id:'',emoji:CP_MAP[c].emoji,real_name:''}));
+  // この作品の出演者を識別キー単位で集める（同名別人も別々に「出演」判定）
+  const castKeys=series?new Set(APPS.filter(a=>a.series===series&&a.cp).map(a=>whoKey(a))):new Set();
+  // タレント1人につき1行。同名別人は talent_id で別行になり、本名で見分けられる。
+  const rows=master.map(m=>{
+    const key=talentPickKey(m);
+    const o={value:key,label:m.name,sub:m.real_name,emoji:m.emoji||'⭐'};
+    if(castKeys.has(key))o.badge=esc(t('cast'));
+    return o;
   });
-  master.filter(tl=>!castSet.has(tl.name)).forEach(tl=>rows.push({value:tl.name,sub:tl.real_name,emoji:tl.emoji||'⭐'}));
+  // 「出演」バッジ付きを先頭へ（安定ソート）
+  rows.sort((a,b)=>(b.badge?1:0)-(a.badge?1:0));
   return rows;
 }
 // 投稿フォーム・表フィルターのコンボボックスを初期化（loadAllから一度だけ呼ぶ）
@@ -2253,8 +2259,9 @@ function msTalentsSet(field,arr){const el=document.getElementById(field+'-multi'
 function msChipRender(field){
   const box=document.getElementById(field+'-chips'); if(!box)return;
   const arr=msTalents(field);
-  box.innerHTML=arr.map((nm,i)=>{const c=cpCfg(nm);
-    return`<button type="button" class="ms-chip" style="background:${c.color};color:#fff" onclick="msTalentRemove('${field}',${i})">${c.emoji||'⭐'} ${esc(nm)} ✕</button>`;}).join('');
+  // arr の各要素は識別キー（同名別人は talent_id）。本名付きラベル・推し色で表示する。
+  box.innerHTML=arr.map((key,i)=>{const c=whoCfg(key);
+    return`<button type="button" class="ms-chip" style="background:${c.color};color:#fff" onclick="msTalentRemove('${field}',${i})">${c.emoji||'⭐'} ${esc(whoLabel(key))} ✕</button>`;}).join('');
 }
 window.msTalentRemove=function(field,i){const a=msTalents(field);a.splice(i,1);msTalentsSet(field,a);};
 // コンボで選んだタレントを配列に追加（検索欄はクリアして続けて選べるようにする）

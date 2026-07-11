@@ -539,7 +539,8 @@ function pendingCardHTML(s){
   // 詳細行（入っている項目だけ表示）
   const rows=[];
   const whoList=(Array.isArray(s.cp_list)&&s.cp_list.length)?s.cp_list.filter(Boolean):(s.cp?[s.cp]:[]);
-  const whoStr=whoList.map(esc).join('・');
+  // 識別キー→本名付きラベルに解決（同名別人がどちらか一目で分かるように）
+  const whoStr=whoList.map(k=>esc(resolveSubTalent(k).label)).join('・');
   if(s.series||whoStr)rows.push(`🎬 <b>${esc(s.series||'（作品未指定）')}</b>${whoStr?` ／ ⭐ ${whoStr}${whoList.length>1?`（${whoList.length}名）`:''}`:''}`);
   if(s.scene_desc)rows.push(`📝 ${esc(s.scene_desc)}`);
   if(s.memo)rows.push(`💡 ${esc(s.memo)}`);
@@ -606,8 +607,10 @@ window.approveSub=async function(id){
   let newLocId=null, resLocId=null, appIds=[], resultNote='';
   // 指定スポットへ紐付け（appearances）を作成し、ローカルにも反映
   async function addApps(locId){
-    for(const cp of cpNames){
-      const data={location_id:locId,cp:cp||'',series:s.series||'',scene_desc:s.scene_desc||'',sns_url:s.sns_url||'',status:'公開'};
+    for(const key of cpNames){
+      // 識別キー→ {cp, talent_id} に解決（同名別人も正しい人物に紐付く）
+      const r=resolveSubTalent(key);
+      const data={location_id:locId,cp:r.cp,talent:r.cp,talent_id:r.talent_id,series:s.series||'',scene_desc:s.scene_desc||'',sns_url:s.sns_url||'',status:'公開'};
       const ref=await addDoc(collection(db,'appearances'),data);
       appIds.push(ref.id);
       localAddApp(ref.id,data);
@@ -619,7 +622,7 @@ window.approveSub=async function(id){
       const loc=LOCS.find(l=>l.id===s.target_location_id);
       if(!loc){alert('対象スポットが見つかりません（削除された可能性があります）。却下してください。');return;}
       if(isApp){
-        const who=cpNames.filter(Boolean).join('・')||'（なし）';
+        const who=cpNames.filter(Boolean).map(k=>resolveSubTalent(k).label).join('・')||'（なし）';
         if(!confirm(`「${loc.name}」に紐付けを追加しますか？\n${s.series||''} / ${who}\n${s.scene_desc||''}`))return;
         await addApps(loc.id);
         resLocId=loc.id;
@@ -1302,6 +1305,18 @@ function appTalent(a){
   if(a&&a.talent_id){const m=TALENT_M.find(x=>talentKey(x)===a.talent_id);if(m)return m;}
   if(a&&a.talent){const m=TALENT_M.find(x=>x.name===a.talent);if(m)return m;}
   return null;
+}
+// 投稿(location_submissions)の cp_list 要素を解決する。
+// 要素は識別キー：ユーザー投稿フォームは同名別人を talent_id(src_id)で、それ以外はニックネーム名で送る。
+// 戻り値 {cp, talent_id, label}。承認時に appearance へ cp/talent_id を正しく付けるために使う。
+function resolveSubTalent(key){
+  if(!key)return{cp:'',talent_id:'',label:'（なし）'};
+  const bySid=TALENT_M.find(x=>talentKey(x)===key);
+  if(bySid)return{cp:bySid.name,talent_id:talentKey(bySid),label:bySid.name+(bySid.real_name?`（${bySid.real_name}）`:'')};
+  const byName=TALENT_M.filter(x=>x.name===key);
+  if(byName.length===1)return{cp:key,talent_id:talentKey(byName[0]),label:key};
+  // 同名が複数居るのに名前だけで来た（古い投稿など）＝人物を確定できない。名前だけ付ける。
+  return{cp:key,talent_id:'',label:key+(byName.length>1?'（⚠要確認）':'')};
 }
 function appWhoKey(a){const t=appTalent(a);return t?talentKey(t):('legacy:'+(a.talent||a.cp||''));}
 function appWhoChip(a){
