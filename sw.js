@@ -3,7 +3,7 @@
 // 注意：data.json はネットワーク優先（常に最新を取りに行き、オフライン時だけキャッシュを使う）。
 //       これはFirestore読み取りとは無関係（data.jsonは静的ファイル）だが、通信量と表示速度を改善する。
 
-const CACHE = 'tglmap-v15';                 // ★中身を更新したらここの番号を上げる（v2, v3…）= 古いキャッシュを捨てる合図
+const CACHE = 'tglmap-v16';                 // ★中身を更新したらここの番号を上げる（v2, v3…）= 古いキャッシュを捨てる合図
 const SHELL = [
   './',
   './index.html',
@@ -35,6 +35,12 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return; // 書き込み等はそのまま通す
 
   const url = new URL(req.url);
+
+  // ⓪ Firebase（Firestore・認証）の通信には一切触らない。
+  //    ここをキャッシュ処理に通すと、保存（書き込み）の応答が返らず画面が固まる原因になる。
+  //    キャッシュしてよそのオリジンは、フォントとLeaflet（unpkg）だけに限定する。
+  if (url.origin !== self.location.origin
+      && !/^(fonts\.googleapis\.com|fonts\.gstatic\.com|unpkg\.com)$/.test(url.hostname)) return;
 
   // ① data.json はネットワーク優先（最新を取りに行く／オフラインならキャッシュ）
   if (url.pathname.endsWith('/data.json')) {

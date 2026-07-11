@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Thai Series Map 🌸 タイドラマ・タイGL聖地巡礼マップ | Thai GL Filming Locations</title>
+<title>Thai Series Map | タイドラマ・タイGL聖地巡礼マップ | Thai GL Filming Locations</title>
 <meta name="description" content="タイドラマ・タイGLの聖地巡礼マップ。GAP The Series・23.5・The Loyal Pin などのロケ地・撮影場所を地図で探して、Googleマップでそのままナビ。Interactive map of Thai GL series filming & shooting locations in Bangkok and Thailand.">
 <meta name="google-site-verification" content="1fuQ68asnxvuP1ymX2j6tvEN4ZDfxx3NPhASRaCaq-s">
 <link rel="canonical" href="https://cooorrrrry9999.github.io/thai-series-map/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Thai Series Map">
-<meta property="og:title" content="Thai Series Map 🌸 タイGL聖地巡礼マップ | Thai GL Filming Locations">
+<meta property="og:title" content="Thai Series Map | タイGL聖地巡礼マップ | Thai GL Filming Locations">
 <meta property="og:description" content="タイGLドラマのロケ地・聖地を地図で。推しの作品・カップルで絞って、Googleマップでナビまで。Find filming locations of Thai GL series on an interactive map.">
 <meta property="og:url" content="https://cooorrrrry9999.github.io/thai-series-map/">
 <meta property="og:image" content="https://cooorrrrry9999.github.io/thai-series-map/og-image.png">
@@ -29,6 +29,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="La Map">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://unpkg.com">
@@ -47,7 +49,7 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 
 /* ── ログイン画面 ── */
 #login-screen{position:fixed;inset:0;z-index:300;background:linear-gradient(160deg,#FDF2F8 0%,#F5F3FF 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;gap:20px}
-.login-logo{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#F9A8D4,#C4B5FD);display:flex;align-items:center;justify-content:center;font-size:40px}
+.login-logo{width:80px;height:80px;border-radius:22px;object-fit:cover;box-shadow:0 4px 16px rgba(0,0,0,.18)}
 .login-title{font-size:24px;font-weight:900;letter-spacing:-.02em}
 .login-sub{font-size:13px;color:var(--text-sub);text-align:center;line-height:1.8}
 .login-btn{display:flex;align-items:center;gap:12px;background:var(--white);border:2px solid #E5E7EB;border-radius:14px;padding:14px 28px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 12px rgba(0,0,0,.08);transition:all .15s;width:100%;max-width:300px;justify-content:center}
@@ -72,7 +74,6 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 /* ── 上部コントロールバー ── */
 .top-bar{position:fixed;top:0;left:0;right:0;z-index:50;padding:env(safe-area-inset-top, 10px) 12px 10px;padding-top:max(env(safe-area-inset-top),10px);display:flex;align-items:center;gap:8px;pointer-events:none}
 .top-bar>*{pointer-events:auto}
-.app-logo{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#F9A8D4,#C4B5FD);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:var(--shadow);flex-shrink:0}
 .search-box{flex:1;min-width:0;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-radius:24px;padding:9px 14px;font-size:14px;border:none;box-shadow:var(--shadow);font-family:inherit;outline:none;color:var(--text)}
 .search-box::placeholder{color:#bbb}
 /* ── 検索サジェスト（候補リスト） ── */
@@ -152,9 +153,6 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 /* 地図オーバーレイ情報 */
 .map-overlay-info{position:fixed;bottom:calc(var(--drawer-h) + 14px);left:50%;transform:translateX(-50%);z-index:40;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;color:#555;box-shadow:0 2px 10px rgba(0,0,0,.12);display:flex;align-items:center;gap:8px;transition:bottom .3s;pointer-events:none;white-space:nowrap}
 .cp-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;display:inline-block}
-
-/* ── スポットカウントバッジ ── */
-.spot-count{position:fixed;bottom:calc(var(--drawer-h) + 12px);right:14px;z-index:40;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;color:var(--text-sub);box-shadow:var(--shadow);transition:bottom .3s}
 
 /* ── 現在地ボタン ── */
 .locate-btn{position:fixed;bottom:calc(var(--drawer-h) + 12px);left:14px;z-index:40;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.96);border:none;cursor:pointer;font-size:20px;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;transition:bottom .3s}
@@ -403,7 +401,7 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 <!-- ログイン画面（閲覧は不要。投稿・マーク同期などログインが必要な操作時に表示） -->
 <div id="login-screen" style="display:none">
   <button class="login-close" onclick="closeLoginScreen()">×</button>
-  <div class="login-logo">🌸</div>
+  <img class="login-logo" src="icon-192.png" alt="Thai Series Map">
   <div class="login-title">Thai Series Map</div>
   <div class="login-sub" data-i18n-html="login_sub">スポットの投稿や、行きたい！行った！マークの<br>端末をまたいだ保存にはログインが必要です</div>
   <button class="login-btn" onclick="doLogin()">
@@ -418,7 +416,6 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 
 <!-- 上部コントロールバー -->
 <div class="top-bar" id="top-bar" style="display:none">
-  <div class="app-logo">🌸</div>
   <input class="search-box" id="search-box" data-i18n-ph="search_ph" placeholder="場所・作品・CPを検索..." oninput="onSearch(this.value)"><button class="top-btn" onclick="openFilterDrawer()" id="filter-btn" title="Filter" style="display:none">🔍</button>
   <button class="top-btn" id="user-btn" onclick="toggleUserMenu()" title="メニュー">👤</button>
 </div>
@@ -480,13 +477,12 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 </div>
 
 <!-- スポット数バッジ -->
-<div class="spot-count" id="spot-count" style="display:none"></div>
 
 <!-- PC: サイドバートグルボタン -->
 <button class="sidebar-toggle open" id="sidebar-toggle" onclick="toggleSidebar()" title="スポット一覧を開閉">›</button>
 
 <!-- 現在地ボタン -->
-<button class="locate-btn" id="locate-btn" style="display:none" onclick="locateMe()" title="現在地">📍</button>
+<button class="locate-btn" id="locate-btn" style="display:none" onclick="locateMe()" title="現在地">🧭</button>
 
 <!-- ドロワー -->
 <div class="drawer" id="drawer" style="display:none">
@@ -733,7 +729,7 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
       <div>
         <div class="howto-step-title" data-i18n="h_7t">現地でナビにも使える！</div>
         <div class="howto-step-desc" data-i18n="h_7d">各ピンをタップすると場所の詳細が見られます。「経路」ボタンで現地へのナビも起動できます。タイ旅行の前に準備しておくと便利です。</div>
-        <div class="howto-step-tip" data-i18n="h_7tip">🌸 オフライン地図と組み合わせると通信なしでも使えます</div>
+        <div class="howto-step-tip" data-i18n="h_7tip">💡 オフライン地図と組み合わせると通信なしでも使えます</div>
       </div>
     </div>
 
@@ -751,7 +747,7 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
   <div class="howto-card" onclick="event.stopPropagation()">
     <div class="howto-header">
       <button class="howto-close" onclick="document.getElementById('guide-overlay').style.display='none'">×</button>
-      <div class="gd-title" data-i18n="g_title">🌸 使い方ガイド</div>
+      <div class="gd-title" data-i18n="g_title">使い方ガイド</div>
       <div class="gd-sub" data-i18n="g_sub">推しの作品・CPで絞って聖地を巡る。旅先ではGoogleマップでそのまま案内まで。</div>
     </div>
 
@@ -840,7 +836,7 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
           <div class="gd-vwhen" data-i18n="g_vsB_when">出発前に計画する人に</div>
         </div>
       </div>
-      <div class="gd-note tip"><span class="gd-ni">🌸</span><span data-i18n-html="g_tip6">迷ったら<b>「アプリで開く」</b>でOK。旅先での使いやすさはこちらが上です。マイマップは「全部まとめて眺めたい」ときの予備くらいの位置づけが気楽です。</span></div>
+      <div class="gd-note tip"><span class="gd-ni">💡</span><span data-i18n-html="g_tip6">迷ったら<b>「アプリで開く」</b>でOK。旅先での使いやすさはこちらが上です。マイマップは「全部まとめて眺めたい」ときの予備くらいの位置づけが気楽です。</span></div>
     </div>
 
     <div class="howto-divider"></div>
@@ -866,7 +862,7 @@ html,body{height:100%;overflow:hidden;font-family:'Noto Sans JP',sans-serif;colo
 
     <div style="padding:20px 20px 0">
       <button onclick="document.getElementById('guide-overlay').style.display='none'" style="width:100%;padding:13px;border-radius:12px;font-weight:800;font-size:15px;border:none;cursor:pointer;font-family:inherit;color:white;background:linear-gradient(135deg,#F9A8D4,#C4B5FD)" data-i18n="g_close">
-        🌸 ガイドを閉じて地図を見る
+        ガイドを閉じて地図を見る
       </button>
     </div>
   </div>
@@ -1040,9 +1036,9 @@ h_6d:['下部メニューの「保存済み」→「マップ」タブをタッ�
 h_6tip:['💡 同じGoogleアカウントでログインしていれば自動で同期されます','💡 It syncs automatically with the same Google account','💡 使用同一個 Google 帳號會自動同步','💡 ซิงก์อัตโนมัติเมื่อใช้บัญชี Google เดียวกัน'],
 h_7t:['現地でナビにも使える！','Use it for navigation on site!','現場也能導航！','ใช้นำทางที่หน้างานได้!'],
 h_7d:['各ピンをタップすると場所の詳細が見られます。「経路」ボタンで現地へのナビも起動できます。タイ旅行の前に準備しておくと便利です。','Tap a pin for details, then “Directions” to navigate. Handy to prepare before your trip to Thailand.','點圖釘看詳情，按「路線」即可導航。出發去泰國前先準備好會很方便。','แตะหมุดเพื่อดูรายละเอียด กด “เส้นทาง” เพื่อนำทาง เตรียมไว้ก่อนทริปสะดวกมาก'],
-h_7tip:['🌸 オフライン地図と組み合わせると通信なしでも使えます','🌸 Combine with offline maps to use without data','🌸 搭配離線地圖，沒有網路也能用','🌸 ใช้คู่กับแผนที่ออฟไลน์ได้โดยไม่ต้องใช้เน็ต'],
+h_7tip:['💡 オフライン地図と組み合わせると通信なしでも使えます','💡 Combine with offline maps to use without data','💡 搭配離線地圖，沒有網路也能用','💡 ใช้คู่กับแผนที่ออฟไลน์ได้โดยไม่ต้องใช้เน็ต'],
 h_dl:['⬇ KMLファイルをダウンロードする','⬇ Download the KML file','⬇ 下載 KML 檔案','⬇ ดาวน์โหลดไฟล์ KML'],
-g_title:['🌸 使い方ガイド','🌸 How-to Guide','🌸 使用指南','🌸 วิธีใช้งาน'],
+g_title:['使い方ガイド','How-to Guide','使用指南','วิธีใช้งาน'],
 g_sub:['推しの作品・CPで絞って聖地を巡る。旅先ではGoogleマップでそのまま案内まで。','Filter by your favorite series or couple and visit their filming spots — with Google Maps navigation on the go.','用喜歡的作品・CP 篩選聖地巡禮，旅途中直接用 Google 地圖導航。','กรองตามซีรีส์/คู่ที่ชอบ แล้วตามรอยโลเคชั่น พร้อมนำทางด้วย Google Maps'],
 g_h1:['まずはこの3ステップ','Start with these 3 steps','先從這 3 步開始','เริ่มด้วย 3 ขั้นตอนนี้'],
 g_q1t:['推しで絞る','Filter by your fave','用本命篩選','กรองตามคนโปรด'],
@@ -1104,7 +1100,7 @@ g_h8:['アプリのように使う','Use it like an app','像 App 一樣使用',
 g_p8:['ブラウザのメニューから<b>「ホーム画面に追加」</b>を選ぶと、アプリのアイコンが追加され、毎回ブラウザを開かずにサッと起動できます。','Choose <b>“Add to Home Screen”</b> in your browser menu to get an app icon for one-tap access.','在瀏覽器選單選<b>「加入主畫面」</b>，就會新增 App 圖示，之後不用開瀏覽器也能快速啟動。','เลือก<b>“เพิ่มลงหน้าจอโฮม”</b>ในเมนูเบราว์เซอร์ จะได้ไอคอนแอปเปิดใช้ได้ทันที'],
 g_pwa_i:['<b>iPhone</b>：共有ボタン →「ホーム画面に追加」','<b>iPhone</b>: Share button → “Add to Home Screen”','<b>iPhone</b>：分享按鈕 →「加入主畫面」','<b>iPhone</b>: ปุ่มแชร์ → “เพิ่มลงหน้าจอโฮม”'],
 g_pwa_a:['<b>Android</b>：メニュー（︙）→「ホーム画面に追加」','<b>Android</b>: Menu (⋮) → “Add to Home Screen”','<b>Android</b>：選單（⋮）→「加入主畫面」','<b>Android</b>: เมนู (⋮) → “เพิ่มลงหน้าจอโฮม”'],
-g_close:['🌸 ガイドを閉じて地図を見る','🌸 Close and explore the map','🌸 關閉指南看地圖','🌸 ปิดคู่มือไปดูแผนที่']
+g_close:['ガイドを閉じて地図を見る','Close and explore the map','關閉指南看地圖','ปิดคู่มือไปดูแผนที่']
 };
 // data-i18n / data-i18n-html / data-i18n-ph 属性を持つ静的要素へ現在言語を反映
 function applyStaticI18n(){
@@ -1145,8 +1141,10 @@ let SERIES_MAP = {
 // カテゴリー → 絵文字
 let CAT_MAP = {
   "カフェ":"☕","レストラン":"🍽️","ホテル":"🏨","名所":"📍",
-  "寺院・神社":"⛩️","ショッピング":"🛍️","スタジオ・ロケ地":"🎬",
-  "大学・図書館":"🎓","スパ・サロン":"💆","スポーツ":"⚽","病院":"🏥",
+  "寺院・神社":"⛩️","ショッピング":"🛍️","スタジオ・テレビ局":"🎬",
+  "大学・図書館・博物館・美術館":"🎓","スパ・サロン":"💆","スポーツ":"⚽","病院":"😷",
+  // ※病院はホテル🏨と見分けやすいよう🏥ではなく😷を使う（category_masterと揃える）
+  "スタジオ・ロケ地":"🎬","大学・図書館":"🎓",
   // 旧カテゴリー（移行前データ・後方互換のフォールバック）
   "スタジオ":"🎬","観光地":"📍","邸宅/スタジオ":"🎬","寺院":"⛩️",
   "大学":"🎓","図書館":"🎓","アート":"📍","放送局":"🎬",
@@ -1162,6 +1160,8 @@ const CAT_I18N={
   "名所":['名所','Landmark','景點','แลนด์มาร์ก'],
   "寺院・神社":['寺院・神社','Temple & Shrine','寺廟・神社','วัด/ศาลเจ้า'],
   "ショッピング":['ショッピング','Shopping','購物','ช้อปปิ้ง'],
+  "スタジオ・テレビ局":['スタジオ・テレビ局','Studio & TV Station','攝影棚・電視台','สตูดิโอ/สถานีโทรทัศน์'],
+  "大学・図書館・博物館・美術館":['大学・図書館・博物館・美術館','University · Library · Museum','大學・圖書館・博物館・美術館','มหาวิทยาลัย/ห้องสมุด/พิพิธภัณฑ์'],
   "スタジオ・ロケ地":['スタジオ・ロケ地','Studio & Set','攝影棚・取景地','สตูดิโอ/โลเคชั่น'],
   "大学・図書館":['大学・図書館','University & Library','大學・圖書館','มหาวิทยาลัย/ห้องสมุด'],
   "スパ・サロン":['スパ・サロン','Spa & Salon','SPA・沙龍','สปา/ซาลอน'],
@@ -1379,16 +1379,15 @@ window.closeLoginScreen=()=>{document.getElementById('login-screen').style.displ
 function isPC(){return window.matchMedia('(min-width:768px)').matches;}
 
 function showUI(){
-  ['top-bar','active-filters','map-overlay-info','spot-count','locate-btn','drawer','fab'].forEach(id=>{
+  ['top-bar','active-filters','map-overlay-info','locate-btn','drawer','fab'].forEach(id=>{
     document.getElementById(id).style.display='';
   });
   document.getElementById('top-bar').style.display='flex';
   document.getElementById('active-filters').style.display='flex';
-  document.getElementById('map-overlay-info').style.display='flex';
+  renderMapOverlayInfo(); // 絞り込み中だけ表示される
   document.getElementById('drawer').style.display=isPC()?'flex':'block';
   document.getElementById('fab').style.display='flex';
   document.getElementById('filter-btn').style.display='flex';
-  document.getElementById('spot-count').style.display='block';
   document.getElementById('locate-btn').style.display='flex';
   if(isPC()){
     document.getElementById('map').classList.add('drawer-open');
@@ -1398,7 +1397,7 @@ function showUI(){
   updateDrawerVar();
 }
 function hideUI(){
-  ['top-bar','active-filters','map-overlay-info','spot-count','locate-btn','drawer','fab'].forEach(id=>{
+  ['top-bar','active-filters','map-overlay-info','locate-btn','drawer','fab'].forEach(id=>{
     const el=document.getElementById(id); if(el)el.style.display='none';
   });
 }
@@ -1487,14 +1486,19 @@ function initMap(){
 }
 
 function renderTileBtn(){
+  // 3ボタン並べると地図が窮屈なので、1ボタンでタップごとに切り替えるサイクル式にする
   document.getElementById('tile-btn-wrap')?.remove();
   const wrap=document.createElement('div');
   wrap.id='tile-btn-wrap';
-  wrap.style.cssText='position:fixed;bottom:calc(var(--drawer-h) + 58px);right:14px;z-index:45;display:flex;flex-direction:column;gap:5px;';
-  wrap.innerHTML=Object.entries(TILES).map(([key,tl])=>`
-    <button onclick="window._switchTile('${key}')" style="padding:5px 11px;border-radius:20px;border:none;cursor:pointer;font-size:11px;font-weight:700;font-family:'Noto Sans JP',sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.15);background:${currentTileKey===key?'#111':'rgba(255,255,255,.95)'};color:${currentTileKey===key?'#fff':'#555'};backdrop-filter:blur(8px);">${tl.labelKey?t(tl.labelKey):'OSM'}</button>`).join('');
+  wrap.style.cssText='position:fixed;bottom:calc(var(--drawer-h) + 58px);right:14px;z-index:45;';
+  const tl=TILES[currentTileKey];
+  wrap.innerHTML=`<button onclick="window._cycleTile()" title="地図の種類を切り替え" style="padding:6px 12px;border-radius:20px;border:none;cursor:pointer;font-size:11px;font-weight:700;font-family:'Noto Sans JP',sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.15);background:rgba(255,255,255,.95);color:#555;backdrop-filter:blur(8px);">🗺 ${tl.labelKey?t(tl.labelKey):'OSM'}</button>`;
   document.body.appendChild(wrap);
 }
+window._cycleTile=function(){
+  const keys=Object.keys(TILES);
+  window._switchTile(keys[(keys.indexOf(currentTileKey)+1)%keys.length]);
+};
 window._switchTile=function(key){
   if(!TILES[key]||!map)return;
   currentTileKey=key;
@@ -1685,14 +1689,16 @@ function renderMarkPills(){
 }
 
 function renderMapOverlayInfo(){
-  const filtered=getFiltered();
+  // 絞り込み中だけ「何で絞っているか＋該当件数」を表示。未絞り込みなら非表示（地図の上をスッキリさせる）
   const el=document.getElementById('map-overlay-info');
   if(!el)return;
   const parts=[];
   activeCps.forEach(cp=>{const cfg=cpCfg(cp);parts.push(`<span class="cp-dot" style="background:${cfg.color}"></span><span>${cfg.emoji||'💗'} ${esc(cp)}</span>`);});
   activeTypes.forEach(tg=>parts.push(`<span>${tg===REC_TAG?recLabel():esc(tg)}</span>`));
   activeMarks.forEach(k=>parts.push(`<span style="color:${MARK_CFG[k].color}">${markLabel(k)}</span>`));
-  parts.push(`<span style="color:#bbb;font-weight:400">📍 ${tf('count',{n:filtered.length})}</span>`);
+  if(!parts.length){el.style.display='none';el.innerHTML='';return;}
+  parts.push(`<span style="color:#bbb;font-weight:400">${tf('count',{n:getFiltered().length})}</span>`);
+  el.style.display='flex';
   el.innerHTML=parts.join('<span style="color:#ddd">|</span>');
 }
 
@@ -1716,7 +1722,6 @@ window.resetFilters=function(){
 // ── Drawer ───────────────────────────────────────────────────
 function renderDrawer(){
   const filtered=getFiltered();
-  document.getElementById('spot-count').textContent=`📍 ${tf('count',{n:filtered.length})}`;
   renderMapOverlayInfo();
   document.getElementById('drawer-title').textContent=tf('spot_list_n',{n:filtered.length});
   const el=document.getElementById('drawer-list');
@@ -2196,10 +2201,14 @@ function msChipRender(field){
 window.msTalentRemove=function(field,i){const a=msTalents(field);a.splice(i,1);msTalentsSet(field,a);};
 // コンボで選んだタレントを配列に追加（検索欄はクリアして続けて選べるようにする）
 function msTalentAdd(field,v){if(!v)return;msTalentsSet(field,[...msTalents(field),v]);const el=document.getElementById(field);if(el)el.value='';}
+// 中カテゴリ（作品）を選んだら、続けてタレント欄へフォーカスして出演者のサジェストを開く
+function focusTalentSuggest(cpInputId){
+  setTimeout(()=>{const el=document.getElementById(cpInputId);if(el)el.focus();},80);
+}
 function setupFormCombos(){
-  setupCombo('f-series',seriesComboOptions,{allowFree:true});
+  setupCombo('f-series',seriesComboOptions,{allowFree:true,onSelect:()=>focusTalentSuggest('f-cp')});
   setupCombo('f-cp',()=>cpComboOptions('f-series'),{allowFree:true,onSelect:v=>msTalentAdd('f-cp',v),getCurrent:()=>''});
-  setupCombo('ai-series',seriesComboOptions,{allowFree:true});
+  setupCombo('ai-series',seriesComboOptions,{allowFree:true,onSelect:()=>focusTalentSuggest('ai-cp')});
   setupCombo('ai-cp',()=>cpComboOptions('ai-series'),{allowFree:true,onSelect:v=>msTalentAdd('ai-cp',v),getCurrent:()=>''});
   // 表ビューの項目別フィルター（作品を選ぶと、タレント候補はその出演者が先頭に並ぶ）
   setupCombo('tf-series',()=>getUniqueSeries().map(s=>({value:s})),
@@ -2218,7 +2227,7 @@ window.openSubmitModal=()=>{
   if(!currentUser){toggleUserMenuClose();requireLogin();return;}
   ['f-name','f-scene','f-sns','f-url','f-memo','f-cp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   msTalentsSet('f-cp',[]);
-  document.getElementById('f-series').value='プライベート';
+  document.getElementById('f-series').value=''; // デフォルトは空＝ユーザーに明示的に選んでもらう
   document.getElementById('submit-msg').textContent='';
   document.getElementById('submit-modal').style.display='flex';
   toggleUserMenuClose();
@@ -2266,7 +2275,7 @@ window.openAddInfoModal=function(){
   // フォームリセット
   ['ai-scene','ai-sns','ai-memo','ai-sns-memo','ai-cp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   msTalentsSet('ai-cp',[]);
-  document.getElementById('ai-series').value='プライベート';
+  document.getElementById('ai-series').value=''; // デフォルトは空＝ユーザーに明示的に選んでもらう
   document.getElementById('add-info-msg').textContent='';
   switchAddInfoTab('appearance');
   document.getElementById('add-info-modal').style.display='flex';
