@@ -1,6 +1,9 @@
 # macOS
 .DS_Store
 
+# 広報動画の制作一式（公開リポジトリに載せない）
+promo/
+
 # バックアップ・作業用ファイル（公開リポジトリに載せない）
 tsmap_backup_*.json
 firestore_appearances.json

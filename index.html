@@ -266,6 +266,45 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(-
 .howto-divider{height:8px;background:#F8FAFC;border-top:1px solid #F1F5F9;border-bottom:1px solid #F1F5F9;margin:4px 0}
 .howto-section{padding:12px 20px 4px;font-size:12px;font-weight:700;color:#999;letter-spacing:.07em}
 
+/* ── マイページ（巡礼の記録）mp- 接頭辞 ── */
+.mp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:14px 20px 2px}
+.mp-stat{background:var(--bg);border-radius:14px;padding:11px 4px 9px;text-align:center}
+.mp-stat-num{font-size:21px;font-weight:900;color:var(--ink);line-height:1.15}
+.mp-stat-num .mp-unit{font-size:11px;font-weight:800}
+.mp-stat-label{font-size:9.5px;color:var(--text-sub);font-weight:700;margin-top:3px;line-height:1.3}
+.mp-sec{padding:16px 20px 8px;font-size:13.5px;font-weight:800;color:var(--text);font-family:'Shippori Mincho',serif;display:flex;align-items:baseline;gap:8px}
+.mp-sec .mp-sec-note{font-size:10px;color:var(--text-sub);font-weight:400;font-family:'Noto Sans JP',sans-serif}
+.mp-stamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;padding:2px 20px 4px}
+.mp-stamp{aspect-ratio:1;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;padding:8px;min-width:0}
+.mp-stamp.off{border:2px dashed #D8D6E4;background:#FBFBFD;color:#B9B7C6}
+.mp-stamp-emoji{font-size:19px;line-height:1}
+.mp-stamp.off .mp-stamp-emoji{filter:grayscale(1);opacity:.55}
+.mp-stamp-name{font-size:8.5px;font-weight:700;line-height:1.25;margin-top:3px;max-height:2.6em;overflow:hidden;word-break:break-word;padding:0 4px}
+.mp-stamp-n{font-size:9px;font-weight:800;margin-top:1px}
+.mp-crown{position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-size:15px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))}
+.mp-stamp{cursor:pointer}
+.mp-fav-btn{position:absolute;top:-2px;right:-2px;width:26px;height:26px;border-radius:50%;border:none;background:var(--white);box-shadow:0 1px 4px rgba(0,0,0,.18);font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;color:#C9C6D8}
+.mp-fav-btn.on{color:#F59E0B}
+.mp-gl-chip{display:flex;align-items:center;gap:8px;width:calc(100% - 40px);margin:12px 20px 0;padding:10px 14px;border-radius:12px;border:1.5px solid #F9A8D4;background:#FDF2F8;color:#9D174D;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left;line-height:1.5}
+.mp-fold{margin:6px 20px 0}
+.mp-fold summary{cursor:pointer;list-style:none;font-size:12px;font-weight:700;color:var(--text-sub);padding:9px 12px;border-radius:10px;background:var(--bg);text-align:center}
+.mp-fold summary::-webkit-details-marker{display:none}
+.mp-fold[open] summary{margin-bottom:4px}
+.mp-fold .mp-stamps{padding:8px 0 0}
+.mp-fav-empty{margin:2px 20px 0;padding:14px;border-radius:12px;border:1.5px dashed #D8D6E4;color:var(--text-sub);font-size:11.5px;line-height:1.7;text-align:center}
+.mp-list{padding:2px 14px 0}
+.mp-row{display:flex;align-items:center;gap:10px;width:100%;border:none;background:none;padding:9px 8px;border-radius:10px;cursor:pointer;font-family:inherit;text-align:left}
+.mp-row:hover{background:var(--bg)}
+.mp-row-ico{font-size:16px;flex-shrink:0}
+.mp-row-main{min-width:0;flex:1;display:block}
+.mp-row-name{display:block;font-size:13px;font-weight:700;color:var(--text);line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mp-row-series{display:block;font-size:10.5px;color:var(--text-sub);line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mp-share-btn{width:calc(100% - 40px);margin:16px 20px 0;padding:13px;border-radius:12px;font-weight:800;font-size:15px;border:none;cursor:pointer;font-family:inherit;color:#fff;background:var(--ink);display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
+.mp-share-btn:disabled{opacity:.55;cursor:default}
+.mp-empty{padding:18px 24px;font-size:12.5px;color:var(--text-sub);line-height:1.8;text-align:center}
+.mp-login-hint{margin:14px 20px 0;padding:9px 12px;border-radius:10px;background:var(--ink-tint);color:var(--ink);font-size:11px;line-height:1.6}
+.mp-credit{text-align:center;padding:16px 0 2px;font-size:10px;color:#B9B7C6;letter-spacing:.08em}
+
 /* ── 使い方ガイドモーダル（gd- 接頭辞で衝突回避） ── */
 .gd-title{font-size:18px;font-weight:900;margin-bottom:4px;display:flex;align-items:center;gap:8px}
 .gd-sub{font-size:12px;color:var(--text-sub);line-height:1.6}
@@ -496,6 +535,7 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(-
   <button class="user-menu-item" onclick="toggleUserMenuClose();openGuideModal()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit;color:#9D174D" data-i18n="menu_guide">📖 使い方ガイド</button>
   <button class="user-menu-item" onclick="openSubmitModal()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit" data-i18n="menu_submit">📍 スポットを投稿</button>
   <button class="user-menu-item" onclick="toggleUserMenuClose();openTableView()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit" data-i18n="menu_table">📋 スポット一覧（表）</button>
+  <button class="user-menu-item" onclick="openMyPage()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit;color:var(--ink)" data-i18n="menu_mypage">👤 マイページ（巡礼の記録）</button>
   <button class="user-menu-item" onclick="toggleUserMenuClose();openKmlModal()" style="border:none;background:none;width:100%;text-align:left;font-family:inherit;color:#059669" data-i18n="menu_kml">🗾 マイマップ出力（KML）</button>
   <div class="user-menu-divider"></div>
   <div style="display:flex;gap:5px;padding:6px 10px;align-items:center">
@@ -901,6 +941,18 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(-
   </div>
 </div>
 
+<!-- マイページ（巡礼の記録） -->
+<div class="howto-overlay" id="mypage-overlay" style="display:none" onclick="closeMyPage(event)">
+  <div class="howto-card">
+    <div class="howto-header">
+      <div class="howto-title" style="font-family:'Shippori Mincho',serif;font-size:20px" data-i18n="mp_title">🌸 巡礼の記録</div>
+      <div class="howto-sub" data-i18n="mp_sub">あなたの聖地巡礼のあゆみ</div>
+      <button class="howto-close" onclick="document.getElementById('mypage-overlay').style.display='none'">×</button>
+    </div>
+    <div id="mp-body"></div>
+  </div>
+</div>
+
 <!-- 投稿FAB -->
 <button class="fab" id="fab" style="display:none" onclick="openSubmitModal()" title="スポットを投稿">＋</button>
 
@@ -982,6 +1034,26 @@ sns_tt:['TikTokの投稿を見る','View post on TikTok','查看 TikTok 影片',
 sns_other:['SNS投稿を見る','View on social media','查看社群貼文','ดูโพสต์โซเชียล'],
 see_glworks:['🌺 Thai GL Worksで {s} を見る →','🌺 See {s} on Thai GL Works →','🌺 到 Thai GL Works 看 {s} →','🌺 ดู {s} บน Thai GL Works →'],
 mark_hint:['💡 ログインするとマークが他の端末にも同期されます','💡 Log in to sync marks across devices','💡 登入後標記會同步到其他裝置','💡 เข้าสู่ระบบเพื่อซิงก์มาร์กข้ามอุปกรณ์'],
+menu_mypage:['👤 マイページ（巡礼の記録）','👤 My Page (Pilgrimage Record)','👤 我的頁面（巡禮紀錄）','👤 หน้าของฉัน (บันทึกตามรอย)'],
+mp_title:['🌸 巡礼の記録','🌸 Pilgrimage Record','🌸 巡禮紀錄','🌸 บันทึกการตามรอย'],
+mp_sub:['あなたの聖地巡礼のあゆみ','Your filming-location journey so far','你的朝聖足跡','เส้นทางตามรอยซีรีส์ของคุณ'],
+mp_went:['行った','Visited','去過','ไปแล้ว'],
+mp_want:['行きたい','Want to go','想去','อยากไป'],
+mp_series_done:['制覇シリーズ','Series completed','制霸作品','ซีรีส์ครบ'],
+mp_rate:['訪問率','Visit rate','造訪率','อัตราเยี่ยมชม'],
+mp_stamps:['巡礼スタンプ','Pilgrimage Stamps','巡禮印章','แสตมป์ตามรอย'],
+mp_stamp_hint:['1ヶ所で獲得・全制覇で👑','Visit 1 spot to earn / all spots for 👑','造訪1處獲得・全制霸得👑','ไป 1 จุดได้แสตมป์ / ครบทุกจุดได้ 👑'],
+mp_list:['行ったスポット','Visited spots','去過的地點','จุดที่ไปแล้ว'],
+mp_empty:['まだマークがありません。<br>スポットの詳細カードで「☑️ 行った」を押して<br>巡礼スタンプを集めましょう！','No marks yet.<br>Tap “Visited” on a spot card<br>to start collecting stamps!','還沒有標記。<br>在地點詳情卡點「去過」<br>開始收集巡禮印章吧！','ยังไม่มีมาร์ก<br>แตะ “ไปแล้ว” บนการ์ดสถานที่<br>เพื่อเริ่มสะสมแสตมป์!'],
+mp_share:['📸 画像で共有','📸 Share as image','📸 以圖片分享','📸 แชร์เป็นรูปภาพ'],
+mp_oshi_rate:['推し制覇率','Fav progress','本命進度','ซีรีส์โปรด'],
+mp_fav_sec:['推し作品','My Fav Series','本命作品','ซีรีส์โปรด'],
+mp_fav_hint:['スタンプの☆を押して「推し作品」を登録すると、ここに集まります','Tap ☆ on a stamp to add it to your favorites','點印章上的☆登錄本命作品後會集中顯示在這裡','แตะ ☆ บนแสตมป์เพื่อเพิ่มซีรีส์โปรดของคุณ'],
+mp_earned:['訪問した作品','Visited works','去過的作品','ผลงานที่เคยไป'],
+mp_fold:['まだ行っていない作品を見る（{n}）','Show unvisited works ({n})','顯示尚未去過的作品（{n}）','ดูผลงานที่ยังไม่ได้ไป ({n})'],
+mp_gl_add:['🌺 GL Worksで★4以上を付けた {n} 作品を推しに追加','🌺 Add {n} series you rated ★4+ on GL Works','🌺 加入你在 GL Works 評★4以上的 {n} 部作品','🌺 เพิ่ม {n} เรื่องที่คุณให้ ★4+ บน GL Works'],
+mp_share_making:['作成中…','Creating…','製作中…','กำลังสร้าง…'],
+mp_more:['ほか {n} 件','+ {n} more','另外 {n} 個','อีก {n} จุด'],
 login_tag:['推しの色で、聖地を巡る','Follow your colors to the filming spots','跟著推的顏色去朝聖','ตามสีของคนโปรดไปยังโลเคชั่นถ่ายทำ'],
 login_sub:['スポットの投稿や、行きたい！行った！マークの<br>端末をまたいだ保存にはログインが必要です','Sign in to submit spots and sync your<br>Want-to-go / Visited marks across devices','投稿地點、跨裝置同步「想去／去過」標記<br>需要登入','เข้าสู่ระบบเพื่อส่งสถานที่ และซิงก์มาร์ก<br>อยากไป/ไปแล้ว ข้ามอุปกรณ์'],
 login_google:['Googleでログイン','Sign in with Google','使用 Google 登入','เข้าสู่ระบบด้วย Google'],
@@ -1278,14 +1350,32 @@ function saveMarks(){
       .catch(e=>console.warn('マーク同期に失敗:',e));
   }
 }
+// ── 推し作品（お気に入りシリーズ）────────────────────────────
+// Set<seriesName> — 端末(localStorage)に常時保存し、ログイン中はFirestoreにも同期
+const CF='tsmap_favs_v1';
+let FAVS=new Set(); try{FAVS=new Set(JSON.parse(localStorage.getItem(CF))||[]);}catch(e){}
+let GL_RATED=[]; // 姉妹サイトGL Worksで★4以上を付けたdrama_id（同一Firebaseプロジェクトのusersドキュメントから取得）
+function saveFavs(){
+  try{localStorage.setItem(CF,JSON.stringify([...FAVS]));}catch(e){}
+  if(currentUser){
+    setDoc(doc(db,'users',currentUser.uid),{favSeries:[...FAVS]},{merge:true})
+      .catch(e=>console.warn('推し作品同期に失敗:',e));
+  }
+}
 // ログイン時：Firestoreのマークと端末のマークを統合（端末側を優先）して両方に保存
 async function loadRemoteMarks(){
   if(!currentUser)return;
   try{
     const snap=await getDoc(doc(db,'users',currentUser.uid));
-    const remote=snap.exists()?(snap.data().spotMarks||{}):{};
+    const data=snap.exists()?snap.data():{};
+    const remote=data.spotMarks||{};
     MARKS={...remote,...MARKS};
-    saveMarks();
+    // 推し作品：リモートと端末の和集合
+    (data.favSeries||[]).forEach(s=>FAVS.add(s));
+    // GL Worksの自己評価（users/{uid}.dramas[dramaId].rate 1〜5）→ ★4以上を推し候補に
+    const dr=data.dramas||{};
+    GL_RATED=Object.keys(dr).filter(id=>(dr[id]&&dr[id].rate||0)>=4);
+    saveMarks(); saveFavs();
     if(map){renderMarkers();renderDrawer();renderMarkPills();renderSpotTable();}
   }catch(e){console.warn('マーク読み込みに失敗:',e);}
 }
@@ -2455,6 +2545,201 @@ window.openGuideModal=function(){
 window.closeGuide=function(e){
   if(e.target===document.getElementById('guide-overlay'))
     document.getElementById('guide-overlay').style.display='none';
+};
+
+// ── マイページ（巡礼の記録）──────────────────────────────────
+// シリーズ別の訪問集計。全て LOCS/APPS/MARKS から動的算出（スポット追加に自動追従）
+function mpSeriesStats(){
+  const locOk=new Set(LOCS.map(l=>l.id));
+  const sMap=new Map(); // series -> Set(locId)
+  APPS.forEach(a=>{
+    if(a.status!=='公開'||!a.series||COMMON_TAGS.has(a.series))return;
+    if(!locOk.has(a.location_id))return;
+    let s=sMap.get(a.series); if(!s){s=new Set();sMap.set(a.series,s);}
+    s.add(a.location_id);
+  });
+  const arr=[];
+  sMap.forEach((locSet,series)=>{
+    let went=0; locSet.forEach(id=>{if(MARKS[id]==='went')went++;});
+    const a0=APPS.find(a=>a.series===series&&a.status==='公開'&&a.cp); // 代表CP（whoKey経由）
+    const cfg=a0?whoCfg(whoKey(a0)):FB;
+    arr.push({series,total:locSet.size,went,cfg,done:went>0&&went===locSet.size});
+  });
+  // 制覇→獲得数→スポット数→名前順（獲得済みがスクショ上部に集まる）
+  arr.sort((x,y)=>(y.done-x.done)||(y.went-x.went)||(y.total-x.total)||x.series.localeCompare(y.series));
+  return arr;
+}
+window.openMyPage=function(){
+  toggleUserMenuClose();
+  renderMyPage();
+  document.getElementById('mypage-overlay').style.display='flex';
+  document.querySelector('#mypage-overlay .howto-card').scrollTop=0;
+};
+window.closeMyPage=function(e){
+  if(e.target===document.getElementById('mypage-overlay'))
+    document.getElementById('mypage-overlay').style.display='none';
+};
+window._mpGo=function(encId){
+  document.getElementById('mypage-overlay').style.display='none';
+  window._sel(decodeURIComponent(encId));
+};
+// 推し登録トグル（スタンプの☆）
+window._mpFav=function(encS){
+  const s=decodeURIComponent(encS);
+  if(FAVS.has(s))FAVS.delete(s);else FAVS.add(s);
+  saveFavs();renderMyPage();
+};
+// スタンプ本体タップ → その作品で地図をフィルター
+window._mpFilter=function(encS){
+  const s=decodeURIComponent(encS);
+  document.getElementById('mypage-overlay').style.display='none';
+  if(!activeTypes.has(s))window._setType(s);
+};
+// GL Worksで★4以上の作品（未推し・地図に存在するもの）
+function glSuggestSeries(){
+  if(!GL_RATED.length)return[];
+  const ids=new Set(GL_RATED.map(String));
+  return UNIQ_SERIES.filter(s=>!FAVS.has(s)&&ids.has(String(seriesDramaId(s))));
+}
+window._mpAddGl=function(){
+  glSuggestSeries().forEach(s=>FAVS.add(s));
+  saveFavs();renderMyPage();
+};
+function mpStampHtml(s){
+  const on=s.went>0, fav=FAVS.has(s.series);
+  const st=on?` style="border:2.5px solid ${s.cfg.color};background:${s.cfg.color}14"`:'';
+  return`<div class="mp-stamp${on?'':' off'}"${st} onclick="window._mpFilter('${enc(s.series)}')">
+    ${s.done?'<div class="mp-crown">👑</div>':''}
+    <button class="mp-fav-btn${fav?' on':''}" onclick="event.stopPropagation();window._mpFav('${enc(s.series)}')">${fav?'★':'☆'}</button>
+    <div class="mp-stamp-emoji">${s.cfg.emoji||'🎬'}</div>
+    <div class="mp-stamp-name"${on?` style="color:${s.cfg.color}"`:''}>${esc(s.series)}</div>
+    <div class="mp-stamp-n"${on?` style="color:${s.cfg.color}"`:''}>${s.went}/${s.total}</div>
+  </div>`;
+}
+// 推し制覇率：推し作品のスポットだけを分母にした進捗（C案）
+function mpOshiRate(stats){
+  const fav=stats.filter(s=>FAVS.has(s.series));
+  const total=fav.reduce((n,s)=>n+s.total,0);
+  const went=fav.reduce((n,s)=>n+s.went,0);
+  return total?Math.round(went/total*100)+'%':'—';
+}
+function renderMyPage(){
+  const body=document.getElementById('mp-body');
+  const wentIds=Object.keys(MARKS).filter(id=>MARKS[id]==='went'&&LOCS.some(l=>l.id===id));
+  const wantN=Object.values(MARKS).filter(v=>v==='want').length;
+  const stats=mpSeriesStats();
+  const doneN=stats.filter(s=>s.done).length;
+  const oshiRate=mpOshiRate(stats);
+  let html=`<div class="mp-stats">
+    <div class="mp-stat"><div class="mp-stat-num">${wentIds.length}</div><div class="mp-stat-label">☑️ ${t('mp_went')}</div></div>
+    <div class="mp-stat"><div class="mp-stat-num">${wantN}</div><div class="mp-stat-label">🤍 ${t('mp_want')}</div></div>
+    <div class="mp-stat"><div class="mp-stat-num">${doneN}</div><div class="mp-stat-label">👑 ${t('mp_series_done')}</div></div>
+    <div class="mp-stat"><div class="mp-stat-num">${oshiRate}</div><div class="mp-stat-label">⭐ ${t('mp_oshi_rate')}</div></div>
+  </div>`;
+  if(!wentIds.length&&!wantN)html+=`<div class="mp-empty">${t('mp_empty')}</div>`;
+  const glSug=glSuggestSeries();
+  if(glSug.length)html+=`<button class="mp-gl-chip" onclick="window._mpAddGl()">${tf('mp_gl_add',{n:glSug.length})}</button>`;
+  // ⭐ 推し作品（主役）
+  const favStats=stats.filter(s=>FAVS.has(s.series));
+  html+=`<div class="mp-sec">⭐ ${t('mp_fav_sec')}<span class="mp-sec-note">${t('mp_stamp_hint')}</span></div>`;
+  if(favStats.length)html+=`<div class="mp-stamps">${favStats.map(mpStampHtml).join('')}</div>`;
+  else html+=`<div class="mp-fav-empty">${t('mp_fav_hint')}</div>`;
+  // 訪問した作品（非推しで獲得済み）
+  const earnedOther=stats.filter(s=>!FAVS.has(s.series)&&s.went>0);
+  if(earnedOther.length)html+=`<div class="mp-sec">${t('mp_earned')}</div><div class="mp-stamps">${earnedOther.map(mpStampHtml).join('')}</div>`;
+  // まだ行っていない作品（折りたたみ＝グレーの壁を隠す）
+  const rest=stats.filter(s=>!FAVS.has(s.series)&&s.went===0);
+  if(rest.length)html+=`<details class="mp-fold"><summary>${tf('mp_fold',{n:rest.length})} ▾</summary><div class="mp-stamps">${rest.map(mpStampHtml).join('')}</div></details>`;
+  if(wentIds.length){
+    html+=`<div class="mp-sec">${t('mp_list')}</div><div class="mp-list">`;
+    html+=wentIds.map(id=>{
+      const loc=LOCS.find(l=>l.id===id);
+      const series=[...new Set(locApps(id).map(a=>a.series).filter(Boolean))];
+      return`<button class="mp-row" onclick="window._mpGo('${enc(id)}')">
+        <span class="mp-row-ico">${catEmoji(loc.category)}</span>
+        <span class="mp-row-main"><span class="mp-row-name">${esc(loc.name)}</span>${series.length?`<span class="mp-row-series">${series.map(esc).join('、')}</span>`:''}</span>
+      </button>`;
+    }).join('');
+    html+='</div>';
+  }
+  html+=`<button class="mp-share-btn" id="mp-share-btn" onclick="shareMyPageImage()">${t('mp_share')}</button>`;
+  if(!currentUser)html+=`<div class="mp-login-hint">${t('mark_hint')}</div>`;
+  html+=`<div class="mp-credit">Thai Series Map</div>`;
+  body.innerHTML=html;
+}
+// スタンプ帳をCanvasで縦長カード画像化 → Web Share / DLフォールバック
+window.shareMyPageImage=async function(){
+  const btn=document.getElementById('mp-share-btn');
+  const orig=btn.textContent;
+  btn.disabled=true;btn.textContent=t('mp_share_making');
+  try{
+    try{await document.fonts.load('800 66px "Shippori Mincho"');await document.fonts.load('900 64px "Noto Sans JP"');}catch(_){}
+    const stats=mpSeriesStats();
+    // 推し作品を先頭に、次いで訪問済みのその他作品
+    const pool=[...stats.filter(s=>FAVS.has(s.series)),...stats.filter(s=>!FAVS.has(s.series)&&s.went>0)];
+    const shown=pool.slice(0,12), extra=pool.length-shown.length;
+    const wentIds=Object.keys(MARKS).filter(id=>MARKS[id]==='went'&&LOCS.some(l=>l.id===id));
+    const wantN=Object.values(MARKS).filter(v=>v==='want').length;
+    const doneN=stats.filter(s=>s.done).length;
+    const rate=mpOshiRate(stats);
+    const W=1080,COLS=3,CELL=300,GAP=28,TOP=430;
+    const rows=shown.length?Math.ceil(shown.length/COLS):0;
+    const gridH=rows?rows*CELL+(rows-1)*GAP:120;
+    const H=TOP+gridH+(extra>0?60:0)+170;
+    const cv=document.createElement('canvas');cv.width=W;cv.height=H;
+    const x=cv.getContext('2d');
+    const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#2D2A4A');g.addColorStop(1,'#413D66');
+    x.fillStyle=g;x.fillRect(0,0,W,H);
+    x.textAlign='center';
+    x.fillStyle='#fff';x.font='800 66px "Shippori Mincho",serif';
+    x.fillText(t('mp_title').replace('🌸','').trim(),W/2,122);
+    x.fillStyle='rgba(255,255,255,.55)';x.font='700 30px "Noto Sans JP",sans-serif';
+    x.fillText('Thai Series Map',W/2,172);
+    const items=[[wentIds.length,'☑️ '+t('mp_went')],[wantN,'🤍 '+t('mp_want')],[doneN,'👑 '+t('mp_series_done')],[rate,'⭐ '+t('mp_oshi_rate')]];
+    items.forEach((it,i)=>{
+      const cx=W/8*(i*2+1);
+      x.fillStyle='#fff';x.font='900 64px "Noto Sans JP",sans-serif';
+      x.fillText(String(it[0]),cx,300);
+      x.fillStyle='rgba(255,255,255,.6)';x.font='700 22px "Noto Sans JP",sans-serif';
+      x.fillText(it[1],cx,345);
+    });
+    shown.forEach((s,i)=>{
+      const col=i%COLS,row=(i/COLS)|0;
+      const inRow=Math.min(COLS,shown.length-row*COLS);
+      const rowW=inRow*CELL+(inRow-1)*GAP;
+      const cx=(W-rowW)/2+col*(CELL+GAP)+CELL/2;
+      const cy=TOP+row*(CELL+GAP)+CELL/2;
+      x.beginPath();x.arc(cx,cy,110,0,Math.PI*2);
+      x.fillStyle='#FDFDFB';x.fill();
+      x.lineWidth=8;x.strokeStyle=s.done?'#D4AF37':s.cfg.color;x.stroke();
+      if(s.done){x.font='42px sans-serif';x.fillText('👑',cx,cy-104);}
+      x.font='50px sans-serif';x.fillText(s.cfg.emoji||'🎬',cx,cy-24);
+      x.fillStyle=s.cfg.color;x.font='700 26px "Noto Sans JP",sans-serif';
+      let nm=s.series;if(nm.length>9)nm=nm.slice(0,8)+'…';
+      x.fillText(nm,cx,cy+34);
+      x.font='800 24px "Noto Sans JP",sans-serif';
+      x.fillText(s.went+'/'+s.total,cx,cy+72);
+    });
+    if(!shown.length){
+      x.fillStyle='rgba(255,255,255,.5)';x.font='700 30px "Noto Sans JP",sans-serif';
+      x.fillText(t('mp_stamps'),W/2,TOP+70);
+    }
+    if(extra>0){
+      x.fillStyle='rgba(255,255,255,.6)';x.font='700 26px "Noto Sans JP",sans-serif';
+      x.fillText(tf('mp_more',{n:extra}),W/2,TOP+gridH+42);
+    }
+    x.fillStyle='rgba(255,255,255,.45)';x.font='700 26px "Noto Sans JP",sans-serif';
+    x.fillText('タイドラマ・タイGL聖地巡礼マップ',W/2,H-80);
+    const blob=await new Promise(res=>cv.toBlob(res,'image/png'));
+    const file=new File([blob],'thai-series-map-pilgrimage.png',{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:'Thai Series Map'});
+    }else{
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=file.name;a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+    }
+  }catch(err){if(!err||err.name!=='AbortError')console.warn('share image failed',err);}
+  btn.disabled=false;btn.textContent=orig;
 };
 
 window.exportKML=function(){
