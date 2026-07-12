@@ -1052,6 +1052,7 @@ mp_fav_hint:['スタンプの☆を押して「推し作品」を登録すると
 mp_earned:['訪問した作品','Visited works','去過的作品','ผลงานที่เคยไป'],
 mp_fold:['まだ行っていない作品を見る（{n}）','Show unvisited works ({n})','顯示尚未去過的作品（{n}）','ดูผลงานที่ยังไม่ได้ไป ({n})'],
 mp_gl_add:['🌺 GL Worksで★4以上を付けた {n} 作品を推しに追加','🌺 Add {n} series you rated ★4+ on GL Works','🌺 加入你在 GL Works 評★4以上的 {n} 部作品','🌺 เพิ่ม {n} เรื่องที่คุณให้ ★4+ บน GL Works'],
+mp_list_more:['すべて見る（あと {n} 件）','Show all ({n} more)','顯示全部（還有 {n} 個）','ดูทั้งหมด (อีก {n} จุด)'],
 mp_share_making:['作成中…','Creating…','製作中…','กำลังสร้าง…'],
 mp_more:['ほか {n} 件','+ {n} more','另外 {n} 個','อีก {n} จุด'],
 login_tag:['推しの色で、聖地を巡る','Follow your colors to the filming spots','跟著推的顏色去朝聖','ตามสีของคนโปรดไปยังโลเคชั่นถ่ายทำ'],
@@ -2651,16 +2652,19 @@ function renderMyPage(){
   const rest=stats.filter(s=>!FAVS.has(s.series)&&s.went===0);
   if(rest.length)html+=`<details class="mp-fold"><summary>${tf('mp_fold',{n:rest.length})} ▾</summary><div class="mp-stamps">${rest.map(mpStampHtml).join('')}</div></details>`;
   if(wentIds.length){
-    html+=`<div class="mp-sec">${t('mp_list')}</div><div class="mp-list">`;
-    html+=wentIds.map(id=>{
+    const rows=wentIds.map(id=>{
       const loc=LOCS.find(l=>l.id===id);
       const series=[...new Set(locApps(id).map(a=>a.series).filter(Boolean))];
       return`<button class="mp-row" onclick="window._mpGo('${enc(id)}')">
         <span class="mp-row-ico">${catEmoji(loc.category)}</span>
         <span class="mp-row-main"><span class="mp-row-name">${esc(loc.name)}</span>${series.length?`<span class="mp-row-series">${series.map(esc).join('、')}</span>`:''}</span>
       </button>`;
-    }).join('');
-    html+='</div>';
+    });
+    html+=`<div class="mp-sec">${t('mp_list')}<span class="mp-sec-note">${wentIds.length}</span></div>`;
+    // 8件までは常時表示、残りは折りたたみ（訪問数が増えても画面が間延びしない）
+    const LIST_SHOW=8;
+    html+=`<div class="mp-list">${rows.slice(0,LIST_SHOW).join('')}</div>`;
+    if(rows.length>LIST_SHOW)html+=`<details class="mp-fold"><summary>${tf('mp_list_more',{n:rows.length-LIST_SHOW})} ▾</summary><div class="mp-list">${rows.slice(LIST_SHOW).join('')}</div></details>`;
   }
   html+=`<button class="mp-share-btn" id="mp-share-btn" onclick="shareMyPageImage()">${t('mp_share')}</button>`;
   if(!currentUser)html+=`<div class="mp-login-hint">${t('mark_hint')}</div>`;
@@ -2668,7 +2672,11 @@ function renderMyPage(){
   body.innerHTML=html;
 }
 // スタンプ帳をCanvasで縦長カード画像化 → Web Share / DLフォールバック
+// MP_SHARING: クリックイベントの二重発火（トラックパッドのタップ＋クリック等）でも1枚しか保存されないようにするガード
+let MP_SHARING=false;
 window.shareMyPageImage=async function(){
+  if(MP_SHARING)return;
+  MP_SHARING=true;
   const btn=document.getElementById('mp-share-btn');
   const orig=btn.textContent;
   btn.disabled=true;btn.textContent=t('mp_share_making');
@@ -2740,6 +2748,8 @@ window.shareMyPageImage=async function(){
     }
   }catch(err){if(!err||err.name!=='AbortError')console.warn('share image failed',err);}
   btn.disabled=false;btn.textContent=orig;
+  // 生成完了直後の重複クリック（二重発火・連打）を1.2秒無視する
+  setTimeout(()=>{MP_SHARING=false;},1200);
 };
 
 window.exportKML=function(){
