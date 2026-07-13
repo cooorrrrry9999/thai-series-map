@@ -457,11 +457,17 @@ window.renderDashboard=function(){
   const pubApps=APPS.filter(a=>a.status==='公開');
   // 実データ（appearances）に入っている単位＝cp（無ければtalent）で集計する。
   // データはCP→タレントに移行済みのため、cp_master(カップル名)で数えると0件になっていた。
+  // talent_id で人物を一意に集計（同名別人＝同じチューレンを混ぜない）。
+  // 名前キーで数えると同名別人が1枚に合算されてしまうため appTalent/talentKey を使う。
   const counts={};
-  pubApps.forEach(a=>{const k=a.cp||a.talent;if(k)counts[k]=(counts[k]||0)+1;});
-  const entries=Object.entries(counts).sort((x,y)=>y[1]-x[1]); // 件数の多い順
-  // 表示メタ（色・絵文字）はCP_M→TALENT_Mの順で探し、無ければグレー
-  const metaOf=name=>CP_M.find(m=>m.name===name)||TALENT_M.find(m=>m.name===name)||{color:'#888',emoji:'💗'};
+  pubApps.forEach(a=>{
+    const t=appTalent(a);
+    const k=t?talentKey(t):('name:'+(a.cp||a.talent||''));
+    if(k==='name:')return;
+    const c=counts[k]||(counts[k]={cnt:0,talent:t,name:t?t.name:(a.cp||a.talent)});
+    c.cnt++;
+  });
+  const entries=Object.entries(counts).sort((x,y)=>y[1].cnt-x[1].cnt); // 件数の多い順
   let html=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px">
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-primary btn-sm" onclick="doPublish()" title="公開用 data.json を書き出す（このあと deploy.sh で公開）">📤 公開用 data.json を書き出す</button>
@@ -479,9 +485,13 @@ window.renderDashboard=function(){
     <div class="stat-card"><div class="stat-num">${entries.length}</div><div class="stat-label">💗 CP/タレント数</div></div>
   </div>`;
   // CP/タレント別の公開件数（実データに存在するものだけ・多い順）
-  html+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;margin-bottom:20px">`+entries.map(([name,cnt])=>{
-    const m=metaOf(name);
-    return`<div class="stat-card"><div class="stat-num" style="color:${m.color||'#888'}">${cnt}</div><div class="stat-label">${m.emoji||'💗'} ${name}</div></div>`;
+  html+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;margin-bottom:20px">`+entries.map(([key,c])=>{
+    const t=c.talent;
+    const m=t||CP_M.find(x=>x.name===c.name)||TALENT_M.find(x=>x.name===c.name)||{color:'#888',emoji:'💗'};
+    // 同名別人がいるときは本名を添えて区別（チューレン（本名））
+    const dup=t&&TALENT_M.filter(x=>x.name===t.name).length>1;
+    const lbl=(dup&&t.real_name)?`${t.name}（${t.real_name}）`:c.name;
+    return`<div class="stat-card"><div class="stat-num" style="color:${m.color||'#888'}">${c.cnt}</div><div class="stat-label">${m.emoji||'💗'} ${esc(lbl)}</div></div>`;
   }).join('')+'</div>';
   if(pending.length){
     html+=`<div style="font-size:13px;font-weight:700;color:var(--pink);margin:16px 0 8px">⚡ 承認待ちの投稿</div>`;
