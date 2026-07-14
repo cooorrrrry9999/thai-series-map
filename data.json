@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2026-07-14T15:50:42.039Z",
+  "exportedAt": "2026-07-14T15:52:02.569Z",
   "locations": [
     {
       "id": "051JAuHfGXgjZF0a9NLT",
@@ -12367,17 +12367,6 @@
       "talent": "Film",
       "cp": "Film",
       "status": "公開"
-    },
-    {
-      "id": "zticA3m9DjYgo0CldE5R",
-      "talent": "Becky",
-      "location_id": "LOC023",
-      "status": "公開",
-      "cp": "Becky",
-      "talent_id": "Becky_1773762644249",
-      "series": "プライベート",
-      "sns_url": "",
-      "scene_desc": "Freenのお母様のカフェ。バンコクから車で3時間。"
     }
   ],
   "cp_master": [],
