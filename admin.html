@@ -1622,16 +1622,25 @@ function downloadJson(obj,fname){
   a.href=url;a.download=fname;document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-window.doBackup=function(){
-  const data={exportedAt:new Date().toISOString(),locations:LOCS,appearances:APPS,cp_master:CP_M,series_master:SERIES_M,category_master:CAT_M,talent_master:TALENT_M};
-  const d=new Date(),p=x=>String(x).padStart(2,'0');
-  downloadJson(data,`tsmap_backup_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.json`);
+// エクスポートは必ずFirestoreの最新から（キャッシュ由来の古いLOCS/APPSを書き出すと公開データが巻き戻る）
+async function freshExportData(){
+  await loadAll(true);
+  return{exportedAt:new Date().toISOString(),locations:LOCS,appearances:APPS,cp_master:CP_M,series_master:SERIES_M,category_master:CAT_M,talent_master:TALENT_M};
+}
+window.doBackup=async function(){
+  try{
+    const data=await freshExportData();
+    const d=new Date(),p=x=>String(x).padStart(2,'0');
+    downloadJson(data,`tsmap_backup_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.json`);
+  }catch(e){alert('⚠ Firestoreから最新データを取得できませんでした: '+e.message);}
 };
 // 公開用：そのまま index.html の隣に置く data.json を書き出す
-window.doPublish=function(){
-  const data={exportedAt:new Date().toISOString(),locations:LOCS,appearances:APPS,cp_master:CP_M,series_master:SERIES_M,category_master:CAT_M,talent_master:TALENT_M};
-  downloadJson(data,'data.json');
-  alert('data.json を書き出しました。\nこのファイルを index.html と同じフォルダに置き換えて、deploy.sh でデプロイすると公開サイトに反映されます。');
+window.doPublish=async function(){
+  try{
+    const data=await freshExportData();
+    downloadJson(data,'data.json');
+    alert('data.json を書き出しました（Firestoreの最新 '+data.locations.length+'件）。\nこのファイルを index.html と同じフォルダに置き換えて、deploy.sh でデプロイすると公開サイトに反映されます。');
+  }catch(e){alert('⚠ Firestoreから最新データを取得できませんでした: '+e.message);}
 };
 window.renderMigrate=function(){
   const legacy=legacyApps();
@@ -1755,6 +1764,11 @@ window.addSpot=async function(){
   const msg=document.getElementById('add-msg');
   if(!name){msg.style.color='var(--red)';msg.textContent='場所名は必須です';return;}
   if(!lat||!lng){msg.style.color='var(--red)';msg.textContent='緯度・経度を入力してください';return;}
+  // 既存スポットとの重複チェック（同名または約100m以内）。紐付けの追加は「スポット一覧」の編集から
+  const dup=findDupLoc(name,{lat,lng});
+  if(dup&&!confirm(`⚠ 既存スポット「${dup.name}」と重複している可能性があります（同名または約100m以内）。\nそれでも新規スポットとして追加しますか？`)){
+    msg.style.color='var(--red)';msg.textContent=`「${dup.name}」との重複の可能性があるため中止しました`;return;
+  }
   // 出演情報を収集（タレント・作品・シーンのどれかが入っているブロックのみ）
   const apps=collectApps()
     .map(a=>({talentIds:(a.talentIds||[]).filter(Boolean),series:a.series.trim(),scene:a.scene.trim(),sns:a.sns.trim()}))

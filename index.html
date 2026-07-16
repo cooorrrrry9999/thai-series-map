@@ -1343,6 +1343,28 @@ const markLabel=k=>k==='want'?'💖 '+t('want'):'✅ '+t('went');
 // おすすめタグの表示名（内部キーREC_TAGは日本語のまま、表示だけ翻訳）
 const recLabel=()=>'⭐ '+t('rec');
 let MARKS={}; try{MARKS=JSON.parse(localStorage.getItem(CM))||{};}catch(e){}
+// 重複スポット統合（2026-07-17）で削除した旧ID → 統合先ID。端末やFirestoreに残った旧マークを移行する
+const LOC_ID_REMAP={
+  awqGCyoJEJ0YiHHKgiMi:'0rt1k2YzTnbOyXs9fzBM',dTNUK7FfmAZ6DIUzo74u:'1l2EAG7UUKsnoTHCGqr6',
+  Fkb7oDM46Bhjf0SzfGmv:'8EQIvnkZoD3p40kj5WJQ',fqHe7jIBRDSfJyEsWMFr:'F4NrkAkEs5ZYoQ0XV0v8',
+  Fqoyl11LfrEz7MRrBAU5:'zPsBxzA7801eMJDXs4VK',veC78j3KHnW1yFTPN1T7:'Gfl3ajdpw2R9tPKdzeaw',
+  yLOVywfmiaoGbAnQtdzO:'KPhdVDuGqm3kcrckE4cP',c0g6ifjopMplYuMjU8tg:'POvVZjemPq48sEc2blQZ',
+  oJ6R6mYz8jZKkyY76EEp:'srNGRXHAkhNv1pGG8SiM',sEDSJvHi6Fpzksqap0Wl:'rCLAhkQzRkjFVrjRBBB4',
+  ZPWKJpYWKafTeDCVjBFR:'1qZ2PyUGangQgVFzQr90',DRApoAu5ULHk7ns0yOHz:'wEbBlXhsTWf50PnrlptW',
+  Oe3EvVJ3SevfIbwtNqjd:'gmcKAdw3cGV6BWoCTFpk',SBY0ij4Bql54gDwbVmUi:'xNAqTWbrATFsRewhYb6m',
+  YD9TYZBRRjvrstf6Jfgh:'r716EXZiCVWZiQIiGaZW',uBIIwLN8R0hzgWjrIcuV:'LOC016',
+  jB1QStYt4njXJTCymI5b:'LOC014',zc0xL01qYmw1zgzRvCEU:'YDSLmVgK7fqDsRf7LcIK'};
+function migrateMarks(){
+  let changed=false;
+  Object.keys(LOC_ID_REMAP).forEach(o=>{
+    if(!(o in MARKS))return;
+    const n=LOC_ID_REMAP[o], v=MARKS[o]; delete MARKS[o];
+    if(MARKS[n]!=='went')MARKS[n]=v==='went'?'went':(MARKS[n]||v); // 「行った」優先で統合
+    changed=true;
+  });
+  return changed;
+}
+if(migrateMarks())try{localStorage.setItem(CM,JSON.stringify(MARKS));}catch(e){}
 let activeMarks=new Set();
 function saveMarks(){
   try{localStorage.setItem(CM,JSON.stringify(MARKS));}catch(e){}
@@ -1371,6 +1393,8 @@ async function loadRemoteMarks(){
     const data=snap.exists()?snap.data():{};
     const remote=data.spotMarks||{};
     MARKS={...remote,...MARKS};
+    migrateMarks(); // リモート由来の旧IDも統合先へ移行してから保存
+
     // 推し作品：リモートと端末の和集合
     (data.favSeries||[]).forEach(s=>FAVS.add(s));
     // GL Worksの自己評価（users/{uid}.dramas[dramaId].rate 1〜5）→ ★4以上を推し候補に
