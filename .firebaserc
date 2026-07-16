@@ -1,0 +1,12 @@
+{
+  "projects": {
+    "default": "thai-gl-works-2c835"
+  },
+  "targets": {
+    "thai-gl-works-2c835": {
+      "hosting": {
+        "map": ["thai-series-map"]
+      }
+    }
+  }
+}

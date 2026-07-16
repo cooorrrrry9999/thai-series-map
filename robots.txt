@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /admin.html
 
-Sitemap: https://cooorrrrry9999.github.io/thai-series-map/sitemap.xml
+Sitemap: https://thai-series-map.web.app/sitemap.xml

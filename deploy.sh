@@ -7,7 +7,8 @@
 #   1. admin.html で「📤 公開用 data.json を書き出す」を押す
 #   2. このスクリプトを実行する（ダブルクリック or ./deploy.sh）
 #      → ダウンロードフォルダの最新 data.json を自動で取り込み、
-#        壊れていないか検査して、GitHub に公開します
+#        壊れていないか検査して、GitHubにバックアップ後、
+#        Firebase Hosting（https://thai-series-map.web.app/）に公開します
 # ============================================================
 
 set -e
@@ -96,7 +97,7 @@ fi
 if [ -f "data.json" ] && command -v python3 &> /dev/null; then
   python3 - <<'PYEOF'
 import json, datetime
-BASE = "https://cooorrrrry9999.github.io/thai-series-map/"
+BASE = "https://thai-series-map.web.app/"
 d = json.load(open('data.json'))
 today = datetime.date.today().isoformat()
 urls = [f'  <url><loc>{BASE}</loc><lastmod>{today}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>']
@@ -122,16 +123,25 @@ else
   echo "✅ コミット完了"
 fi
 
-# ── ④ GitHub へプッシュ ────────────────────────────────────
-echo "🚀 GitHubにアップロードしています..."
+# ── ④ GitHub へプッシュ（バックアップ用） ──────────────────
+echo "🚀 GitHubにバックアップしています..."
 git branch -M main
 git push -u origin main
+
+# ── ⑤ Firebase Hosting へ公開 ──────────────────────────────
+if ! command -v firebase &> /dev/null; then
+  echo "❌ Firebase CLI がインストールされていません"
+  echo "   npm install -g firebase-tools でインストールしてください"
+  exit 1
+fi
+echo "🚀 Firebase Hosting に公開しています..."
+firebase deploy --only hosting:map
 
 # ── 完了メッセージ ─────────────────────────────────────────
 echo ""
 echo "✅ デプロイ完了！"
 echo ""
-echo "🌐 公開URL（数分後にアクセスできます）:"
-echo "   https://${GITHUB_USER}.github.io/${REPO}/"
+echo "🌐 公開URL:"
+echo "   https://thai-series-map.web.app/"
 echo ""
 echo "📱 スマホでこのURLを開いて「ホーム画面に追加」でアプリ化できます"

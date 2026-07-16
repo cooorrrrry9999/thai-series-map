@@ -1,0 +1,29 @@
+{
+  "hosting": {
+    "target": "map",
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/.*/**",
+      "**/node_modules/**",
+      "deploy.sh",
+      "scripts/**",
+      "promo/**",
+      "**/*.rtf",
+      "**/*.md",
+      "tsmap_backup_*.json",
+      "firestore.rules",
+      "firestore_appearances.json",
+      "firestore_import.html"
+    ],
+    "headers": [
+      {
+        "source": "**/*.@(html|json|webmanifest)",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache" }
+        ]
+      }
+    ]
+  }
+}
