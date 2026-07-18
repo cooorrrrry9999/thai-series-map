@@ -583,12 +583,14 @@ function pendingCardHTML(s){
     </div>
   </div>`;
 }
-// GoogleマップURLから座標を抽出（@lat,lng / !3d..!4d.. / q=lat,lng 形式。goo.gl短縮URLからは取れない）
+// GoogleマップURLから座標を抽出（goo.gl短縮URLからは取れない）
+// !3d!4d＝場所ピンの座標を最優先。@lat,lng は「地図の表示中心」なので、パン/ズームした状態で
+// コピーしたURLだとピンと大きくずれる＝変な場所になるため最後の手段にする（autoCoordsと同じ優先順位）
 function coordsFromGmapsUrl(u){
   if(!u)return null;
-  const m=u.match(/@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/)
-       ||u.match(/!3d(-?\d{1,2}\.\d+)!4d(-?\d{1,3}\.\d+)/)
-       ||u.match(/[?&]q=(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
+  const m=u.match(/!3d(-?\d{1,2}\.\d+)!4d(-?\d{1,3}\.\d+)/)
+       ||u.match(/[?&]q=(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/)
+       ||u.match(/@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/);
   return m?{lat:parseFloat(m[1]),lng:parseFloat(m[2])}:null;
 }
 // 既存スポットとの重複候補を探す（同名＝大文字小文字無視、または約100m以内）
@@ -984,12 +986,12 @@ window.editLocModal=function(locId){
       <div class="form-group">
         <label class="form-label">緯度</label>
         <input class="form-input" id="el-lat" type="number" step="any" value="${loc.lat||''}"
-          oninput="updateEditCoordStatus()">
+          oninput="updateEditCoordStatus()" onchange="syncEditMarkerFromInputs()">
       </div>
       <div class="form-group">
         <label class="form-label">経度</label>
         <input class="form-input" id="el-lng" type="number" step="any" value="${loc.lng||''}"
-          oninput="updateEditCoordStatus()">
+          oninput="updateEditCoordStatus()" onchange="syncEditMarkerFromInputs()">
       </div>
     </div>
     <div id="el-coord-status" style="margin-bottom:10px">${coordStatus}</div>
@@ -1050,6 +1052,12 @@ window.saveLoc=function(locId){
     googleMapsUrl:url||gmap,
     memo:document.getElementById('el-memo').value.trim(),
   };
+  // 座標欄が空でも、どちらかのURL欄にフルURLが貼られていれば座標を自動設定
+  // （「保存用」欄にだけフルURLを貼って保存→座標0,0のまま＝地図に出ない事故の防止）
+  if(!data.lat&&!data.lng){
+    const c=coordsFromGmapsUrl(url)||coordsFromGmapsUrl(gmap);
+    if(c){data.lat=c.lat;data.lng=c.lng;}
+  }
   localUpdateLoc(locId,data);
   clearC(); closeModal(); renderSpots();
   updateDoc(doc(db,'locations',locId),data)
@@ -1757,12 +1765,17 @@ window.clearDraft=function(){
 };
 window.addSpot=async function(){
   const name=document.getElementById('a-name').value.trim();
-  const lat=parseFloat(document.getElementById('a-lat').value)||0;
-  const lng=parseFloat(document.getElementById('a-lng').value)||0;
+  let lat=parseFloat(document.getElementById('a-lat').value)||0;
+  let lng=parseFloat(document.getElementById('a-lng').value)||0;
   const gmap=document.getElementById('a-gmap').value.trim();
   const url=document.getElementById('a-url').value.trim();
   const msg=document.getElementById('add-msg');
   if(!name){msg.style.color='var(--red)';msg.textContent='場所名は必須です';return;}
+  // 座標欄が空でも、どちらかのURL欄にフルURLが貼られていれば座標を自動設定
+  if(!lat&&!lng){
+    const c=coordsFromGmapsUrl(url)||coordsFromGmapsUrl(gmap);
+    if(c){lat=c.lat;lng=c.lng;}
+  }
   if(!lat||!lng){msg.style.color='var(--red)';msg.textContent='緯度・経度を入力してください';return;}
   // 既存スポットとの重複チェック（同名または約100m以内）。紐付けの追加は「スポット一覧」の編集から
   const dup=findDupLoc(name,{lat,lng});
@@ -2709,6 +2722,11 @@ window.initAdminEditMap=function(lat,lng,elId){
     return;
   }
   const el=document.getElementById(elId||'el-map'); if(!el)return;
+  // モーダルを開き直すと modal-body の innerHTML 差し替えで前回の地図DOMは破棄されている。
+  // 古いインスタンスを使い回すと新しい #el-map が空のまま＝ピンがどこにも表示されないので作り直す
+  if(adminEditMap&&!document.body.contains(adminEditMap.getContainer())){
+    adminEditMap.remove();adminEditMap=null;adminEditMarker=null;
+  }
   if(!adminEditMap){
     adminEditMap=L.map(elId,{attributionControl:false}).setView([(lat||13.75), (lng||100.5)], (lat&&lng)?15:6);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(adminEditMap);
@@ -2733,6 +2751,15 @@ window.setAdminEditMarker=function(lat,lng){
   if(typeof updateEditCoordStatus==='function')updateEditCoordStatus();
 };
 
+// 緯度・経度欄を手入力で直したとき（確定時）にミニ地図のマーカーへ反映する
+window.syncEditMarkerFromInputs=function(){
+  const lat=parseFloat(document.getElementById('el-lat')?.value);
+  const lng=parseFloat(document.getElementById('el-lng')?.value);
+  if(!adminEditMap||isNaN(lat)||isNaN(lng)||!lat||!lng)return;
+  setAdminEditMarker(lat,lng);
+  adminEditMap.setView([lat,lng],Math.max(adminEditMap.getZoom(),15));
+};
+
 window.autoCoords=function(url,latId,lngId,msgId){
   const u=url.trim();
   if(!u){const el=document.getElementById(msgId);if(el)el.innerHTML='';return;}
@@ -2748,6 +2775,13 @@ window.autoCoords=function(url,latId,lngId,msgId){
   if(m){
     document.getElementById(latId).value=m[1];
     document.getElementById(lngId).value=m[2];
+    // 編集モーダルのミニ地図にも即反映（マーカー移動＋取得地点へパン）。これが無いと
+    // 座標欄だけ更新されて地図上のピンが古い場所に残り「変な場所に反映された」ように見える
+    if(latId==='el-lat'&&adminEditMap){
+      const la=parseFloat(m[1]),ln=parseFloat(m[2]);
+      setAdminEditMarker(la,ln);
+      adminEditMap.setView([la,ln],Math.max(adminEditMap.getZoom(),16));
+    }
     if(el){
       el.innerHTML=`<div style="display:flex;align-items:center;gap:6px;color:var(--green);background:#D1FAE5;border-radius:7px;padding:4px 10px">
         <span>✅ 座標を取得: ${m[1]}, ${m[2]}</span>
