@@ -2,6 +2,16 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<script>
+/* 旧GitHub Pages(cooorrrrry9999.github.io/thai-series-map/)へのアクセスを新サイト(thai-series-map.web.app)へ即転送。
+   同一index.htmlが両ホストに配信されるため、host判定で本番のみ転送し、旧URLの訪問者・被リンク・クロールを web.app に統合する。
+   ?spot= 等のクエリとハッシュは保持する。 */
+(function(){
+  if(location.hostname.indexOf('github.io')!==-1){
+    location.replace('https://thai-series-map.web.app/'+(location.search||'')+(location.hash||''));
+  }
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Thai Series Map | タイドラマ・タイGL聖地巡礼マップ | Thai GL Filming Locations</title>
 <meta name="description" content="タイドラマ・タイGLの聖地巡礼マップ。GAP The Series・23.5・The Loyal Pin などのロケ地・撮影場所を地図で探して、Googleマップでそのままナビ。Interactive map of Thai GL series filming & shooting locations in Bangkok and Thailand.">
