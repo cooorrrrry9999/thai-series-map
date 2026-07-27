@@ -110,6 +110,82 @@ print(f"🔎 sitemap.xml を生成しました（{len(urls)} URL）")
 PYEOF
 fi
 
+# ── ②d 静的スポット一覧を index.html に差し込み（SEO：JS実行なしでも全スポットの名称・作品・住所をクロールさせる）──
+if [ -f "data.json" ] && [ -f "index.html" ] && command -v python3 &> /dev/null; then
+  python3 - <<'PYEOF'
+import json, html, re
+d = json.load(open('data.json'))
+# location_id → その地に登場する作品名・シーン説明
+apps_by_loc = {}
+for a in d.get('appearances', []):
+    lid = a.get('location_id')
+    if not lid:
+        continue
+    apps_by_loc.setdefault(lid, []).append(a)
+
+def esc(s):
+    return html.escape(str(s or '').strip())
+
+items = []
+for l in sorted(d.get('locations', []), key=lambda x: (x.get('name') or '')):
+    lid = l.get('id')
+    if not lid:
+        continue
+    name = esc(l.get('name'))
+    cat = esc(l.get('category'))
+    addr = esc(l.get('address'))
+    apps = apps_by_loc.get(lid, [])
+    series = []
+    for a in apps:
+        s = (a.get('series') or '').strip()
+        if s and s not in series:
+            series.append(s)
+    scenes = []
+    for a in apps:
+        sc = (a.get('scene_desc') or '').strip()
+        if sc and sc not in scenes:
+            scenes.append(sc)
+    meta = []
+    if cat:
+        meta.append(cat)
+    if series:
+        meta.append('作品: ' + esc('・'.join(series)) + ' ロケ地')
+    if addr:
+        meta.append(addr)
+    if scenes:
+        meta.append(esc(' / '.join(scenes[:3])))
+    meta_html = '｜'.join(meta)
+    items.append(
+        f'<li><a href="?spot={esc(lid)}">{name}</a>'
+        + (f' <span class="dir-meta">{meta_html}</span>' if meta_html else '')
+        + '</li>'
+    )
+
+block = (
+    '<!--SPOT_DIRECTORY_START-->\n'
+    '<section id="spot-directory" aria-label="タイドラマ・タイGL 聖地巡礼スポット一覧">\n'
+    '<h2>タイドラマ・タイGL 聖地巡礼スポット一覧 / All Thai GL Filming Locations</h2>\n'
+    '<ul>\n' + '\n'.join(items) + '\n</ul>\n'
+    '</section>\n'
+    '<!--SPOT_DIRECTORY_END-->'
+)
+
+src = open('index.html', encoding='utf-8').read()
+new = re.sub(
+    r'<!--SPOT_DIRECTORY_START-->.*?<!--SPOT_DIRECTORY_END-->',
+    lambda m: block,
+    src,
+    count=1,
+    flags=re.S,
+)
+if new != src:
+    open('index.html', 'w', encoding='utf-8').write(new)
+    print(f"📇 静的スポット一覧を index.html に差し込みました（{len(items)} 件）")
+else:
+    print("⚠️  SPOT_DIRECTORY マーカーが見つからず一覧を差し込めませんでした")
+PYEOF
+fi
+
 # ── ③ ステージング & コミット ──────────────────────────────
 echo ""
 echo "📦 変更ファイルをまとめています..."

@@ -61,6 +61,13 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(-
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 /* 検索エンジン向けの不可視見出し（スクリーンリーダーにも読まれる） */
 .sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+/* SEO用の静的スポット一覧（クローラーが JS 実行なしで全スポットの名称・作品・住所を読めるようにする）。地図(#map:fixed)の下に置き、通常は視界外 */
+#spot-directory{position:relative;z-index:1;background:#fff;color:#333;padding:24px 16px 60px;font-size:13px;line-height:1.7;max-width:820px;margin:100vh auto 0;border-top:1px solid #eee}
+#spot-directory h2{font-size:16px;margin:0 0 12px;font-weight:700}
+#spot-directory ul{list-style:none;margin:0;padding:0}
+#spot-directory li{padding:8px 0;border-bottom:1px solid #f4f4f4}
+#spot-directory a{color:#5b4b9a;font-weight:700;text-decoration:none}
+#spot-directory .dir-meta{color:#777}
 
 /* ── ログイン画面（アイコンと同じ「夜の地図」の世界。方眼＋点線ルートはアイコンの意匠） ── */
 #login-screen{position:fixed;inset:0;z-index:300;background:
@@ -1943,11 +1950,42 @@ window._sel=function(locId,fromPin){
   focusSpot(loc,fromPin);
   fillDetail(loc);
 };
-// SEO: ページタイトルをスポットに合わせて動的に変更（?spot= 直リンクのインデックス用）
+// SEO: ?spot= 直リンク時、タイトル・canonical・OGP をそのスポット固有にする
+//      （全 ?spot= URL が root の canonical に集約され1ページ扱いになるのを防ぎ、各スポットを独立インデックス対象にする）
 const BASE_TITLE=document.title;
+const _seoEls={
+  canon:document.querySelector('link[rel="canonical"]'),
+  ogUrl:document.querySelector('meta[property="og:url"]'),
+  desc:document.querySelector('meta[name="description"]'),
+  ogTitle:document.querySelector('meta[property="og:title"]'),
+  ogDesc:document.querySelector('meta[property="og:description"]'),
+};
+const _seoBase={};
+for(const k in _seoEls){
+  const el=_seoEls[k];
+  _seoBase[k]=el?(el.getAttribute(k==='canon'?'href':'content')||''):'';
+}
 function setSpotTitle(loc,apps){
-  const s=[...new Set(apps.map(a=>a.series).filter(Boolean))][0];
-  document.title=`${loc.name}${s?` — ${s} ロケ地 / Filming Location`:''} | Thai Series Map`;
+  const series=[...new Set(apps.map(a=>a.series).filter(Boolean))];
+  const s=series[0];
+  const title=`${loc.name}${s?` — ${s} ロケ地 / Filming Location`:''} | Thai Series Map`;
+  document.title=title;
+  const url=location.origin+location.pathname+'?spot='+encodeURIComponent(loc.id);
+  if(_seoEls.canon)_seoEls.canon.setAttribute('href',url);
+  if(_seoEls.ogUrl)_seoEls.ogUrl.setAttribute('content',url);
+  if(_seoEls.ogTitle)_seoEls.ogTitle.setAttribute('content',title);
+  const seriesTxt=series.join('・');
+  const desc=`${loc.name}${loc.address?`（${loc.address}）`:''}はタイドラマ・タイGL${seriesTxt?`「${seriesTxt}」`:''}のロケ地・聖地です。Googleマップでそのままナビ。Filming location of Thai GL series${seriesTxt?` ${seriesTxt}`:''}.`;
+  if(_seoEls.desc)_seoEls.desc.setAttribute('content',desc);
+  if(_seoEls.ogDesc)_seoEls.ogDesc.setAttribute('content',desc);
+}
+function resetSpotSEO(){
+  document.title=BASE_TITLE;
+  if(_seoEls.canon)_seoEls.canon.setAttribute('href',_seoBase.canon);
+  if(_seoEls.ogUrl)_seoEls.ogUrl.setAttribute('content',_seoBase.ogUrl);
+  if(_seoEls.desc)_seoEls.desc.setAttribute('content',_seoBase.desc);
+  if(_seoEls.ogTitle)_seoEls.ogTitle.setAttribute('content',_seoBase.ogTitle);
+  if(_seoEls.ogDesc)_seoEls.ogDesc.setAttribute('content',_seoBase.ogDesc);
 }
 // 詳細パネルのDOMを描画（言語切替時の再描画にも使う）
 function fillDetail(loc){
@@ -2131,7 +2169,7 @@ function renderSpotTable(){
 
 window.closeDetail=e=>{if(e.target===document.getElementById('detail-overlay'))closeDetailDirect();};
 window.closeDetailDirect=()=>{
-  document.title=BASE_TITLE;
+  resetSpotSEO();
   document.getElementById('detail-overlay').style.display='none';
   const dr=document.getElementById('drawer');
   dr.style.display='block';
@@ -2879,5 +2917,354 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
+<!-- SEO: 全スポットの静的一覧。deploy.sh が data.json から自動生成してマーカー間を差し替える（手動編集不可） -->
+<!--SPOT_DIRECTORY_START-->
+<section id="spot-directory" aria-label="タイドラマ・タイGL 聖地巡礼スポット一覧">
+<h2>タイドラマ・タイGL 聖地巡礼スポット一覧 / All Thai GL Filming Locations</h2>
+<ul>
+<li><a href="?spot=LOC001">99 House Studio</a> <span class="dir-meta">スタジオ・テレビ局｜作品: Blank・GAP ロケ地｜Soi Ram Intra 117, Min Buri, Bangkok｜Samの家</span></li>
+<li><a href="?spot=S6rEaoXkwN5NRWhMVp9k">ALAND TOKYO</a> <span class="dir-meta">ショッピング｜作品: FreenBeckyFayMay2025年3月来日 ロケ地｜〒150-0042 東京都渋谷区宇田川町２０−１１ 1F.2F TOKYO</span></li>
+<li><a href="?spot=XQVtl5RGQ1FsJwtsTsuL">AT ISAN</a> <span class="dir-meta">レストラン｜作品: オススメスポット：レストラン ロケ地｜593/21 Soi Sukhumvit 33/1, Khlong Tan Nuea, Watthana, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=7UbHNn9QwPtfzR1Xl1uV">AUBE</a> <span class="dir-meta">ホテル｜作品: 4Element; Water ロケ地｜10 Ratchaphruek Rd, Bang Phrom, Taling Chan, Bangkok 10170 Thai</span></li>
+<li><a href="?spot=5Oe4QO7YFgr8fC8XbKmX">Ace of Hua hin resort</a> <span class="dir-meta">ホテル｜作品: 4Eletment;Fire ロケ地｜1392 Phet Kasem Rd, Cha-Am, Hua Hin, Phetchaburi 76120</span></li>
+<li><a href="?spot=4s7lZQ51a0h2jwkwAubC">Acts studio Thailand</a> <span class="dir-meta">スタジオ・テレビ局｜作品: Somewhere Somehow・Blank・Love Beyond Dreams・My Marvellous Dream is You ロケ地｜9/9 หมู่ที่ 1 ซอย บางคูวัดบางบัวทอง Bang Khu Wat, Mueang Pathum Thani District, Pathum Thani 12000 Thai</span></li>
+<li><a href="?spot=46xDZILEE0xvChp0F3nq">After You Dessert Cafe&#x27; Iconsiam</a> <span class="dir-meta">カフェ｜作品: オススメスポット：カフェ ロケ地｜6th Floor Icon Siam Shopping Mall, Khlong Ton Sai, Khlong San, Bangkok 10600 Thai</span></li>
+<li><a href="?spot=gmcKAdw3cGV6BWoCTFpk">After Yum Pattaya</a> <span class="dir-meta">レストラン｜作品: FayMayNeen ロケ地｜ปั้มคาลเท็กซ์ 144 หมู่ที่ 9 อยู่ใน Central Pattaya Rd, Bang Lamung District, Chon Buri 20150 Thai｜豚の首肉炒め、イカの卵炒め、サーモン漬け、などなど</span></li>
+<li><a href="?spot=44956ASRLgP9cIVzB4YR">Agalico</a> <span class="dir-meta">カフェ｜作品: Love Senior Special Episode・プライベート・My Safe Zone ロケ地｜20 Sukhumvit 51 Alley, Khlong Tan Nuea, Watthana, Bangkok 10110 Thai｜カバー曲MVロケ地</span></li>
+<li><a href="?spot=pEKWSMAU5zmQ2eGBDsiz">Aka tombo</a> <span class="dir-meta">レストラン｜作品: Love design ロケ地｜〒802-0004 福岡県北九州市小倉北区鍛冶町１丁目８−１１｜関係者で食べに行っていた場所</span></li>
+<li><a href="?spot=d2PKh8qAvsc5KosDHSxW">Akiba Drift Trike</a> <span class="dir-meta">スポーツ｜作品: プライベート ロケ地｜458 Rong Fak Nang KM. 30 Alley, Thai Ban, Mueang Samut Prakan District, Samut Prakan 10280 Thai</span></li>
+<li><a href="?spot=bRk5e1j1mhFysDl8fciX">Alice Brunch Lab</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜Ban Mai, Pak Kret District, Nonthaburi 11120｜幼馴染のLookjunと訪れていたカフェ</span></li>
+<li><a href="?spot=LOC018">Areeya X PROUD Rooftop</a> <span class="dir-meta">レストラン｜作品: プライベート ロケ地｜อินทรามระ 26/2 ถ. รัชดาภิเษก Din Daeng, Bangkok 10400 タイ｜屋上のムーカタ屋さん。店員さんが親切。</span></li>
+<li><a href="?spot=2brjehwo4pYqBx3OXhqn">Assumption College English Program, Rama II Campus</a> <span class="dir-meta">大学・図書館・博物館・美術館｜作品: 23.5 ロケ地</span></li>
+<li><a href="?spot=wR28SqbjKKqVnGtMSsCq">Assumption University</a> <span class="dir-meta">大学・図書館・博物館・美術館｜作品: Somewhere Somehow・Girl Rules ロケ地｜592 3 Soi Ramkhamhaeng 24, Hua Mak, Bang Kapi, Bangkok 10240 Thai</span></li>
+<li><a href="?spot=Hee6pekAWRuNs1RxQqus">Aunt Tue&#x27;s Fried Meat</a> <span class="dir-meta">レストラン｜作品: プライベート ロケ地｜79, 1 S. Vibhavadi Rangsit 16, Ratchadaphisek, Din Daeng, Bangkok 10400</span></li>
+<li><a href="?spot=PR7iR3vLOslcb0yhpcPU">B-Story Garden Café &amp; Restaurants</a> <span class="dir-meta">レストラン｜作品: プライベート ロケ地｜33, 25 Pradit Manutham Rd, Lat Phrao, Bangkok 10230 Thai</span></li>
+<li><a href="?spot=1l2EAG7UUKsnoTHCGqr6">BAD POUTINE</a> <span class="dir-meta">カフェ｜作品: EmiBonnie Vlog(2025April) ロケ地｜1338B Song Wat Rd, Chakkrawat, Samphanthawong, Bangkok 10100 Thai</span></li>
+<li><a href="?spot=RhOrLFhKRgF1iClIcybj">BARTELS Asok - Sourdough Sandwiches, Coffee &amp; Juicery</a> <span class="dir-meta">カフェ｜作品: オススメスポット：カフェ ロケ地｜199/9-11 Sukhumvit Rd, Khlong Toei Nuea, Watthana, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=3ujBQlwDQNKVCblScCsA">BELOW NOAH Ekkamai</a> <span class="dir-meta">名所｜作品: Chasing Love ロケ地｜LG floor, Park X, 295 Soi Sukhumvit 63, Khlong Tan Nuea, Watthana, Bangkok 10110 Thailand</span></li>
+<li><a href="?spot=1qZ2PyUGangQgVFzQr90">Baan 168 Ram Inthra 117</a> <span class="dir-meta">スタジオ・テレビ局｜作品: My Marvellous Dream is You ロケ地｜168 Thanon Charoen phatthana, Bang Chan, Khlong Sam Wa, Bangkok 10510</span></li>
+<li><a href="?spot=EbvK5FwSXZXOjWacORGg">Baan Kang Wat</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜191-197 ซอย วัดอุโมงค์ Suthep, Mueang Chiang Mai District, Chiang Mai 50200 Thailand</span></li>
+<li><a href="?spot=ZG291kEj6Nj4Jvt4XzGT">Baan Langsuan Bangkok</a> <span class="dir-meta">レストラン｜作品: オススメスポット：レストラン ロケ地｜39/2 Soi Langsuan, Lumphini, Pathum Wan, Bangkok 10330 Thai</span></li>
+<li><a href="?spot=rhOeC417vjZUA1TiPntk">Baan Le Seafood Kitchen (By Chef Na)</a> <span class="dir-meta">レストラン｜作品: プライベート ロケ地｜Khok Kham, Mueang Samut Sakhon District, Samut Sakhon 74000｜二人のオススメのレストラン、IG liveで切り忘れてチューしてました</span></li>
+<li><a href="?spot=uIzcWxPOPLNExzNnOhks">Baan Suan Sathorn Craft &amp; Cafe</a> <span class="dir-meta">カフェ｜作品: オススメスポット：カフェ ロケ地｜60 Chuea Phloeng 2 Alley, Thung Maha Mek, Sathon, Bangkok 10120</span></li>
+<li><a href="?spot=6phOyQ2tDxQ5Hobe5dXx">Baan saran lom</a> <span class="dir-meta">ホテル｜作品: Love design ロケ地</span></li>
+<li><a href="?spot=aFVoMxNX2KzrmKG5qPki">Ballad Coffee Bar</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜1337 Charoen Nakhon Rd, Banglamphu Lang, Khlong San, Bangkok 10600</span></li>
+<li><a href="?spot=EjwZ1ry1wphY9yKvDeEe">Ban Tha Chang Natural Spring (Pak Chong Spring)</a> <span class="dir-meta">名所｜作品: FayMayNeen ロケ地｜ซอย โยธาธิการ Mu Si, Pak Chong District, Nakhon Ratchasima 30130 Thai</span></li>
+<li><a href="?spot=S6or4257wH2SQhSkGYJD">Banana Leaf</a> <span class="dir-meta">レストラン｜作品: Mate ロケ地｜2025 The Promenade 2026 Ram Inthra Rd, Khan Na Yao, Bangkok 10230</span></li>
+<li><a href="?spot=ciR1MiQxF0h6iOEt7QeM">Banana state Fasion Hotel</a> <span class="dir-meta">ホテル｜作品: Love Beyond Dreams ロケ地｜55, １ Kanchanaphisek Rd, Bang Khu Wiang, Bang Kruai District, Nonthaburi 11130 Thailand</span></li>
+<li><a href="?spot=ujencCTjjfBq1ehoNAfW">Bang Mae Mai&#x27;s 100 Sugar Palm Trees @Turn Loiton</a> <span class="dir-meta">名所｜作品: Hometown Romance ロケ地｜74W4+GJ4, Bang Yai, Bang Pla Ma District, Suphan Buri 72150｜Klaoの広大な土地</span></li>
+<li><a href="?spot=uou6568HOHtoJ7xHYiCF">Bangkok Art and Culture Centre</a> <span class="dir-meta">大学・図書館・博物館・美術館｜作品: プライベート ロケ地｜939 Rama I Rd, Wang Mai, Pathum Wan, Bangkok 10330 Thai</span></li>
+<li><a href="?spot=XDYcj4EIeFQJoNdpMwG1">Bangkok Planetarium</a> <span class="dir-meta">大学・図書館・博物館・美術館｜作品: 23.5・Pluto ロケ地｜928 Sukhumvit Rd, Phra Khanong, Khlong Toei, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=flaybI5RgF8s693haC7m">Bangkok Post Building</a> <span class="dir-meta">スタジオ・テレビ局｜作品: My Marvellous Dream is You ロケ地｜136 Na Ranong Rd, Khlong Toei, Bangkok 10110｜WanがKimを奪還するシーン</span></li>
+<li><a href="?spot=yJPDbk4HiWGsXMNDFWvc">Bare Nail Spa - Ekkamai</a> <span class="dir-meta">スパ・サロン｜作品: プライベート ロケ地｜EKM 6, RoomB202, 2nd Fl, 26 Ekkamai 6 Alley, Phra Khanong Nuea, Watthana, Bangkok 10110｜P&#x27;Aim(Fayの従姉)のお店</span></li>
+<li><a href="?spot=0qOLkRnySrWJWRIgrAHP">Bayside Aquarium</a> <span class="dir-meta">名所｜作品: Somewhere Somehow ロケ地｜〒812-0021 福岡県福岡市博多区１３ 博多プレイス 内 福岡市博多区築港本町１３−６ ベイサイド</span></li>
+<li><a href="?spot=tloooawDwEdEsYgbc5D7">Blue Coffee At Old Town</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜52 Rachadamnoen Rd Old City Tambon Si Phum, Mueang Chiang Mai District, Chiang Mai 50200 Thailand</span></li>
+<li><a href="?spot=H0hOtJED9yHBeTpWl9WU">Blue Elephant</a> <span class="dir-meta">レストラン｜作品: The Loyal Pin ロケ地｜BTS Surasak station, 41 S Sathon Rd, Yan Nawa, Sathon, Bangkok 10120 Thailand</span></li>
+<li><a href="?spot=OAYBuTGZHfAp4HcH0H0I">Boon Sung Iron Bridge</a> <span class="dir-meta">名所｜作品: URANUS2324 ロケ地｜V923+QHV, Bang Nai Si Subdistrict, Takua Pa District, Phang Nga 82110 Thai</span></li>
+<li><a href="?spot=N5nZetXQXeI3Fgji0scs">Boonyavej Hospital</a> <span class="dir-meta">病院｜作品: Shades ロケ地｜834/1 Phet Kasem Rd, Bang Khae Nuea, Bang Khae, Bangkok 10160</span></li>
+<li><a href="?spot=fhWmiwtaczIuT5Zw2hmU">Bottomless Sukhumvit 33</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地</span></li>
+<li><a href="?spot=CrgnK30VyAVbMqb64mBN">Brassiere Cozy Beach</a> <span class="dir-meta">ホテル｜作品: 4Element; Water・4Eletment;Air ロケ地｜Namのホテル</span></li>
+<li><a href="?spot=xI4CH4Zf1wIylqWMoJfH">Brown Burgundy</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜猫2と家族デートカフェ</span></li>
+<li><a href="?spot=b3PRhnMQbinq1ukXfSJZ">CHAGÔ ชาโก้ - EmQuartier</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜Sukhumvit Rd, Khlong Tan Nuea, Watthana, Bangkok 10110｜Ormちゃんのドリンク店2号店</span></li>
+<li><a href="?spot=xAZwPTlkBVohVtcCWWuz">CHARLOTTE DOUGHNUTS Sukhumvit 33</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地</span></li>
+<li><a href="?spot=W7ctnivoOg3jJRE0GCdz">CHER SPA</a> <span class="dir-meta">スパ・サロン｜作品: The Loyal Pin ロケ地｜741 Pradit Manutham Rd, Wang Thonglang, Bangkok 10310 Thailand</span></li>
+<li><a href="?spot=ZchFkLoVZF870nedEMaU">CHUM&#x27;s Coffee</a> <span class="dir-meta">カフェ｜作品: Sunset x Vibes ロケ地｜126/1 อาคาร 24 มหาวิทยาลัยหอการค้าไทย Ratchadaphisek Rd, Ratchadaphisek, Din Daeng, Bangkok 10400 Thai</span></li>
+<li><a href="?spot=eU6b0kpDKqJrCTtTqSdt">COF AND COW at NANGLINCHEE</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地</span></li>
+<li><a href="?spot=LOC016">COK Cream of The Koff</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜Thanon Ek Thaksin, Lak Hok, Pathum Thani｜FreenがBeckyを連れて行ったカフェ。</span></li>
+<li><a href="?spot=yk61gzAeXblgmBne0RCv">Café Craft by CHANINTR</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地</span></li>
+<li><a href="?spot=PuhDO8t52jlSRitHk0cq">Café Rapport Central Library</a> <span class="dir-meta">大学・図書館・博物館・美術館｜作品: Love design ロケ地｜〒803-0813 福岡県北九州市小倉北区城内４</span></li>
+<li><a href="?spot=PSuMwp72i90SYORDrm2d">Centa grand Hotel Osaka</a> <span class="dir-meta">ホテル｜作品: MilkLove2024年8月来日・FreenBeckyFayMay 2025年10月来日 ロケ地｜〒556-0011 大阪府大阪市浪速区難波中２丁目１１−５０｜来日時宿泊</span></li>
+<li><a href="?spot=wEbBlXhsTWf50PnrlptW">Centara Q Resort Rayong</a> <span class="dir-meta">ホテル｜作品: Somewhere Somehow ロケ地</span></li>
+<li><a href="?spot=1utkbPskFJzH1Pv2XpMq">Center Point Massage &amp; Spa (Sukhumvit 24 Branch)</a> <span class="dir-meta">スパ・サロン｜作品: オススメスポット：観光地 ロケ地｜2/16 Sukhumvit 24 Alley, Khlong Tan, Khlong Toei, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=wDWp6mnpdhVs0EgnXpOt">Central Rama 9</a> <span class="dir-meta">ショッピング｜作品: My Marvellous Dream is You ロケ地｜9/9 Rama IX Rd, Huai Khwang, Bangkok 10310</span></li>
+<li><a href="?spot=LOC002">Central VIllage</a> <span class="dir-meta">ショッピング｜作品: GAP ロケ地｜98 Suvarnabhumi 3 Rd, Bang Phli, Samut Prakan｜モールのシーン。</span></li>
+<li><a href="?spot=3sH6tWSPiYDDhx8PgmCr">Central Westgate</a> <span class="dir-meta">ショッピング｜作品: Blank ロケ地｜199/3 หมู่ที่ 6, Sao Thong Hin, Bang Yai District, Nonthaburi 11000｜端々に出てくるショッピングモールでのシーンのロケ地</span></li>
+<li><a href="?spot=M6OVyDXGsL3CywsfhGoY">Central world</a> <span class="dir-meta">ショッピング｜作品: Shades ロケ地｜999/9 Rama I Rd, Pathum Wan, Bangkok 10330｜central food hool、万引きのシーン</span></li>
+<li><a href="?spot=LOC029">Channel 3</a> <span class="dir-meta">スタジオ・テレビ局｜作品: My Safe Zone・The Secret Of Us ロケ地｜Khlong Tan, Khlong Toei, Bangkok</span></li>
+<li><a href="?spot=YSs7pM9jy6XIqyj4BZpc">Chatuchuck Market</a> <span class="dir-meta">ショッピング｜作品: オススメスポット：観光地 ロケ地｜587, 10 Kamphaeng Phet 2 Rd, Khwaeng Chatuchak, Chatuchak, Bangkok 10900 Thai</span></li>
+<li><a href="?spot=rgR8nc4zD04ZRbsUuNKa">Cheevit Cheeva SQ1</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜ชั้นที่ 1, ล็อต ss1001, อาคาร 1, สยามสแควร์ 388, Pathum Wan, Bangkok 10330</span></li>
+<li><a href="?spot=LOC012">Chom chui</a> <span class="dir-meta">カフェ｜作品: The Loyal Pin ロケ地｜R85X+2PX, Soi Kamnan Tinnakorn, Sala Klang, Bang Kruai District, Nonthaburi 11130 タイ｜バンコクの古い街並みを再現したエリア。</span></li>
+<li><a href="?spot=EnT1aEe2uuq7831brAFo">Chotana Villa</a> <span class="dir-meta">ホテル｜作品: プライベート ロケ地｜51, 26 Chotana Rd, Chang Phueak, เมือง Chiang Mai 50300 Thailand</span></li>
+<li><a href="?spot=jfLCRXnzQyB4Rk6e16RZ">Christmas Tree</a> <span class="dir-meta">名所｜作品: プライベート ロケ地｜〒071-0471 北海道上川郡美瑛町美馬牛</span></li>
+<li><a href="?spot=LOC013">Chulalongkon university</a> <span class="dir-meta">大学・図書館・博物館・美術館｜作品: プライベート・The Loyal Pin ロケ地｜254 Phayathai Rd, Wang Mai, Pathum Wan, Bangkok｜Fayの出身大学 / Pinが通っていた大学のモデル。</span></li>
+<li><a href="?spot=yanYHFbztoD4BwQWst6K">Coconut Shell Noodle House</a> <span class="dir-meta">レストラン｜作品: 4Element; Water ロケ地｜W83R+42R, O Bo Cho Liap Khlong Ta Chae Rd, Bang Khu Rat, Bang Bua Thong District, Nonthaburi 11110 Thai</span></li>
+<li><a href="?spot=3MWOQYdc9Y9RGRwrj3EK">Cocoon bkk</a> <span class="dir-meta">ホテル｜作品: Shades ロケ地｜27/21 Soi Yua Tong Bangkaew Bangplie, Bangkok, Samut Prakan 10540｜誕生日に行ったホテル</span></li>
+<li><a href="?spot=rCLAhkQzRkjFVrjRBBB4">Colonel Kanit Moo Kata</a> <span class="dir-meta">レストラン｜作品: プライベート・オススメスポット：ムーカタ ロケ地｜หมูกะทะผู้พันคณิต ปาก Soi Lat Pla Khao 14, Chorakhe Bua, Lat Phrao, Bangkok 10230</span></li>
+<li><a href="?spot=LOC032">D-Sports Stadium</a> <span class="dir-meta">スポーツ｜作品: Lucky My Love・プライベート ロケ地｜107 Soi Sukhumvit 63, Khlong Tan Nuea, Bangkok｜スポーツシーンのロケ地。</span></li>
+<li><a href="?spot=GHZtpRFt2Wg5ZX0A5gOq">DROP BY DOUGH</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地</span></li>
+<li><a href="?spot=PcEuoqaNKy1spr0C0fAN">Daeng Phochana</a> <span class="dir-meta">レストラン｜作品: プライベート ロケ地｜99 Phraeng Phuthon Rd, San Chao Pho Sua, Phra Nakhon, Bangkok 10200 Thai｜オススメのレストラン</span></li>
+<li><a href="?spot=3EfFBTD64ljCCInanmao">Daimaru Bessou 大丸別荘</a> <span class="dir-meta">ホテル｜作品: Somewhere Somehow ロケ地｜〒818-0058 福岡県筑紫野市湯町１丁目２０−１｜松風か松風控を貸切。東門からの出入りがすぐ、updownしなくてよいので機材搬入が楽だったはず</span></li>
+<li><a href="?spot=oKqyKt4uuA0UBrMNRL0d">DawanKimhan Beach scene</a> <span class="dir-meta">名所｜作品: My Marvellous Dream is You ロケ地</span></li>
+<li><a href="?spot=ziyb9h3mAWTtkdGhMnIT">Dear December Cafe</a> <span class="dir-meta">カフェ｜作品: My Safe Zone ロケ地</span></li>
+<li><a href="?spot=yCy6ce60souvuYMDkXfF">Dhurakij Pundit University</a> <span class="dir-meta">大学・図書館・博物館・美術館｜作品: Love senior・My Only Sunshine ロケ地｜110/1-4 Pracha Chuen Rd, Thung Song Hong, Lak Si, Bangkok 10210 Thai</span></li>
+<li><a href="?spot=FRsw5Lbr8UH1JXoOoE1d">Diora Luxe Runfini</a> <span class="dir-meta">スパ・サロン｜作品: オススメスポット：観光地 ロケ地｜Krit Building, 1032/1-5 Rama IV Rd, Thung Maha Mek, Sathon, Bangkok 10120 Thao</span></li>
+<li><a href="?spot=jB3FLikqbeYMBM512taJ">Don Quijote Fukuoka Tenjin Main Store ドン・キホーテ 福岡天神本店</a> <span class="dir-meta">ショッピング｜作品: Somewhere Somehow ロケ地｜〒810-0021 福岡県福岡市中央区今泉１丁目２０−１７</span></li>
+<li><a href="?spot=34tUpHvxgS0B51HAnDif">Dragon town</a> <span class="dir-meta">名所｜作品: プライベート ロケ地｜188 74 Soi Chulalongkorn 5, Wang Mai, Pathum Wan, Bangkok 10330</span></li>
+<li><a href="?spot=LOC003">Einght Studio</a> <span class="dir-meta">スタジオ・テレビ局｜作品: ENEMIES WITH BENEFITS・GAP ロケ地｜8 Rama IX Soi 41, Suan Luang, Bangkok｜Pilot版はここで撮影されました(現在非公開) / オフィス内シーンの撮影スタジオ。一般公開なし。</span></li>
+<li><a href="?spot=GUdqrel8aiNsVjIX5JhI">Ekamai Moo Krata (Thai BBQ)</a> <span class="dir-meta">レストラン｜作品: プライベート ロケ地｜392 Ekkamai 24 Alley, Khlong Tan Nuea, Watthana, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=MaeGuMMaGp0or6UIr9Cu">EmSphere</a> <span class="dir-meta">ショッピング｜作品: プライベート ロケ地｜628 Sukhumvit Rd, Khlong Tan, Khlong Toei, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=fsWWfqqaA5GSFOK8Y01D">Emporium</a> <span class="dir-meta">ショッピング｜作品: プライベート ロケ地</span></li>
+<li><a href="?spot=XV0ejMWRKA1qqfygeyaU">Emquartier</a> <span class="dir-meta">ショッピング｜作品: Frozen Valentine ロケ地｜695 Sukhumvit Rd, Khlong Tan Nuea, Watthana, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=0rt1k2YzTnbOyXs9fzBM">FRIEND FRIEND</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜622 Sukhumvit Rd, Khlong Tan, Khlong Toei, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=3FG9U8sTpxlMxLJEal56">FamilyMart Kokura Kajimachi 2-chome Store</a> <span class="dir-meta">ショッピング｜作品: プライベート ロケ地｜〒802-0004 福岡県北九州市小倉北区鍛冶町２丁目１−１</span></li>
+<li><a href="?spot=abnPgae6xCx28NbPqV5z">Fay&#x27;s photo spot</a> <span class="dir-meta">名所｜作品: FayMay2024年9月来日 ロケ地｜〒141-0022 東京都品川区東五反田１丁目２１−１０｜アイスを購入しています</span></li>
+<li><a href="?spot=eNmegdCwaBz9iGh2dvDe">Fragrant seasoning, wrapped in leaves.</a> <span class="dir-meta">ショッピング｜作品: オススメスポット：観光地 ロケ地｜71 Jakkawat Road, Jakkawat, Samphanthawong, Bangkok 10100 Thai</span></li>
+<li><a href="?spot=kKt4kb6okZTDsM8NQJ1l">Fuatakee Old Market</a> <span class="dir-meta">ショッピング｜作品: Blank・オススメスポット：観光地 ロケ地｜Soi Lat Krabang 17, Khwaeng Lat Krabang, Lat Krabang, Bangkok 10520 Thai｜Nuengさんの画廊があった場所</span></li>
+<li><a href="?spot=LiUzPp9jlQsa7ugsWmbg">Fujinosuke Oshino Hakkai Store 富士之祐 忍野八海店</a> <span class="dir-meta">カフェ｜作品: FreenBeckyHengNam2024年10月来日 ロケ地｜242-1 Oshino-mura, Minamitsuru-gun, Yamanashi Prefecture 401-0511｜No more bule</span></li>
+<li><a href="?spot=Ut84CtMcloqzJxdxutfy">Fukuhaku Deai Bridge 福博であい橋</a> <span class="dir-meta">名所｜作品: Somewhere Somehow ロケ地｜〒810-0002 福岡県福岡市中央区西中洲６</span></li>
+<li><a href="?spot=j6aW22fx2QzNH82loYWY">Fukuoka Prefecture Park Street Bridge 福岡県公園通り橋</a> <span class="dir-meta">名所｜作品: Somewhere Somehow ロケ地｜〒810-0001 福岡県福岡市中央区天神１丁目１</span></li>
+<li><a href="?spot=sT1nXNfYvqlSZr3mvTv2">GMM Grammy Place Building</a> <span class="dir-meta">スタジオ・テレビ局｜作品: プライベート ロケ地｜50 Sukhumvit Rd, Khlong Toei Nuea, Watthana, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=GNvTawTVu4SuDHArF1P3">GRAPH HOTELS</a> <span class="dir-meta">ホテル｜作品: Shades ロケ地｜188 Ratchadaphisek Rd, Huai Khwang, Bangkok 10310｜ホテルシーンはここ</span></li>
+<li><a href="?spot=DM12UFL6cWoP4JK0Avnh">Galaxy Enterprise Gaming Thailand</a> <span class="dir-meta">スポーツ｜作品: FayMayNeen ロケ地｜FayMayNeen ep11</span></li>
+<li><a href="?spot=hEMRgEoJeW8xcnJk9aj1">Glass Chapel, City of Nirvana</a> <span class="dir-meta">寺院・神社｜作品: オススメスポット：観光地 ロケ地｜99 Bang Talat, Khlong Khuean District, Chachoengsao 24110 Thai｜銀のお寺</span></li>
+<li><a href="?spot=CIAeSggUor3IQnki1Vqh">Golden Mount</a> <span class="dir-meta">寺院・神社｜作品: Whale Store xoxo ロケ地｜QG34+GMF, Ban Bat, Pom Prap Sattru Phai, Bangkok 10100 Thai</span></li>
+<li><a href="?spot=LOC005">Grand chaoplaya</a> <span class="dir-meta">レストラン｜作品: GAP ロケ地｜Phra Nakhon Si Ayutthaya｜エビデートのレストラン。</span></li>
+<li><a href="?spot=Bsel8TRqsFsIKTgBzpbi">Grandpa&#x27;s Basil</a> <span class="dir-meta">レストラン｜作品: オススメスポット：レストラン ロケ地｜41/1 Soi Sukhumvit 23, Khlong Toei Nuea, Watthana, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=fgRt92k84PBiKn1wZSnZ">Grazi Clinic</a> <span class="dir-meta">病院｜作品: FayMayNeen ロケ地｜Grazi Clinic 214 Surawong Rd, Si Phraya, Bang Rak, Bangkok 10500</span></li>
+<li><a href="?spot=4545ssVft2Wsg6RmdUu4">Great Shanghai</a> <span class="dir-meta">レストラン｜作品: オススメスポット：レストラン ロケ地｜682/8 Sukhumvit Rd, Khlong Tan, Khlong Toei, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=txwSDhl9HPKVJ1XzKnxA">Gu rong bao Aruchizan ban shop songwat</a> <span class="dir-meta">カフェ｜作品: EmiBonnie Vlog(2025April) ロケ地</span></li>
+<li><a href="?spot=YvPzoe3T8Yb84F7DGwsZ">HEY Mookrata</a> <span class="dir-meta">レストラン｜作品: プライベート ロケ地｜240, 1 Charoen Nakhon 10 Alley, Khlong Ton Sai, Khlong San, Bangkok 10600 Thai｜Beckyがファンに振る舞ったムーカタ屋さん</span></li>
+<li><a href="?spot=LE31QL4QLa3CHjvHNxDx">HOTEL JAPANESQUE FUKUOKA</a> <span class="dir-meta">ホテル｜作品: Somewhere Somehow ロケ地｜〒812-0053 福岡県福岡市東区箱崎６丁目１８−１２ ルネッサンス２１ 箱崎寮</span></li>
+<li><a href="?spot=aNaiz2WjLTSmC9MFd3C4">Hakata Port Tower</a> <span class="dir-meta">名所｜作品: Somewhere Somehow ロケ地｜〒812-0021 福岡県福岡市博多区築港本町１３−１４−１</span></li>
+<li><a href="?spot=7SwjDb4jM5IJ9DRTajAf">Happy gym beyond</a> <span class="dir-meta">スポーツ｜作品: Girl Rules ロケ地｜388 Thep Rak Rd, Tha Raeng, Bang Khen, Bangkok 10220 Thai</span></li>
+<li><a href="?spot=LOC030">Hario Cafe</a> <span class="dir-meta">カフェ｜作品: Lucky My Love ロケ地｜29 Sukhumvit 33 Alley, Khlong Tan Nuea, Bangkok｜デートシーンのカフェ。</span></li>
+<li><a href="?spot=EcP2AbUZuC1jB0tU7mxD">Head Land Spa &amp; Massage Asoke</a> <span class="dir-meta">スパ・サロン｜作品: オススメスポット：観光地 ロケ地｜55, 100 Pi Sayam Samakhom Alley, Khlong Toei Nuea, Watthana, Bangkok 10110 タイ</span></li>
+<li><a href="?spot=iICBhi3jd3QOHL1nmxGq">Hey Gelato</a> <span class="dir-meta">カフェ｜作品: Harmony Secret ロケ地｜21 Plaeng Nam Rd, Khwaeng Samphanthawong, Samphanthawong, Bangkok 10100｜MaevikaとAiwarinのこっそりデートがバレかけたジェラート屋さん</span></li>
+<li><a href="?spot=lpCUAE3Gy4F1YpLDM04R">Hia Tai Ki</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜78/4 Prachathipatai Rd, Ban Phan Thom, Phra Nakhon, Bangkok 10200 Thai</span></li>
+<li><a href="?spot=t3CZ3CEtxn5C2acCbPgv">Holiday Inn Pattaya</a> <span class="dir-meta">ホテル｜作品: FayMayNeen ロケ地｜463/68, 463/99, หมู่ที่ 9 Pattayasainueang, ตำบล หนองปรือ, Bang Lamung District, Chon Buri 20150 Thailand</span></li>
+<li><a href="?spot=svulH4oJVEENzudfYjmz">Hongki</a> <span class="dir-meta">レストラン｜作品: プライベート ロケ地｜jingjingの実家の香港ダックのお店</span></li>
+<li><a href="?spot=P6Ff4ov4qcFRurPks2gN">Hotel Manhattan Sukhumvit Bangkok</a> <span class="dir-meta">ホテル｜作品: オススメスポット：ホテル ロケ地｜13 Sukhumvit Rd, Khlong Toei Nuea, Watthana, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=Yzm2zynthwq1nIVo2l6y">Hotel Muse Bangkok, Autograph Collection</a> <span class="dir-meta">ホテル｜作品: Chasing Love ロケ地｜55, 555 Lang Suan Rd, Khwaeng Lumphini, Pathum Wan, Bangkok 10330 Thailand</span></li>
+<li><a href="?spot=zv9UAvl4aApOh3aDC6Uj">Hotel V Bangkok - M Gallery Collection</a> <span class="dir-meta">ホテル｜作品: Girl Rules ロケ地｜117 39, 40 Phaya Thai Rd, Khwaeng Thanon Phetchaburi, Khet Ratchathewi, Bangkok 10400 Thai</span></li>
+<li><a href="?spot=LOC033">Hotel Wizpark Ratchada</a> <span class="dir-meta">ホテル｜作品: Lucky My Love ロケ地｜598 Din Daeng Rd, Din Daeng, Bangkok｜Weaさんの家のロケ地。最終話の車から降りるシーンもここ。</span></li>
+<li><a href="?spot=DZcR12rzR704pIJs2H7h">Hotel my stays Gotanda</a> <span class="dir-meta">ホテル｜作品: FayMay2024年9月来日 ロケ地｜〒141-0022 東京都品川区東五反田２丁目５−４</span></li>
+<li><a href="?spot=GhtBPwzBrqFrLd9SsHTk">Hotoku Ninomiya Shrine</a> <span class="dir-meta">寺院・神社｜作品: FreenBeckyHengNam2024年10月来日 ロケ地｜8-10 Jonai, Odawara City, Kanagawa Prefecture 250-0014</span></li>
+<li><a href="?spot=LwiWYU9laPGBka9kbaxm">Hygge Cafe by StepUp Thammasat Rangsit</a> <span class="dir-meta">カフェ｜作品: Love Beyond Dreams ロケ地｜99 Khlong Nueng, Khlong Luang District, Pathum Thani 12120 Thai</span></li>
+<li><a href="?spot=Ed9a7QsYLIb2lwy3He5o">I wanna Bangkok</a> <span class="dir-meta">名所｜作品: EmiBonnie Vlog(2025April) ロケ地</span></li>
+<li><a href="?spot=eAihAPKPCYQBeRdUSp08">ICE HOUSE by Bangkok Ice Baths</a> <span class="dir-meta">スパ・サロン｜作品: プライベート ロケ地｜アイスバス</span></li>
+<li><a href="?spot=MgSeaqes0B4IUUwPDkkG">Ice Cream Samosorn</a> <span class="dir-meta">カフェ｜作品: オススメスポット：カフェ ロケ地｜368 ซอย จุฬาฯ 1 Wang Mai, Pathum Wan, Bangkok 10330 Thai</span></li>
+<li><a href="?spot=LOC020">Icon Siam</a> <span class="dir-meta">ショッピング｜作品: プライベート ロケ地｜299 Charoen Nakhon Rd, Khlong San, Bangkok｜アフターユー（かき氷）やスタバなど。</span></li>
+<li><a href="?spot=E3VgHaDCKFTRZDnqZtoD">Imuchan</a> <span class="dir-meta">レストラン｜669, ปาก Sukhumvit 37 Alley, Khlong Tan Nuea, Watthana, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=AkTwrLz9619Vd3hXr2py">In &amp; Out Landscape</a> <span class="dir-meta">カフェ｜作品: 4Element; Earth ロケ地｜94 ลาดพร้าว Phlabphla, Wang Thonglang, Bangkok 10310 Thai</span></li>
+<li><a href="?spot=YDSLmVgK7fqDsRf7LcIK">Institute of Marine Science, Burapha University</a> <span class="dir-meta">大学・図書館・博物館・美術館｜作品: FayMayNeen ロケ地｜169 Long Had Bangsaen Rd, Saen Suk, Chon Buri District, Chon Buri 20131 Thai</span></li>
+<li><a href="?spot=Q0Ozg6F7MPUXObEAmYYs">Itoshima City Futamigaura Parking Lot 糸島市二見ヶ浦駐車場</a> <span class="dir-meta">名所｜作品: Somewhere Somehow ロケ地｜〒819-1304 福岡県糸島市志摩桜井３７９０−３</span></li>
+<li><a href="?spot=Xb6AtYeTlkVhZeZK1RYV">Jai Massage by heart Sukhumvit 19</a> <span class="dir-meta">スパ・サロン｜作品: オススメスポット：観光地 ロケ地｜19 Sukhumvit Rd, Khlong Tan Nuea, Watthana, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=0koRkvCnFJYNeTJXmY1p">Jidoritei shichifukuzin</a> <span class="dir-meta">レストラン｜作品: FreenBeckyFayMay2025年3月来日 ロケ地｜〒542-0083 大阪府大阪市中央区東心斎橋２丁目７−４ 日宝 笠屋町ビル 1F｜フリベキのサインがあり</span></li>
+<li><a href="?spot=wdpOqa2C35tHymfeEhFo">KOPI KUAPA café (โก้ปี้ กั่วป่า)</a> <span class="dir-meta">カフェ｜作品: URANUS2324 ロケ地｜115 Thanon Sri Takuapa, Takua Pa, Takua Pa District, Phang Nga 82110 Thai</span></li>
+<li><a href="?spot=RPUPtchcpQ0QXwwNTuJ0">KROMO Bangkok, Curio Collection by Hilton</a> <span class="dir-meta">ホテル｜作品: Chasing Love ロケ地｜525 Sukhumvit Road ช, Sukhumvit 29 Alley, Khlong Toei Nuea, Watthana, Bangkok 10110 Thaildand</span></li>
+<li><a href="?spot=LOC023">Kaembum Fresh Coffee Branch 2 By Nun</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜9JMW+GR, Khlong Takrao, Tha Takiap District, Chachoengsao 24160 タイ｜Freenのお母様のカフェ。バンコクから車で3時間。</span></li>
+<li><a href="?spot=LOC010">Kao sok National Park</a> <span class="dir-meta">名所｜作品: URANUS2324 ロケ地｜Phanom District, Surat Thani｜ジャングルと湖が美しい国立公園。</span></li>
+<li><a href="?spot=II15LUy1Igp6f78VQcLO">Kawaguchiko Art Museum　河口湖美術館</a> <span class="dir-meta">名所｜作品: FreenBeckyHengNam2024年10月来日 ロケ地｜3170 Kawaguchi, Fujikawaguchiko-machi, Minamitsuru-gun, Yamanashi Prefecture 401-0304｜No more bule</span></li>
+<li><a href="?spot=xWBdJJ33YGVS7CdalBpE">Kee&#x27;s house</a> <span class="dir-meta">スタジオ・テレビ局｜作品: Poisonous Love・Somewhere Somehow ロケ地｜348/3 ชื่อ ยโยธินพัฒนา 3 แยก 2-4 Khwaeng Khlong Chan, Khet Bang Kapi, Krung Thep Maha Nakhon 10240 Thai</span></li>
+<li><a href="?spot=jHWsMXBNAFFojf0dF18V">Khao Kha Moo Charoen Krung 77/1</a> <span class="dir-meta">レストラン｜作品: オススメスポット：レストラン ロケ地｜ถ. เจริญกรุง Wat Phraya Krai, Bang Kho Laem, Bangkok 10120 Thai</span></li>
+<li><a href="?spot=Xoy8dSGQRMv5apFlr5uL">Khao Kheow Open Zoo</a> <span class="dir-meta">大学・図書館・博物館・美術館｜作品: オススメスポット：観光地 ロケ地</span></li>
+<li><a href="?spot=8EQIvnkZoD3p40kj5WJQ">Khao Sam Muk Viewpoint</a> <span class="dir-meta">名所｜作品: FayMayNeen ロケ地｜8W53+QWW, Saen Suk, Chon Buri District, Chon Buri 20130 Thai</span></li>
+<li><a href="?spot=sa7bN3izs4bMr5qZEc0Q">Khao Soi, Chiang Mai</a> <span class="dir-meta">レストラン｜作品: オススメスポット：レストラン ロケ地｜71 71 At Narong Rd, Khlong Toei, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=r716EXZiCVWZiQIiGaZW">Khot Yam Cafe, Rattanathibet</a> <span class="dir-meta">レストラン｜作品: FayMayNeen ロケ地</span></li>
+<li><a href="?spot=PZhJMuU31SykYRQlSJe1">Kinrin Lake 金鱗湖</a> <span class="dir-meta">名所｜作品: Somewhere Somehow ロケ地｜〒879-5102 大分県由布市湯布院町川上１５６１−１｜2026年6月11日</span></li>
+<li><a href="?spot=6tz4xwYnv8G1mxzeq7GC">Kitakyushu Municipal Kokura Castle Garden</a> <span class="dir-meta">名所｜作品: Love design ロケ地｜〒803-0813 福岡県北九州市小倉北区城内１−２</span></li>
+<li><a href="?spot=sfprbOvOnAO9DegqKcd7">Kitakyushu Municipal Museum of Art</a> <span class="dir-meta">大学・図書館・博物館・美術館｜作品: Love design ロケ地｜〒804-0024 福岡県北九州市戸畑区西鞘ケ谷町２１−１</span></li>
+<li><a href="?spot=B4PuJ2wwWfSGLxnaSYDi">Koko Japanese Restaurant</a> <span class="dir-meta">レストラン｜作品: Shades ロケ地｜Si Lom Rd, Si Lom, Sathon, Bangkok 10500</span></li>
+<li><a href="?spot=WudPAD0oUDCiW0DblJ5T">Kokura Castle</a> <span class="dir-meta">名所｜作品: Love design ロケ地｜〒803-0813 福岡県北九州市小倉北区城内２−１</span></li>
+<li><a href="?spot=C1xQOGTJNmkfFv70ISYq">Kopitiam by Wilai</a> <span class="dir-meta">レストラン｜作品: プライベート ロケ地｜18 Thalang Rd, Tambon Talat Yai, Mueang Phuket District, Phuket 83000</span></li>
+<li><a href="?spot=zPsBxzA7801eMJDXs4VK">Kraft Kaffe</a> <span class="dir-meta">カフェ｜作品: Petrichor ロケ地｜272 Nak Niwat Rd, Khwaeng Lat Phrao, Lat Phrao, Bangkok 10230 Thai</span></li>
+<li><a href="?spot=aroCezrpqZQSQEgej7ch">Kuichai Saphanhan</a> <span class="dir-meta">レストラン｜1207 ตรงข้ามศูนย์อาหารตลาดพลู ปาก Thoet Thai 27 Alley, ตลาดพลู Thon Buri, Bangkok 10600 Thai</span></li>
+<li><a href="?spot=x6PiuOXDjsghzBnTmria">Kumamon Squere</a> <span class="dir-meta">ショッピング｜作品: Somewhere Somehow ロケ地｜〒860-0808 熊本県熊本市中央区手取本町８−２ テトリアくまもとビル 1階</span></li>
+<li><a href="?spot=fMNC4kHTZ0JAymvXuUJP">Kumamoto Castle</a> <span class="dir-meta">名所｜作品: Somewhere Somehow ロケ地｜〒860-0002 熊本県熊本市中央区本丸１−１</span></li>
+<li><a href="?spot=wgzt1xXU4hCsh1t3WyPw">Kurume Gelato</a> <span class="dir-meta">カフェ｜作品: FayMay2025年6月SWSHロケ ロケ地｜〒830-0015 福岡県久留米市螢川町５−９｜ロケ合間に食べたっぽい</span></li>
+<li><a href="?spot=5LeMVdDvDnD3xiaapxxU">Kurume Station</a> <span class="dir-meta">名所｜作品: Somewhere Somehow ロケ地｜〒830-0022 福岡県久留米市城南町２－２１</span></li>
+<li><a href="?spot=GJRJmIBO3Qc5fDoaHgum">Kwong Kee Roast - 鄺記</a> <span class="dir-meta">レストラン｜作品: プライベート ロケ地｜Linlingのお店</span></li>
+<li><a href="?spot=9GKMZeIDHxToyiPyM0LQ">Kyoto shi cafe</a> <span class="dir-meta">カフェ｜作品: Somewhere Somehow ロケ地｜55, 144 หมู่ที่ 2 ถนน หอการค้า, Khlong Khoi, Pak Kret District, Nonthaburi 11120｜MVに出てくる場所</span></li>
+<li><a href="?spot=trgVhGqvH79oBZgdxa5F">LIB STORY Thai BBQ &amp; Local Food</a> <span class="dir-meta">レストラン｜作品: オススメスポット：ムーカタ ロケ地｜139, Sukhumvit 21 Rd, Khlong Toei Nuea, Watthana, Krung Thep Maha Nakhon 10110 Thai｜エアコン下、焼き肉のタレとポン酢あり、ムーカタの正解</span></li>
+<li><a href="?spot=HePGrKT62A8VWsahxWsH">Lake of Kawaguchi</a> <span class="dir-meta">名所｜作品: FreenBeckyHengNam2024年10月来日 ロケ地｜Fujikawaguchiko Town, Yamanashi Prefecture｜No more bule</span></li>
+<li><a href="?spot=IOTRTCBGvEHUWHyfFfiO">Lancaster Hotel Bangkok</a> <span class="dir-meta">ホテル｜作品: Love Beyond Dreams・4Element; Water ロケ地｜1777 Phetchaburi Rd, Huai Khwang, Bangkok 10310 Thai</span></li>
+<li><a href="?spot=0U4sh1U9NkmXcD2bcNnw">Lee&#x27;s Noodles, Thonglor　バミー コンセリー</a> <span class="dir-meta">レストラン｜作品: オススメスポット：レストラン ロケ地｜1081 Sukhumvit Rd, แขวง วัฒนา Watthana, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=QnkT2jjrRnH60nCJWUbs">Leenova Hotel</a> <span class="dir-meta">ホテル｜作品: オススメスポット：ホテル ロケ地｜83 Suphaphong 1 Alley, Lane 3-3, Nong Bon, Prawet, Bangkok 10250 Thai</span></li>
+<li><a href="?spot=LOC031">Loft Bangkok Hotel</a> <span class="dir-meta">ホテル｜作品: Lucky My Love ロケ地｜1091/290 Phetchaburi Rd, Makkasan, Bangkok｜Nabdaoの部屋・会社・カフェ・飲み会シーンなど多数。</span></li>
+<li><a href="?spot=RJTX8dsyDnpGCNcA2QBV">Lon Lon Local Diner</a> <span class="dir-meta">レストラン｜作品: プライベート ロケ地｜150 Silom Soi 3 (Naratiwas Soi 3 or Sathorn, Soi 8, Si Lom, banrak, Bangkok 10500 Thailand｜Kaoさんおすすめのレストラン</span></li>
+<li><a href="?spot=KPhdVDuGqm3kcrckE4cP">Luggaw Emsphere</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜628 Sukhumvit Rd, Khlong Tan, Khlong Toei, Bangkok 10110｜Loveちゃんおすすめのジュース屋さん ここだけでなく、バンコク各地にあります グアバミックスジュース+酸っぱい砂糖あり</span></li>
+<li><a href="?spot=xNAqTWbrATFsRewhYb6m">Luka cafe</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地</span></li>
+<li><a href="?spot=BHqzjT3iSl4CYRJvBbHs">Lumière Hakozaki Store ルミエール 箱崎店</a> <span class="dir-meta">ショッピング｜作品: FayMayNeen ロケ地｜〒812-0053 福岡県福岡市東区箱崎４丁目７−５５｜GachaGacha</span></li>
+<li><a href="?spot=lksW1GQGavzBJoAVdbCy">Luxury Treehouse Khaoyai</a> <span class="dir-meta">ホテル｜作品: 4Eletment;Air ロケ地｜Luxury Treehouse Khaoyai, Wang Katha, Pak Chong District, Nakhon Ratchasima 30130 Thai</span></li>
+<li><a href="?spot=lobCBDqxG8Yth9t2Bq7t">MAHAPHO RIVERVIEW</a> <span class="dir-meta">名所｜作品: EmiBonnie Vlog(2025April) ロケ地</span></li>
+<li><a href="?spot=3hAlnml5NsPADVkkVidR">MOVIO TOWN</a> <span class="dir-meta">スタジオ・テレビ局｜作品: Shades・Somewhere Somehow ロケ地｜89 ３９, Bang Krathuek, Sam Phran District, Nakhon Pathom 73210 タイ｜街のシーン</span></li>
+<li><a href="?spot=wAUxHrUvxDJsK6Nela5z">Mae Kha Canal</a> <span class="dir-meta">名所｜作品: オススメスポット：観光地 ロケ地｜118 Ragang Rd, Haiya Sub-district, Mueang Chiang Mai District, Chiang Mai 50100</span></li>
+<li><a href="?spot=Sb08tXOF8FjV03OgOPKN">Mae Waree&#x27;s Mango Sticky Rice</a> <span class="dir-meta">レストラン｜作品: オススメスポット：レストラン ロケ地｜1 Thong Lo, Khlong Tan Nuea, Watthana, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=4OqqSfzLA1bwFE5Wk7Us">Maison Hotel Bangkok Sukhumvit 2</a> <span class="dir-meta">ホテル｜作品: Somewhere Somehow ロケ地｜18 Sukhumvit 2, Khlong Toei, Bangkok 10110 Thailand</span></li>
+<li><a href="?spot=lcmEsgmWXFKIoBea57bn">Mandarin Hotel Managed by Centrepoint</a> <span class="dir-meta">ホテル｜作品: オススメスポット：ホテル ロケ地｜662 Rama IV Rd, Maha Phruttharam, Bang Rak, Bangkok 10500 Thai</span></li>
+<li><a href="?spot=fMEmw56DEOWyASkqGxvv">MaxValu Hakozakigu-mae Store マックスバリュ筥崎宮前店</a> <span class="dir-meta">ショッピング｜作品: FayMayNeen ロケ地｜〒812-0054 福岡県福岡市東区馬出４丁目９−１５｜お惣菜を買いに行った場所</span></li>
+<li><a href="?spot=StZR4hfuu9wfidrlsiuf">May&#x27;s Photo spot</a> <span class="dir-meta">名所｜作品: FayMay2024年9月来日 ロケ地｜〒150-0001 東京都渋谷区神宮前１丁目１５−１５−３ 平安ビル</span></li>
+<li><a href="?spot=MbFBvNYNiiUSq745u2ij">Mayprapa store, SW1 market branch.</a> <span class="dir-meta">ショッピング｜作品: オススメスポット：観光地 ロケ地｜PHQ5+59M ตลาด Market Sukhumvit Rd, Khlong Toei, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=I0kOhPco5ldu0qjC3xQn">Medici Playhouse Italian Restaurant &amp; Bar</a> <span class="dir-meta">レストラン｜作品: Harmony Secret ロケ地｜55, 55/555 โรงแรมมิวส์ กรุงเทพฯ 555 Lang Suan Rd, Lumphini, Pathum Wan, Bangkok 10330｜ANTHEA Barとして使用されたお店</span></li>
+<li><a href="?spot=yzFpsuLSNixc5uurSorX">Meiji Shirine</a> <span class="dir-meta">寺院・神社｜作品: FreenBeckyHengNam2024年10月来日 ロケ地｜No more bule</span></li>
+<li><a href="?spot=Ty6QwckPzbFKhQqHxx2y">Meisyuuen</a> <span class="dir-meta">レストラン｜作品: FayMayNeen ロケ地｜〒812-0053 福岡県福岡市東区箱崎２丁目４１−７ メモリアル箱崎</span></li>
+<li><a href="?spot=JD4lyg1A3HbwpdnzvVZf">Merkron Market</a> <span class="dir-meta">ショッピング｜作品: オススメスポット：観光地 ロケ地｜Phet Samut, Mae Klong, Mueang Samut Songkhram District, Samut Songkhram 75000 Thai</span></li>
+<li><a href="?spot=SoOwYDWpxGlzLTo7GwlP">Miami Hotel</a> <span class="dir-meta">ホテル｜作品: オススメスポット：ホテル ロケ地｜2 Soi Sukhumvit 13, Khlong Toei Nuea, Watthana, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=F4NrkAkEs5ZYoQ0XV0v8">Miffy Café Bangkok</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地</span></li>
+<li><a href="?spot=q3GNAE9D2xrNXCI1U61y">Mojikou Station</a> <span class="dir-meta">名所｜作品: Love design ロケ地｜〒801-0841 福岡県北九州市門司区西海岸１丁目５−５</span></li>
+<li><a href="?spot=LlzNst8HjR4dauOCWd9P">NABUN Thai Restaurant</a> <span class="dir-meta">レストラン｜作品: Love design ロケ地｜〒802-0081 福岡県北九州市小倉北区紺屋町１−１２ 安倍ビル ２Ｆ｜Uranus2324上映中に関係者で食べに行っていた場所</span></li>
+<li><a href="?spot=lzCSlwRdhLZWuQrYHAwr">NAYHUA CAFE</a> <span class="dir-meta">カフェ｜作品: 4Eletment;Fire ロケ地｜347 Sarika, Mueang Nakhon Nayok District, Nakhon Nayok 26000</span></li>
+<li><a href="?spot=TEvPYxqJYAQPKuEuYmmx">NH Bangkok Asoke</a> <span class="dir-meta">ホテル｜作品: オススメスポット：ホテル ロケ地｜16 Ratchadaphisek Rd, Khlong Toei, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=esw1v1YXHh7MwKIakQ7Q">Nakaike 中池</a> <span class="dir-meta">名所｜作品: FreenBeckyHengNam2024年10月来日 ロケ地｜401-0511 Oshino Village, Minamitsuru District, Yamanashi Prefecture｜No more bule</span></li>
+<li><a href="?spot=oplSodRsN1pfYRUripOb">Nakanoshima LOVE CENTRAL</a> <span class="dir-meta">カフェ｜作品: FreenBeckyFayMay 2025年10月来日 ロケ地</span></li>
+<li><a href="?spot=eucpwMfGASEBNG8M8bsB">Nanzouin 南蔵院</a> <span class="dir-meta">寺院・神社｜作品: FayMayNeen・FayMay2025年6月SWSHロケ ロケ地｜〒811-2405 福岡県糟屋郡篠栗町篠栗３９２｜撮休に</span></li>
+<li><a href="?spot=LOC021">Neilson Hays Library</a> <span class="dir-meta">大学・図書館・博物館・美術館｜作品: プライベート ロケ地｜195 Surawong Rd, Bang Rak, Bangkok｜Beckyが友人のイベントで訪れた場所。</span></li>
+<li><a href="?spot=nrXT9aNX64CeANKOKAl2">NeoLux Studio</a> <span class="dir-meta">スタジオ・テレビ局｜作品: Chasing Love ロケ地｜2QM2+5XM ซอยเจริญทรัพย์ Rangsit, Thanyaburi District, Pathum Thani 12110 Thailand</span></li>
+<li><a href="?spot=i5Z1vPMlFNzAonHhu28t">New Zealand of Thailand: The first location is Ban Tha Rit.</a> <span class="dir-meta">名所｜作品: FayMayNeen ロケ地｜บ้านท่าฤทธิ์ Tambon Wang Muang, Wang Muang District, Saraburi 18220 Thai</span></li>
+<li><a href="?spot=g8SfjQcqT30tfXPqiAPK">Nezha San Tai Zi Shrine</a> <span class="dir-meta">寺院・神社｜作品: FayMayNeen ロケ地｜8WHF+F88 การเคหะฯ 1 ซอย 13 Ang Sila, Chon Buri District, Chon Buri 20000 Thailand</span></li>
+<li><a href="?spot=f4Suxj7Yok9WtWFpVCQo">Nishitamagaki Torii 西玉垣鳥居</a> <span class="dir-meta">寺院・神社｜作品: FreenBeckyHengNam2024年10月来日 ロケ地｜1-1 Yoyogi Kamizono-cho, Shibuya-ku, Tokyo 151-0052｜No more bule</span></li>
+<li><a href="?spot=Gfl3ajdpw2R9tPKdzeaw">Nonna &amp; Son Pattaya</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜218, Muang Pattaya, Bang Lamung District, Chon Buri 20150 Thai</span></li>
+<li><a href="?spot=52MkjX4XOrywk20arVkg">North East</a> <span class="dir-meta">レストラン｜作品: オススメスポット：レストラン ロケ地｜1010, 12-15 Rama IV Rd, Si Lom, Bang Rak, Bangkok 10500 Thai</span></li>
+<li><a href="?spot=PuIMAS1VHEtwPB0BJ6se">ONE HOTEL NAVANAKORN</a> <span class="dir-meta">ホテル｜作品: Blank ロケ地｜8 ３４５, Khlong Nueng, Khlong Luang District, Pathum Thani 12120｜Nueng&#x27;s house</span></li>
+<li><a href="?spot=8MIsEftej1ICxPBbgYHh">Ochozan Katsuoji Temple 応頂山 勝尾寺</a> <span class="dir-meta">寺院・神社｜作品: Unlock your love ロケ地｜〒562-8508 大阪府箕面市粟生間谷２９１４−１</span></li>
+<li><a href="?spot=OEBeH6mMtsNRv1N3efvC">Odawara Castle</a> <span class="dir-meta">名所｜作品: FreenBeckyHengNam2024年10月来日 ロケ地｜6-1 Jonai, Odawara City, Kanagawa Prefecture 250-0014｜No more bule</span></li>
+<li><a href="?spot=6o47ZyPfj09aTHBwIP8V">Oh my godmother</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜パーティーにお呼ばれ</span></li>
+<li><a href="?spot=Wjbrw0LSkNn573hseJzO">Oliveto Cafe</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜4088 Rama IV Rd, Phra Khanong, Khlong Toei, Bangkok 10110 Thailand</span></li>
+<li><a href="?spot=h28Bv7VnxiJEUufudecO">One to Two Coffee</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜319 Phaya Thai Rd, Pathum Wan, Bangkok 10330｜20260505デート</span></li>
+<li><a href="?spot=bGzRBgYO4Equ1tGhcg6N">Ooana 酒場大穴 五反田店</a> <span class="dir-meta">レストラン｜作品: FayMay2024年9月来日 ロケ地｜〒141-0022 東京都品川区東五反田１丁目１２−２ 東急ステイ五反田 Ｂ１Ｆ</span></li>
+<li><a href="?spot=ukecIcdybpSeIMyX1WP5">Ooishi Park</a> <span class="dir-meta">名所｜作品: FreenBeckyHengNam2024年10月来日 ロケ地｜2525-11 Oishi, Fujikawaguchiko-machi, Minamitsuru-gun, Yamanashi Prefecture 401-0305｜No more bule</span></li>
+<li><a href="?spot=deUgqzbdhAmAYxFGXCgD">Ourlog Coffee Roasters</a> <span class="dir-meta">カフェ｜作品: FreenBeckyFayMay 2025年10月来日 ロケ地｜〒531-0074 大阪府大阪市北区本庄東１丁目２４−７</span></li>
+<li><a href="?spot=F4FbgzZCLXdzFQcoccJU">P.S.Gemmie English speaking hair salon</a> <span class="dir-meta">スパ・サロン｜作品: プライベート ロケ地｜〒150-0001 東京都渋谷区神宮前１丁目９−８ KI 438 2F-B｜2026年12月P&#x27;Aimと来日時</span></li>
+<li><a href="?spot=IyxwDHF2it1qhDgQYdwS">PB Valley Khao Yai</a> <span class="dir-meta">名所｜作品: 4Element; Earth ロケ地｜102/2 Moo5, Mitraparp Road Payayen Pakchong Nakhon Ratchasima 30320 Thai</span></li>
+<li><a href="?spot=O1WJWp8HNdxKaUAkCg14">Pam&#x27;s grandmother House</a> <span class="dir-meta">スタジオ・テレビ局｜作品: Us ロケ地｜362 Soi Charan Sanitwong 66、Khwaeng Bang Phlat, Khet Bang Phlat, Krung Thep Maha Nakhon 10700 Thai</span></li>
+<li><a href="?spot=Z8LrON3zE14JTMBI4v2R">Panee Mango Sticky Rice</a> <span class="dir-meta">レストラン｜作品: オススメスポット：レストラン ロケ地｜171 ถนน ริมคลองด่าน Bang Kho, Chom Thong, Bangkok 10150 タイ</span></li>
+<li><a href="?spot=LOC004">Pata Plantation</a> <span class="dir-meta">レストラン｜作品: GAP ロケ地｜70 Moo 1, Pak Kret, Nonthaburi｜お寿司シーン・Samの誕生日会。</span></li>
+<li><a href="?spot=TKpDKGATJXPh6llw2XC5">Pepina</a> <span class="dir-meta">レストラン｜作品: オススメスポット：レストラン ロケ地｜27/1 Sukhumvit 33 Alley, Khlong Toei Nuea, Watthana, Bangkok 10110 Thai｜イタリアン</span></li>
+<li><a href="?spot=zRnVixJpFkU2zDNum1wJ">PhedPhed Lhay</a> <span class="dir-meta">レストラン｜作品: プライベート ロケ地｜14 Sai Lom 1 Alley, Samsen Nai, Phaya Thai, Bangkok 10400 Thai</span></li>
+<li><a href="?spot=vYDiRTNZmRY26JtwCptE">Phra Phuttha Yodfa Bridge</a> <span class="dir-meta">名所｜作品: プライベート ロケ地｜Khwaeng Wang Burapha Phirom, Khet Phra Nakhon, Bangkok 10600</span></li>
+<li><a href="?spot=lwvC9Vqyv7EkBeLUeeSF">Phuket Old Town</a> <span class="dir-meta">名所｜作品: プライベート ロケ地｜Thalang Rd, Tambon Talat Yai, Mueang Phuket District, Phuket 83000</span></li>
+<li><a href="?spot=fAOvC5DOjWaKYU9yCDy0">Pongphat Lee Food Shop</a> <span class="dir-meta">レストラン｜作品: オススメスポット：レストラン ロケ地｜PGG9+GMJ ซอย ศาลเจ้าแม่ปลาตะเพียน Si Phraya, Bang Rak, Bangkok 10500 Thai</span></li>
+<li><a href="?spot=YAik1ob92pTu2CEOMYhX">Ponycanyon Office</a> <span class="dir-meta">スタジオ・テレビ局｜作品: FayMay2024年9月来日 ロケ地｜〒106-0032 東京都港区六本木１丁目５−１７ 泉ガーデンANNEX</span></li>
+<li><a href="?spot=ve2o4xNXq2oY3wgmWRcM">Prasat Nakhon Luang</a> <span class="dir-meta">寺院・神社｜作品: FayMayNeen ロケ地｜FJ86+4H5, Nakhon Luang, Nakhon Luang District, Phra Nakhon Si Ayutthaya 13260 Thailand</span></li>
+<li><a href="?spot=YTeiYfkcEYicOdAwTiGi">Public Park</a> <span class="dir-meta">スタジオ・テレビ局｜作品: 23.5 ロケ地｜QM5M+2QH, Khwaeng Saphan Sung, Saphan Sung, Bangkok 10240</span></li>
+<li><a href="?spot=VysXp5H1mAyA9YSct84W">Puey Ungphakorn Centenary Hall and Park</a> <span class="dir-meta">大学・図書館・博物館・美術館｜作品: Shades・Somewhere Somehow・Love Beyond Dreams・Girl Rules ロケ地｜3JC6+JVC, 99 หมู่ที่ 18 Phahonyothin Rd, Khlong Nueng, Khlong Luang District, Pathum Thani 12120｜大学シーンは全てタマサート大学のこのキャンパス内だと関係者証言があるが、どこかは不明</span></li>
+<li><a href="?spot=nDMqG5gYbkxtq8h9qh7W">Quicksand Beach Bar &amp; Terrace</a> <span class="dir-meta">レストラン｜作品: Somewhere Somehow ロケ地｜เเ, 215/3 กร่ำ กลง, Rayong 21190 Thailand</span></li>
+<li><a href="?spot=FJ9pSB6yMP0Uxnl6ixQ4">R HOUSE</a> <span class="dir-meta">カフェ｜作品: Us ロケ地｜26 ซ. 18 Bueng Kham Phroi, Lam Luk Ka District, Pathum Thani 12150</span></li>
+<li><a href="?spot=LUfHmcMG5OdyyKny1YAj">Rabiang Zabb</a> <span class="dir-meta">レストラン｜作品: プライベート ロケ地｜QH9W+8RP, Pracha Uthit Rd, Phlabphla, Wang Thonglang, Bangkok 10312</span></li>
+<li><a href="?spot=r6W5vDHW7RAqfuAVyV6Y">Ralph Poshtel Sukhumvit</a> <span class="dir-meta">ホテル｜作品: オススメスポット：ホテル ロケ地｜Sukhumvit 10 Alley, Khlong Toei, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=EqW4iojZPLkzNrhM3MK3">Rama 9 Grilled Chicken</a> <span class="dir-meta">レストラン｜作品: オススメスポット：レストラン ロケ地｜25 8 Rama IX Rd, Hua Mak, Bang Kapi, Bangkok 10240 Thai｜美味しいガイヤーン</span></li>
+<li><a href="?spot=LOC015">Ransit university</a> <span class="dir-meta">大学・図書館・博物館・美術館｜作品: Secret Crush On You・プライベート ロケ地｜52/347 Phahonyothin Rd, Lak Hok, Pathum Thani｜Freen・Hengの母校。SCOYのロケ地でもある。</span></li>
+<li><a href="?spot=4i7vIwQn7NxKlKIGYaDo">Rayong Marriott Resort</a> <span class="dir-meta">ホテル｜作品: 4Element; Water ロケ地｜Apo(Nam)&#x27;s Hotel</span></li>
+<li><a href="?spot=utB9JpnXTg6nsELFb7Dj">Red biridge</a> <span class="dir-meta">名所｜作品: FreenBeckyHengNam2024年10月来日 ロケ地｜No more bule</span></li>
+<li><a href="?spot=srNGRXHAkhNv1pGG8SiM">Renaissance Bangkok Ratchaprasong Hotel</a> <span class="dir-meta">ホテル｜作品: The Secret Of Us ロケ地｜518, 8 Phloen Chit Rd, Lumphini, Pathum Wan, Bangkok 10330 タイ</span></li>
+<li><a href="?spot=3R8qVHg1p1I4b1EuRUxc">Rhapsodia Park Khao Yai</a> <span class="dir-meta">名所｜作品: FayMayNeen ロケ地｜455 Moo 16, Wang Sai, Pak Chong District, Nakhon Ratchasima 30130 Thai</span></li>
+<li><a href="?spot=WNDkmxnzRNfWXb7Fth5n">Ri Cafe</a> <span class="dir-meta">カフェ｜作品: プライベート・オススメスポット：カフェ ロケ地｜16, 78 Lat Phrao 18 Alley, Lane 3, Chom Phon, Chatuchak, Bangkok 10900｜トイストーリーの世界みたいで可愛い！</span></li>
+<li><a href="?spot=uUAo4rwL7v5kfBp1dGu3">Rinlapat&#x27;s house</a> <span class="dir-meta">スタジオ・テレビ局｜作品: Somewhere Somehow・Denied Love・Mate・Us・My Only Sunshine・Love Bully・In Love Forever・Affair ロケ地｜บ้านรินทร์ลภัส ซ. ชลมาร์คพิจารณ์ 8 Lat Sawai, Lam Luk Ka District, Pathum Thani 12150 タイ｜Peemの実家 / Khun Linの実家 / Genlongの実家</span></li>
+<li><a href="?spot=whOHYmtWIHs3C0SG6uJE">Royal Cliff Beach Hotel Pattaya</a> <span class="dir-meta">ホテル｜作品: プライベート ロケ地｜353 Phra Tamnak, Pattaya City, Bang Lamung District, Chon Buri 20150 Thailand｜2026年GMM Outing</span></li>
+<li><a href="?spot=ZmqcymPPLiXznunAfBGg">SOSO COFFEE (ECO PARK)</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜May訪問 2025年12月17日</span></li>
+<li><a href="?spot=7AdcwfQD7Kf6z8sorp1V">SYNHUB Digi-Tech Community</a> <span class="dir-meta">スタジオ・テレビ局｜作品: Chasing Love・Somewhere Somehow・Fulfill ロケ地｜หมู่ที่ 1, 96, Khlong Nueng, Khlong Luang District, Pathum Thani 12120 Thailand</span></li>
+<li><a href="?spot=DXCVzVJpnTX9gINDOBLn">Sailom Sangdad Homey Studio</a> <span class="dir-meta">スタジオ・テレビ局｜作品: My Marvellous Dream is You・23.5 ロケ地｜92/10 Ram Inthra Rd, Nuan Chan, Bueng Kum, Bangkok 10230</span></li>
+<li><a href="?spot=SdyAdpuWEv6Ol1dAcGtJ">Sakurai Shrine</a> <span class="dir-meta">寺院・神社｜作品: Somewhere Somehow ロケ地｜〒819-1304 福岡県糸島市志摩桜井４２２７</span></li>
+<li><a href="?spot=zOKp6ky18cbRSM95GeQr">Sam Khok Pool Vila</a> <span class="dir-meta">ホテル｜作品: 4Element; Earth ロケ地｜House No. 22, Moo 2, entrance to Soi Thai Ko 6, Thai Ko, Sam Khok District, Pathum Thani 12160, Thailand</span></li>
+<li><a href="?spot=E3gW1SNfl6QOkuwWrO63">Samchuk Market</a> <span class="dir-meta">ショッピング｜作品: Hometown Romance ロケ地｜ซอย เทศบาลซอย 9 Tambon Sam Chuk, Sam Chuk District, Suphan Buri 72130｜KlaoとSi一家で観光</span></li>
+<li><a href="?spot=cMfzL7sQXcYzc4KlUhqi">Samut Prakan Crocodile Farm and Zoo</a> <span class="dir-meta">大学・図書館・博物館・美術館｜作品: FayMayNeen ロケ地｜555, Thai Ban, Mueang Samut Prakan District, Samut Prakan 10270</span></li>
+<li><a href="?spot=Du6JwJTDgG2WTdx46y3G">Samyan Mitrtown</a> <span class="dir-meta">ショッピング｜作品: プライベート ロケ地｜944 Rama IV Rd, Wang Mai, Pathum Wan, Bangkok 10330 Thai</span></li>
+<li><a href="?spot=tOpyhEI8bpTXjTvw8i80">Sangubashi station</a> <span class="dir-meta">名所｜作品: FreenBeckyHengNam2024年10月来日 ロケ地｜4-6 Yoyogi, Shibuya-ku, Tokyo 151-0053</span></li>
+<li><a href="?spot=hEW6utaiWgwLXZM3S7F3">Sarakurayama Observation Deck</a> <span class="dir-meta">名所｜作品: Love design ロケ地</span></li>
+<li><a href="?spot=N8YZHFRNtxVBQUIl8UJ7">Sea Of Love, Pattaya ซีออฟเลิฟ</a> <span class="dir-meta">ホテル｜作品: In Love Forever ロケ地｜13 13 หมู่.8 Na Chom Thian 56 Alley, Na Chom Thian, Sattahip District, Chon Buri 20250｜過去のデート場所として使用されたレストラン&amp;ホテル</span></li>
+<li><a href="?spot=pQbPqdJynypTkRJOKYZZ">Self. Smoothie</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜564 Sukhumvit Rd, Khlong Tan, Khlong Toei, Bangkok 10110 Thai｜ベッキーがオススメのドリンク</span></li>
+<li><a href="?spot=PRJYrGmXNv6FKMIAVqhQ">Shark fin soup</a> <span class="dir-meta">レストラン｜作品: プライベート ロケ地｜456 Phadung Dao Rd, Samphanthawong, Bangkok 10100｜Kapookさんのお父さんのお店</span></li>
+<li><a href="?spot=bcUJT4z3IIckcH7phGjj">She Sails Cafe &amp; Beach Club</a> <span class="dir-meta">カフェ｜作品: Remine ロケ地｜141 Chakphong, Klaeng District, Rayong 21190 Thai｜Pilot撮影の際に立ち寄っていた場所</span></li>
+<li><a href="?spot=x3sAzfuqTOCfFNobWdgn">Shinobazu Village</a> <span class="dir-meta">名所｜作品: FreenBeckyHengNam2024年10月来日 ロケ地</span></li>
+<li><a href="?spot=051JAuHfGXgjZF0a9NLT">Shouchi Kitashinchi</a> <span class="dir-meta">レストラン｜作品: FreenBeckyFayMay2025年3月来日 ロケ地｜〒530-0003 大阪府大阪市北区堂島１丁目５−３８ フォーシーズン７ビル 2～3F</span></li>
+<li><a href="?spot=A728csT5dKlYz6SdcTd7">Siam Amazing Park</a> <span class="dir-meta">名所｜作品: Blank・プライベート ロケ地｜203 Suan Sayam Rd, Khan Na Yao, Bangkok 10230 Thai｜MV Awkward</span></li>
+<li><a href="?spot=RPlkTeRZbqaxCPguRrIW">Sirimahannop</a> <span class="dir-meta">レストラン｜作品: オススメスポット：レストラン ロケ地｜72 ถ. เจริญกรุง Wat Phraya Krai, Bang Kho Laem, Bangkok 10120 Thai</span></li>
+<li><a href="?spot=gWG0z0UHsa5azHk29gyl">So/Bangkok</a> <span class="dir-meta">ホテル｜作品: My Only Sunshine・Affair ロケ地｜2 N Sathon Rd, Si Lom, Bang Rak, Bangkok 10500 Thai</span></li>
+<li><a href="?spot=LOC022">Soul Salt Paint Bar</a> <span class="dir-meta">名所｜作品: プライベート ロケ地｜Bangkok｜お絵描きデートをしていた場所。</span></li>
+<li><a href="?spot=ODN7DTxMxE3bDwjzwzxq">St. Tropez</a> <span class="dir-meta">スタジオ・テレビ局｜作品: My Only Sunshine・GAP ロケ地｜หมู่ที่2 90 Bang Phlap, Pak Kret District, Nonthaburi 11120 Thai｜最後の結婚式、Jimの結婚式も</span></li>
+<li><a href="?spot=DK53v5rStTKSvbtWuixf">Starbucks Langsuan</a> <span class="dir-meta">カフェ｜作品: オススメスポット：カフェ ロケ地｜30 Soi Langsuan, Lumphini, Pathum Wan, Bangkok 10330 Thai｜洒落たスタバ</span></li>
+<li><a href="?spot=Eiw6cpqwf064asalAfQM">Statue of Samet</a> <span class="dir-meta">名所｜作品: Somewhere Somehow ロケ地｜HFF7+X94, Phe, Mueang Rayong District, Rayong 21160 Thailand</span></li>
+<li><a href="?spot=fsTyfoikyzL7kSbprMHy">Sudaphochana</a> <span class="dir-meta">レストラン｜作品: オススメスポット：レストラン ロケ地｜12-14, 3F Times Square Building, Sukhumvit Rd, Klongtoey, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=Oh1Kta41PeXF7fydh4H7">Suizenji Park&#x27;s Artificial Mount Fuji 水前寺公園</a> <span class="dir-meta">名所｜作品: Somewhere Somehow ロケ地｜〒862-0956 熊本県熊本市中央区水前寺公園８−１</span></li>
+<li><a href="?spot=lWKSstSIqYc4J2ulDc6Y">Sushi &amp; Shabu-shabu Yuzuan Hakata Chiyo Branch 寿司･しゃぶしゃぶ ゆず庵 博多千代店</a> <span class="dir-meta">レストラン｜作品: FayMay2025年6月SWSHロケ ロケ地｜〒812-0044 福岡県福岡市博多区千代５丁目３−５｜2026年6月14日Dinner</span></li>
+<li><a href="?spot=CwKq88zHEywtdZQXBgsa">Symphony of the Sea</a> <span class="dir-meta">ホテル｜作品: Apple My Love・My Marvellous Dream is You・Affair ロケ地｜1, 1 Sukhumvit Soi 20, Saen Suk, Chon Buri District, Chon Buri 20130 タイ｜Hengさんに八つ当たりしたところ</span></li>
+<li><a href="?spot=oB35BF6BrWYKZuU87tkZ">TAIBAN BKK</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜Vlogに登場</span></li>
+<li><a href="?spot=vFyhfUhZWtAVJnVGA9mn">THREE ICONIC</a> <span class="dir-meta">カフェ｜作品: Chasing Love ロケ地｜16 １０, Bueng Kham Phroi, Lam Luk Ka District, Pathum Thani 12150 Thailand</span></li>
+<li><a href="?spot=yG1dYnohbcr5UCNIsGyF">TOFFEE park</a> <span class="dir-meta">カフェ｜作品: FayMay2025年6月SWSHロケ ロケ地｜〒810-0002 福岡県福岡市中央区西中洲６−３６｜休憩の合間に飲んだカフェラテ</span></li>
+<li><a href="?spot=Mby2zlmfet3p08dG10H7">TRIBE Table @TRIBE Bangkok</a> <span class="dir-meta">レストラン｜作品: Hometown Romance ロケ地｜122 Sukhumvit 39, Khlong Tan Nuea, Watthana, Bangkok 10110｜KlaoとSiのデート場所</span></li>
+<li><a href="?spot=5H113c7kBRpvPtGS1sTB">Taladnoi on ground</a> <span class="dir-meta">ショッピング｜作品: EmiBonnie Vlog(2025April) ロケ地｜体温で色が変わる蝶のネックレス</span></li>
+<li><a href="?spot=tUw4TbdpBGmmwlku1NkQ">Taling Pling Restaurant</a> <span class="dir-meta">レストラン｜作品: オススメスポット：レストラン ロケ地｜653 Bld. 7, Bann Silom Arcade, Bang Rak, Bangkok 10500 Thai</span></li>
+<li><a href="?spot=3eqEs0enxwutM04CPDaS">Taling Pling Restaurant@Siam Paragon</a> <span class="dir-meta">レストラン｜作品: オススメスポット：レストラン ロケ地｜G30, 991 Rama I Rd, Pathum Wan, Bangkok 10330 タイ</span></li>
+<li><a href="?spot=cr6EY7O3yVX1DmKLju3x">Taling Pling Sukhumvit 34</a> <span class="dir-meta">レストラン｜作品: オススメスポット：レストラン ロケ地｜25 Soi Sukhumvit 34, Khlong Tan, Khlong Toei, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=ibX1ZcprIgH3fw2CiZ8s">Tawanchai Fresh Milk</a> <span class="dir-meta">カフェ｜作品: オススメスポット：カフェ ロケ地｜15 Si Lom Rd, Si Lom, Bang Rak, Bangkok 10500 タイ</span></li>
+<li><a href="?spot=Lbw8sdZxCtWnkUVCtBI9">Taya Hotel Bangkok</a> <span class="dir-meta">ホテル｜作品: My Only Sunshine ロケ地｜888 Phatthanakan Rd, Suan Luang, Bangkok 10250 Thai</span></li>
+<li><a href="?spot=7JcP186PgRE97JCzfg1x">Tenso Shrine 天祖神社</a> <span class="dir-meta">寺院・神社｜作品: Somewhere Somehow ロケ地｜〒879-5102 大分県由布市湯布院町川上１７５０</span></li>
+<li><a href="?spot=LOC026">Ternajachob Cozy Cafe</a> <span class="dir-meta">カフェ｜作品: The Secret Of Us ロケ地｜24/6 Chaloem Phrakiat Ratchakan Thi 9, Prawet｜ケンカしてバッチバチだった時のカフェ。</span></li>
+<li><a href="?spot=4nBKq93euSjoPf1pXUrs">Terra Thonglor</a> <span class="dir-meta">レストラン｜作品: プライベート ロケ地｜111/4 Ekkamai Rd, Khwaeng Khlong Tan Nuea, Watthana, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=HHbWtEQdhTCE6y82NfcZ">Tha Phae Gate</a> <span class="dir-meta">名所｜作品: オススメスポット：観光地 ロケ地｜Tha Phae Road, Chang Khlan Sub-district, Mueang Chiang Mai District, Chiang Mai 50200</span></li>
+<li><a href="?spot=0CU8mboRZEYEhtPleUTV">Thai Paiboon Lumber Limited Partnership</a> <span class="dir-meta">ショッピング｜作品: Whale Store xoxo ロケ地｜50/1 ซ.บรมบรรพต Ban Bat, Pom Prap Sattru Phai, Bangkok 10100 Thai</span></li>
+<li><a href="?spot=r8fUAUURP57qo5jOUl4O">Thai Wax Museum</a> <span class="dir-meta">大学・図書館・博物館・美術館｜作品: 4Eletment;Air ロケ地｜หมู่ที่ 1 43/2 Borommaratchachonnani Rd, Khun Kaeo, Nakhon Chai Si District, Nakhon Pathom 73120 Thai</span></li>
+<li><a href="?spot=j6Nl6aMNTACN7L1hkLTU">Tham Laplae Monastery</a> <span class="dir-meta">寺院・神社｜作品: 4Eletment;Fire ロケ地｜370 หมู่2 บ้านหนองพลับ หนองพลับ Hua Hin District, Prachuap Khiri Khan</span></li>
+<li><a href="?spot=POvVZjemPq48sEc2blQZ">Thamsuea Party House</a> <span class="dir-meta">カフェ｜作品: Somewhere Somehow・Us ロケ地｜สนามฟุตบอลฟลิกซ์ 735 Pradit Manutham Rd, Saphan Song, Wang Thonglang, Bangkok 10310</span></li>
+<li><a href="?spot=urafKzVdw47tjM739UsG">The Baristro x Ping River</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜62 Patan Road Muang Chiang Mai 50300 Thailand</span></li>
+<li><a href="?spot=CBTtds9io2XqMnJvUW86">The Bazaar Hotel Bangkok</a> <span class="dir-meta">ホテル｜作品: オススメスポット：ホテル ロケ地｜5 Ratchadaphisek Rd, Chom Phon, Chatuchak, Bangkok 10900 Thai</span></li>
+<li><a href="?spot=DrwXF9ipg1Bzud2YJaoZ">The Inside House</a> <span class="dir-meta">ホテル｜作品: プライベート ロケ地｜56 Samlarn Rd Old City Tambon Phra Sing, Mueang Chiang Mai District, Chiang Mai 50200 Thailand</span></li>
+<li><a href="?spot=WCoRX4f9SLbyqzAcRuJq">The Press Sky Bar</a> <span class="dir-meta">レストラン｜作品: Harmony Secret ロケ地｜140 Dinso Rd, Sao Chingcha, Phra Nakhon, Bangkok 10200｜MaevikaとAiwarinが行ったBar</span></li>
+<li><a href="?spot=lIWYjZl2RPoXMVLWDvbY">The Promenade</a> <span class="dir-meta">ショッピング｜作品: Mate ロケ地｜587,589 589/7-9 Ram Inthra Rd, Khan Na Yao, Bangkok 10230｜3階と4階の間</span></li>
+<li><a href="?spot=ySmy93jYoUz69OMnKsUi">The Quarter Ramkhamhaeng by UHG</a> <span class="dir-meta">ホテル｜作品: プライベート ロケ地｜20251217 プールで撮影とデート</span></li>
+<li><a href="?spot=MTsFJSJ1rm4BxgMhb6B3">The Sanctuary of Truth</a> <span class="dir-meta">寺院・神社｜作品: オススメスポット：観光地 ロケ地｜206, ２ Soi Na Kluea 12, Muang Pattaya, Bang Lamung District, Chon Buri 20150 Thai</span></li>
+<li><a href="?spot=WoRRSZYp1w1MpDPyLKMR">The Secret Mookrata Sukhumvit 22</a> <span class="dir-meta">レストラン｜作品: オススメスポット：ムーカタ ロケ地｜Near Silom Massage, Sukhumvit Alley 22, Khwaeng Khlong Tan, Khlong Toei, Bangkok 10110 Thai｜甘いソースもあり、川エビもある</span></li>
+<li><a href="?spot=h4lOMNIRxx1TbulLnkPq">The scenery Vintage Farm</a> <span class="dir-meta">ホテル｜作品: 4Eletment;Fire ロケ地｜234 หมู่ 7 สวนผึ้ง Suan Phueng District, Ratchaburi 70180</span></li>
+<li><a href="?spot=TbAkdy5qF2rjgW0wtgya">Thonburi Wellbeing Co., Ltd.</a> <span class="dir-meta">スタジオ・テレビ局｜作品: 4Element; Water ロケ地｜61/160 Rama IX Rd, Khwaeng Huai Khwang, Huai Khwang, Bangkok 10310 Thai</span></li>
+<li><a href="?spot=NKmuLYvcazORcn9xGOiI">Tints of Blue Residence</a> <span class="dir-meta">ホテル｜作品: オススメスポット：ホテル ロケ地｜47 Sukhumvit Soi 27, Khlong Toei Nuea, Watthana, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=tmKMW52lHqg3uZ9JJurY">Toriyuki Spain-saka</a> <span class="dir-meta">レストラン｜作品: FayMay2024年9月来日 ロケ地｜〒107-0061 東京都港区赤坂１丁目１２−３２ アーク森ビル １Ｆ｜焼き鳥食べてます</span></li>
+<li><a href="?spot=LOC028">Toscana Valley</a> <span class="dir-meta">ホテル｜作品: The Secret Of Us ロケ地｜Pong Ta Long, Pak Chong, Nakhon Ratchasima｜アメリカシーンのロケ地。</span></li>
+<li><a href="?spot=wrDCw2DZptfNZrClbAkZ">Tudsananpon</a> <span class="dir-meta">スタジオ・テレビ局｜作品: Hometown Romance ロケ地｜496 ม.ขุมทรัพย์นคร Phutta Monthon Sai 3 Rd, Sala Thammasop, Thawi Watthana, Bangkok 10170｜Siの家として使用された</span></li>
+<li><a href="?spot=ATlX1UV1qQSx8fQnn1a5">Tuengnua.Tuengtua</a> <span class="dir-meta">レストラン｜作品: プライベート ロケ地</span></li>
+<li><a href="?spot=eK2dccZmWpU2zaByGmQm">University of Thai Chamber of Commerce</a> <span class="dir-meta">大学・図書館・博物館・美術館｜作品: Sunset x Vibes・Love senior ロケ地｜126/1 ซ. วิภาวดิรังสิต2 แยก 6 แขวง รัชดาภิเษก Din Daeng, Bangkok 10400 Thai</span></li>
+<li><a href="?spot=Ay0fRvZYBBrVbA0jgSin">Uokuni</a> <span class="dir-meta">レストラン｜作品: Somewhere Somehow ロケ地｜〒839-0827 福岡県久留米市山本町豊田１６３３−１</span></li>
+<li><a href="?spot=AYIImYfNU78A4ZKLY8vZ">Uranus2324 Bus stop</a> <span class="dir-meta">名所｜作品: URANUS2324 ロケ地｜Thanon Rat Bumrung、Tambon Bang Nai Si, Amphoe Takua Pa, Chang Wat Phang-nga 82110 Thai</span></li>
+<li><a href="?spot=Ha97nTXUrXNk12WPFlu6">Us Shrine</a> <span class="dir-meta">寺院・神社｜作品: Us ロケ地｜670, ศาลเจ้าปุงเถ่ากง 792 Soi Charan Sanitwong 66/1, Bang Phlat, Bangkok 10700</span></li>
+<li><a href="?spot=NyB58T4bdL3smMuNenki">Us Wedding &amp; Event VENUE</a> <span class="dir-meta">スタジオ・テレビ局｜作品: Pluto ロケ地｜結婚式</span></li>
+<li><a href="?spot=L2QFm3anw4P8digEimsw">Vanich House</a> <span class="dir-meta">カフェ｜作品: EmiBonnie Vlog(2025April) ロケ地</span></li>
+<li><a href="?spot=7bIry2kXB4HIzzkOdUtM">Veligandu Maldives Resort Island</a> <span class="dir-meta">ホテル｜作品: プライベート ロケ地｜モルディブデート</span></li>
+<li><a href="?spot=fsJdGvuav2F1fbO2oaay">Vending machine</a> <span class="dir-meta">名所｜作品: FayMay2024年9月来日 ロケ地｜〒141-0022 東京都品川区東五反田２丁目</span></li>
+<li><a href="?spot=LOC006">Verano Beach Vila</a> <span class="dir-meta">ホテル｜作品: GAP ロケ地｜Puek Tian, Cha-am, Phetchaburi｜SamMon新婚旅行（？）シーン。</span></li>
+<li><a href="?spot=ulSIWLwGxMUXsn1hvoI8">WOW PHUKET — Chalong</a> <span class="dir-meta">ホテル｜作品: プライベート ロケ地｜Luang Pho Chaem Rd, Chalong, เมือง Phuket 83130</span></li>
+<li><a href="?spot=LZql4KGhRCbFqngLHbNd">Wakato Bridge</a> <span class="dir-meta">名所｜作品: Love design ロケ地｜〒804-0071 福岡県北九州市２丁目２ 一般国道199号</span></li>
+<li><a href="?spot=UrajCwhLgYtgFSUNP3Vv">Wang Rakhrai Park</a> <span class="dir-meta">名所｜作品: 4Eletment;Fire ロケ地｜222 Hwy 3049, ตำบล บ้านใหญ่ Mueang Nakhon Nayok District, Nakhon Nayok 26000</span></li>
+<li><a href="?spot=V8UeePHjq8FNRoBKaRkv">Wanis Clayhouse</a> <span class="dir-meta">カフェ｜作品: FayMayNeen ロケ地｜37 4 Soi Chatuchot 11, Ao Ngoen, Sai Mai, Bangkok 10220</span></li>
+<li><a href="?spot=kFbxDSc77xFZqaaQPkdb">Wat Arun</a> <span class="dir-meta">寺院・神社｜作品: The Loyal Pin・4Eletment;Air ロケ地｜158 Thanon Wang Doem, Wat Arun, Bangkok Yai, Bangkok 10600 Thai｜OST; Cheevee</span></li>
+<li><a href="?spot=c2jFVxVx9z8cxtDOFwu1">Wat Nong Ruea</a> <span class="dir-meta">寺院・神社｜作品: プライベート ロケ地｜FMQQ+V6M, Tha Takiap, Tha Takiap District, Chachoengsao 24160 Thai｜2025年の4月ソンクラーン休暇を過ごした</span></li>
+<li><a href="?spot=oQhnWWU78JgkJ4yBTBO8">Wat Pa Lelai, Nonthaburi</a> <span class="dir-meta">寺院・神社｜作品: Hometown Romance ロケ地｜WFJP+2QM ถนน ทางหลวงชนบท นนทบุรี 2051 Bang Tanai, Pak Kret District, Nonthaburi 11120｜EP5でKlaoとSiが参拝していた寺院</span></li>
+<li><a href="?spot=LOC019">Wat Parknam</a> <span class="dir-meta">寺院・神社｜作品: プライベート・オススメスポット：観光地 ロケ地｜300 Ratchamongkhon Prasat Alley, Bangkok｜美しい天井画のある寺院。拝観無料。</span></li>
+<li><a href="?spot=84uu65ffxK1TSZi2BijG">Wat Phra That Doi Suthep Ratchaworawihan</a> <span class="dir-meta">寺院・神社｜作品: オススメスポット：観光地 ロケ地｜Suthep, Mueang Chiang Mai District, Chiang Mai 50200｜チェンマイといえば</span></li>
+<li><a href="?spot=JrWXQl8gUW376mdellPU">Wat Poo</a> <span class="dir-meta">寺院・神社｜作品: オススメスポット：観光地 ロケ地｜2 Sanam Chai Rd, Phra Borom Maha Ratchawang, Phra Nakhon, Bangkok 10200 Thai</span></li>
+<li><a href="?spot=wFagSPVSr801xgNjpaVc">Wat Prakeaw</a> <span class="dir-meta">寺院・神社｜作品: オススメスポット：観光地 ロケ地｜Na Phra Lan Rd, Phra Borom Maha Ratchawang, Phra Nakhon, Bangkok 10200 Thai</span></li>
+<li><a href="?spot=8NNfYtfdW2G06kBNVxWP">Wat Sri Suphan (Silver Ubosot)</a> <span class="dir-meta">寺院・神社｜作品: オススメスポット：観光地 ロケ地｜銀のお寺、中は女人禁制、外からはOK</span></li>
+<li><a href="?spot=Ji7OhPJFbkMrKx860paU">Wat Suthat Thepwararam Ratchaworamahawihan</a> <span class="dir-meta">寺院・神社｜作品: The Loyal Pin ロケ地｜146 Bamrung Mueang Rd, Wat Ratchabophit, Phra Nakhon, Bangkok 10200｜赤いブランコ</span></li>
+<li><a href="?spot=cpUuEhzTV6PxtFfOpi8D">Wat That Thong Chon buri</a> <span class="dir-meta">寺院・神社｜作品: 4Eletment;Fire ロケ地｜hat Thong, Bo Thong District, Chon Buri 20270</span></li>
+<li><a href="?spot=hJEE4cd7AruVOC85vUOu">Wat Weluwanaram (Bai Khiao)</a> <span class="dir-meta">寺院・神社｜作品: オススメスポット：観光地 ロケ地｜449 Thanon Wat Weru Wanaram, Don Mueang, Bangkok 10210 Thai</span></li>
+<li><a href="?spot=LOC007">Wawa House</a> <span class="dir-meta">スタジオ・テレビ局｜作品: Blank・GAP・The Loyal Pin・Chasing Love ロケ地｜63/21 Moo 15, Bang Yai, Nonthaburi｜Nuengさんの実家 / 各ドラマに登場する宮殿。 / 宮殿</span></li>
+<li><a href="?spot=LOC014">Wheel Sky（Asiatique）</a> <span class="dir-meta">名所｜作品: プライベート ロケ地｜2194 Charoen Krung Rd, Bang Kho Laem, Bangkok｜伝説のデート場所。</span></li>
+<li><a href="?spot=Ma544Xj1irzhhrXNCOue">Wood Brook</a> <span class="dir-meta">カフェ｜作品: EmiBonnie Vlog(2025April) ロケ地</span></li>
+<li><a href="?spot=kwoM7R1GZvs4S6ZZqjAS">Yakiniku King</a> <span class="dir-meta">レストラン｜作品: FayMay2024年9月来日 ロケ地｜〒153-0051 東京都目黒区上目黒３丁目８−５ 中目黒サンライズビル ３Ｆ</span></li>
+<li><a href="?spot=ahCEhJ3lhn95GVvMKIN1">Yamaga Onsen Seiryuso</a> <span class="dir-meta">ホテル｜作品: Somewhere Somehow ロケ地｜〒861-0501 熊本県山鹿市山鹿１７６８</span></li>
+<li><a href="?spot=RunJlUUYFbhRlNwQPx5a">Yanisa MuayThai</a> <span class="dir-meta">スポーツ｜作品: プライベート ロケ地｜Bangkok, Bang Khun Thian, Krung Thep Maha Nakhon, ชั้น 3</span></li>
+<li><a href="?spot=3BxR4TJoEBf7fa6oq5EL">Yellow lane cafe</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜2, 92 Soi Phahon Yothin 5, Phaya Thai, Bangkok 10400</span></li>
+<li><a href="?spot=xJVAh2uDmt4PdrHHmEyA">Yoppa yogurt</a> <span class="dir-meta">名所｜作品: プライベート ロケ地｜オーナーを務めるヨーグルトドリンク店</span></li>
+<li><a href="?spot=zB3PMoWrxx2PtVrZ7GB0">Yufuin Floral Village 湯布院フローラルヴィレッジ</a> <span class="dir-meta">ホテル｜作品: Somewhere Somehow・プライベート ロケ地｜〒879-5102 大分県由布市湯布院町川上１５０３−３</span></li>
+<li><a href="?spot=qDD5yBU5FVJ0aI9WH8Ob">Yufuin Shoyuya Honten 湯布院醤油屋本店</a> <span class="dir-meta">ショッピング｜作品: Somewhere Somehow ロケ地｜〒879-5102 大分県由布市湯布院町川上１０９８−１｜EP9</span></li>
+<li><a href="?spot=QAX0BO4gevvtYaGkyBvg">Yufuin Station 由布院駅</a> <span class="dir-meta">名所｜作品: Somewhere Somehow ロケ地｜〒879-5114 大分県由布市湯布院町川北８−２</span></li>
+<li><a href="?spot=ZV1sJIlkOkov3QTDER3I">Zen Onsen</a> <span class="dir-meta">スパ・サロン｜作品: プライベート ロケ地｜デートしてました(2026年2月ごろ)</span></li>
+<li><a href="?spot=KnxDWLtU1RIq7XhQAtKG">allflowers Café, Restaurant &amp; Bar</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜31-33 ซ. นานา Pom Prap, Pom Prap Sattru Phai, Bangkok 10100 Thai</span></li>
+<li><a href="?spot=qjig7J6uc8VXVUXTo7XS">chago Siam</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜Ormのお店</span></li>
+<li><a href="?spot=GvVbzLq6SAIn0pyXzhWQ">gris.BKK</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜2, 53 Nak Niwat Rd, Khwaeng Lat Phrao, Khet Lat Phrao, Bangkok 10230 Thai</span></li>
+<li><a href="?spot=hQr24xW9NhRFRpiVdZoK">iki haus</a> <span class="dir-meta">カフェ｜作品: In Love Forever ロケ地｜329 Sukhumvit 71 Rd, Phra Khanong Nuea, Watthana, Bangkok 10110｜RunchとNeenが初めて出会ったカフェ</span></li>
+<li><a href="?spot=JZVaxNER8iinoKuuFiFf">liabduan danneramit night market</a> <span class="dir-meta">ショッピング｜作品: FayMayNeen ロケ地</span></li>
+<li><a href="?spot=k4GudWJ8K62nQ9XU1WLF">うらしま館</a> <span class="dir-meta">ホテル｜作品: オススメスポット：ホテル ロケ地｜78 Sukhumvit 95/1 Alley, Bang Chak, Phra Khanong, Bangkok 10260 Thai｜日本人向けホステル</span></li>
+<li><a href="?spot=bMKtCXzpmTKF6X6niQl0">ことびあクリニック@Bio House | Cotovia Clinic</a> <span class="dir-meta">病院｜作品: オススメ：病院 ロケ地｜6th floor, Bio House, 606 Sukhumvit 39, Khlong Tan Nuea, Watthana, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=JbqLF4oRB4vywirFGUGC">のどぐろの中俣 築地</a> <span class="dir-meta">レストラン｜作品: FreenBeckyHengNam2024年10月来日 ロケ地｜Beckyはイカが好きみたい</span></li>
+<li><a href="?spot=emhd35kNRXOvxXahwKum">はんなりカフェ ド 京都 - HANNARI CAFÉ DE KYOTO</a> <span class="dir-meta">カフェ｜作品: プライベート ロケ地｜111/5 Thonglor 10, Ekamai, 5 Soi Sukhumvit 63, Khlong Tan Nuea, Watthana, Bangkok 10110 Thai</span></li>
+<li><a href="?spot=Xy3vcFg4XOkFoeWJ8vRz">クローバー歯科医院</a> <span class="dir-meta">病院｜作品: オススメ：病院 ロケ地｜188, 22 Soi Chulalongkorn 5, Wang Mai, Pathum Wan, Bangkok 10330 Thai</span></li>
+<li><a href="?spot=RTz6v1BXdKwo85PXa2qy">ビーフガーデン</a> <span class="dir-meta">レストラン｜作品: FreenBeckyFayMay2025年3月来日 ロケ地｜焼肉</span></li>
+<li><a href="?spot=W2xLhF8y6IKh8nl1pb50">リーガロイヤルホテル東京</a> <span class="dir-meta">ホテル｜作品: FreenBeckyFayMay2025年3月来日 ロケ地｜宿泊</span></li>
+<li><a href="?spot=8UjsCtDQfJKQftUqArEv">宿屋昭 Sho villa</a> <span class="dir-meta">ホテル｜作品: Somewhere Somehow ロケ地｜〒839-0827 福岡県久留米市山本町豊田1656番地3</span></li>
+<li><a href="?spot=eCR048XrnixDKOwWQnpp">林治 Japanese Dining Experience</a> <span class="dir-meta">レストラン｜作品: Somewhere Somehow ロケ地｜82 2 Khu Bon Rd, Bang Chan, Khlong Sam Wa, Bangkok 10510 Thailand</span></li>
+<li><a href="?spot=nYQe4lLbcTY7BrF9FJEF">泰華聖娘廟</a> <span class="dir-meta">寺院・神社｜作品: EmiBonnie Vlog(2025April) ロケ地</span></li>
+<li><a href="?spot=3PcO30s4g5x4xM8Lp3Bp">蛍観橋　Hotarukan Bridge</a> <span class="dir-meta">名所｜作品: Somewhere Somehow ロケ地｜〒879-5102 大分県由布市湯布院町川上１５３０−３</span></li>
+</ul>
+</section>
+<!--SPOT_DIRECTORY_END-->
 </body>
 </html>
