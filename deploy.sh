@@ -93,21 +93,11 @@ if [ -f "data.json" ] && [ -f "scripts/clean_data.py" ] && command -v python3 &>
   python3 scripts/clean_data.py data.json
 fi
 
-# ── ②c sitemap.xml を data.json から自動生成（SEO：全スポットの直リンクを検索エンジンに知らせる）──
-if [ -f "data.json" ] && command -v python3 &> /dev/null; then
-  python3 - <<'PYEOF'
-import json, datetime
-BASE = "https://thai-series-map.web.app/"
-d = json.load(open('data.json'))
-today = datetime.date.today().isoformat()
-urls = [f'  <url><loc>{BASE}</loc><lastmod>{today}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>']
-for l in d.get('locations', []):
-    if l.get('id'):
-        urls.append(f'  <url><loc>{BASE}?spot={l["id"]}</loc><lastmod>{today}</lastmod><changefreq>monthly</changefreq></url>')
-xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + '\n'.join(urls) + '\n</urlset>\n'
-open('sitemap.xml', 'w').write(xml)
-print(f"🔎 sitemap.xml を生成しました（{len(urls)} URL）")
-PYEOF
+# ── ②c スポット別の静的ページ（プリレンダ）と sitemap.xml を生成 ──
+#   各スポットを /spot/<id>/ の静的HTML化し、検索結果に固有の title/説明を出す（SEO・CTR改善）。
+#   sitemap.xml も同スクリプトが /spot/<id>/ 形式で生成する（詳細は scripts/prerender.py）。
+if [ -f "data.json" ] && [ -f "scripts/prerender.py" ] && command -v python3 &> /dev/null; then
+  python3 scripts/prerender.py data.json
 fi
 
 # ── ②d 静的スポット一覧を index.html に差し込み（SEO：JS実行なしでも全スポットの名称・作品・住所をクロールさせる）──
@@ -156,7 +146,7 @@ for l in sorted(d.get('locations', []), key=lambda x: (x.get('name') or '')):
         meta.append(esc(' / '.join(scenes[:3])))
     meta_html = '｜'.join(meta)
     items.append(
-        f'<li><a href="?spot={esc(lid)}">{name}</a>'
+        f'<li><a href="spot/{esc(lid)}/">{name}</a>'
         + (f' <span class="dir-meta">{meta_html}</span>' if meta_html else '')
         + '</li>'
     )
