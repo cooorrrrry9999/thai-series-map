@@ -2390,9 +2390,13 @@ function setupCombo(id,getOptions,{allowFree=false,emptyKey=null,onSelect=null,g
 // その作品に出演しているタレント
 function getSeriesTalents(series){return[...new Set(APPS.filter(a=>a.series===series).map(a=>a.cp).filter(Boolean))];}
 // 作品の候補：プライベートを先頭に全作品
+// 出演データに登場する作品 ＋ series_master（SERIES_MAP＝まだスポットが無いがDBには登録済みの作品）を統合。
+// これで既存作品が必ず候補に出るようになり、手入力による表記揺れを防ぐ。
 function seriesComboOptions(){
-  const all=getUniqueSeries();
-  return ['プライベート',...all.filter(s=>s!=='プライベート')].map(s=>({value:s}));
+  const set=new Set(getUniqueSeries());
+  Object.keys(SERIES_MAP).forEach(s=>set.add(s));
+  const all=[...set].filter(s=>s!=='プライベート').sort();
+  return ['プライベート',...all].map(s=>({value:s}));
 }
 // タレントの候補：選択中の作品の出演タレントを「出演」バッジ付きで先頭に
 function cpComboOptions(seriesInputId){
