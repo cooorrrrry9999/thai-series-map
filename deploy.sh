@@ -161,18 +161,20 @@ block = (
 )
 
 src = open('index.html', encoding='utf-8').read()
-new = re.sub(
+new, n = re.subn(
     r'<!--SPOT_DIRECTORY_START-->.*?<!--SPOT_DIRECTORY_END-->',
     lambda m: block,
     src,
     count=1,
     flags=re.S,
 )
-if new != src:
+if n == 0:
+    print("⚠️  SPOT_DIRECTORY マーカーが見つからず一覧を差し込めませんでした")
+elif new != src:
     open('index.html', 'w', encoding='utf-8').write(new)
     print(f"📇 静的スポット一覧を index.html に差し込みました（{len(items)} 件）")
 else:
-    print("⚠️  SPOT_DIRECTORY マーカーが見つからず一覧を差し込めませんでした")
+    print(f"✓ スポット一覧に変更なし（{len(items)} 件）")
 PYEOF
 fi
 
