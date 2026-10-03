@@ -44,8 +44,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://unpkg.com">
-<link rel="preconnect" href="https://a.basemaps.cartocdn.com">
-<link rel="preconnect" href="https://b.basemaps.cartocdn.com">
+<link rel="preconnect" href="https://a.tile.openstreetmap.org">
+<link rel="preconnect" href="https://b.tile.openstreetmap.org">
 <link rel="preconnect" href="https://www.gstatic.com">
 <link rel="dns-prefetch" href="https://firestore.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
@@ -1658,17 +1658,15 @@ async function loadAll(){
 
 // ── Leaflet ───────────────────────────────────────────────────
 const TILES = {
-  carto:      {url:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',attr:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',labelKey:'tile_std'},
-  cartoLight: {url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',attr:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',labelKey:'tile_light'},
   osm:        {url:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',attr:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',labelKey:null},
 };
-let currentTileKey='carto', tileLayer=null;
+let currentTileKey='osm', tileLayer=null;
 
 function initMap(){
   if(map){map.remove();map=null;markers={};}
   map=L.map('map',{center:[13.7,100.5],zoom:6,zoomControl:false,attributionControl:true});
   window._map=map; // デバッグ用（コンソールから地図状態を確認できる）
-  tileLayer=L.tileLayer(TILES.carto.url,{attribution:TILES.carto.attr,maxZoom:19,subdomains:'abcd'}).addTo(map);
+  tileLayer=L.tileLayer(TILES.osm.url,{attribution:TILES.osm.attr,maxZoom:19,subdomains:'abc'}).addTo(map);
   L.control.zoom({position:'bottomright'}).addTo(map);
   map.on('click',()=>{closeDetailDirect();toggleUserMenuClose();});
   renderMarkers();
@@ -1693,7 +1691,7 @@ window._switchTile=function(key){
   if(!TILES[key]||!map)return;
   currentTileKey=key;
   if(tileLayer)map.removeLayer(tileLayer);
-  tileLayer=L.tileLayer(TILES[key].url,{attribution:TILES[key].attr,maxZoom:19,subdomains:'abcd'}).addTo(map);
+  tileLayer=L.tileLayer(TILES[key].url,{attribution:TILES[key].attr,maxZoom:19,subdomains:'abc'}).addTo(map);
   renderTileBtn();
 };
 
