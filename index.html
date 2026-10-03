@@ -1667,11 +1667,68 @@ function initMap(){
   map=L.map('map',{center:[13.7,100.5],zoom:6,zoomControl:false,attributionControl:true});
   window._map=map; // デバッグ用（コンソールから地図状態を確認できる）
   tileLayer=L.tileLayer(TILES.osm.url,{attribution:TILES.osm.attr,maxZoom:19,subdomains:'abc'}).addTo(map);
+  // 路線専用のpaneをtile(200)とmarker(600)の間に作っておく。
+  // これでGeoJSONのfetch完了タイミングに関係なく、ロケ地ピンの下・地図タイルの上という重なり順が保たれる。
+  map.createPane('railPane');
+  map.getPane('railPane').style.zIndex = 420;
   L.control.zoom({position:'bottomright'}).addTo(map);
   map.on('click',()=>{closeDetailDirect();toggleUserMenuClose();});
+  map.on('zoomend', renderRailLines);
   renderMarkers();
   renderTileBtn();
+  renderRailLines();
+  renderRailToggleBtn();
 }
+
+// ── 鉄道路線オーバーレイ（BTS/MRT/ARL、OpenStreetMapの路線データを事前抽出） ──
+// ロケ地が最寄り駅のどの路線沿いか一目でわかるよう、公式の路線カラーで描画する。
+let RAIL_LINES = null, railLayer = null, railVisible = true;
+
+async function loadRailLines(){
+  if (RAIL_LINES) return RAIL_LINES;
+  try{
+    const res = await fetch('./bts_mrt_lines.json', {cache:'force-cache'});
+    const d = await res.json();
+    RAIL_LINES = d.lines;
+  }catch(e){ console.warn('路線データの読み込みに失敗:', e); RAIL_LINES = []; }
+  return RAIL_LINES;
+}
+
+async function renderRailLines(){
+  const lines = await loadRailLines();
+  if (!map || !lines.length) return;
+  if (railLayer) { map.removeLayer(railLayer); railLayer = null; }
+  railLayer = L.layerGroup();
+  const showStations = map.getZoom() >= 12;
+  for (const line of lines){
+    for (const seg of line.segments){
+      L.polyline(seg, {pane:'railPane', color: line.colour, weight: 4, opacity: 0.85, lineCap:'round', lineJoin:'round'}).addTo(railLayer);
+    }
+    if (showStations){
+      for (const st of line.stations){
+        L.circleMarker([st.lat, st.lon], {
+          pane:'railPane', radius: 4, color: line.colour, weight: 2, fillColor:'#fff', fillOpacity: 1
+        }).bindTooltip(`${st.ref?('['+st.ref+'] '):''}${st.name_en||st.name_th}`, {direction:'top', offset:[0,-4]}).addTo(railLayer);
+      }
+    }
+  }
+  if (railVisible) railLayer.addTo(map);
+}
+
+function renderRailToggleBtn(){
+  document.getElementById('rail-btn-wrap')?.remove();
+  const wrap=document.createElement('div');
+  wrap.id='rail-btn-wrap';
+  wrap.style.cssText='position:fixed;bottom:calc(var(--drawer-h) + 100px);right:14px;z-index:45;';
+  wrap.innerHTML=`<button onclick="window._toggleRail()" title="BTS/MRT路線の表示切り替え" style="padding:6px 12px;border-radius:20px;border:none;cursor:pointer;font-size:11px;font-weight:700;font-family:'Noto Sans JP',sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.15);backdrop-filter:blur(8px);background:${railVisible?'rgba(60,60,60,.85)':'rgba(255,255,255,.95)'};color:${railVisible?'#fff':'#555'};">🚇 路線図</button>`;
+  document.body.appendChild(wrap);
+}
+window._toggleRail=function(){
+  railVisible = !railVisible;
+  if (!map || !railLayer) { renderRailToggleBtn(); return; }
+  if (railVisible) railLayer.addTo(map); else map.removeLayer(railLayer);
+  renderRailToggleBtn();
+};
 
 function renderTileBtn(){
   // 3ボタン並べると地図が窮屈なので、1ボタンでタップごとに切り替えるサイクル式にする
