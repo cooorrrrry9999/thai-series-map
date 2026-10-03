@@ -6,7 +6,16 @@ promo/
 
 # バックアップ・作業用ファイル（公開リポジトリに載せない）
 tsmap_backup_*.json
+cleanup_backup_*.json
 firestore_appearances.json
 firestore_import.html
 Map deploy.rtf
 .claude/
+
+# Firebase CLIのローカルキャッシュ（ビルド成果物、Git管理不要）
+.firebase/
+
+# アプリと無関係な個人資料・開発メモ（公開リポジトリに載せない）
+SEO result/
+HightAge Gap Matrix/
+ROADMAP*.md

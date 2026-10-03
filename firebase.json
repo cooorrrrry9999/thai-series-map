@@ -13,9 +13,12 @@
       "**/*.rtf",
       "**/*.md",
       "tsmap_backup_*.json",
+      "cleanup_backup_*.json",
       "firestore.rules",
       "firestore_appearances.json",
-      "firestore_import.html"
+      "firestore_import.html",
+      "SEO result/**",
+      "HightAge Gap Matrix/**"
     ],
     "headers": [
       {
