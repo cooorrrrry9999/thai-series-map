@@ -1545,10 +1545,13 @@ onAuthStateChanged(auth,user=>{
   handleDeepLink();
 })();
 
-// ?spot=<id> 付きURLで開いたら、そのスポットの詳細を直接表示（SNS共有用）
+// #spot=<id> 付きURLで開いたら、そのスポットの詳細を直接表示（SNS共有用）
+// ハッシュはサーバーに送られずGoogleに別URLとしてインデックスされないため、
+// 新しい共有リンクはハッシュ側を使う。旧 ?spot= リンクも後方互換で読める。
 function handleDeepLink(){
   try{
-    const sid=new URLSearchParams(location.search).get('spot');
+    const sid=new URLSearchParams(location.hash.slice(1)).get('spot')
+      ||new URLSearchParams(location.search).get('spot');
     if(sid&&LOCS.some(l=>l.id===sid))window._sel(sid);
   }catch(e){}
 }
@@ -2032,7 +2035,9 @@ for(const k in _seoEls){
 }
 function setSpotTitle(loc,apps){
   const series=[...new Set(apps.map(a=>a.series).filter(Boolean))];
-  const s=series[0];
+  // プライベート等のタグはドラマ名ではないのでtitle/descには出さない（prerender.pyと同じ判定）
+  const realSeries=series.filter(s=>!COMMON_TAGS.has(s));
+  const s=realSeries[0]||'';
   const title=`${loc.name}${s?` — ${s} ロケ地 / Filming Location`:''} | Thai Series Map`;
   document.title=title;
   // canonical は静的プリレンダページ（/spot/<id>/）に集約する。
@@ -2041,8 +2046,10 @@ function setSpotTitle(loc,apps){
   if(_seoEls.canon)_seoEls.canon.setAttribute('href',url);
   if(_seoEls.ogUrl)_seoEls.ogUrl.setAttribute('content',url);
   if(_seoEls.ogTitle)_seoEls.ogTitle.setAttribute('content',title);
-  const seriesTxt=series.join('・');
-  const desc=`${loc.name}${loc.address?`（${loc.address}）`:''}はタイドラマ・タイGL${seriesTxt?`「${seriesTxt}」`:''}のロケ地・聖地です。Googleマップでそのままナビ。Filming location of Thai GL series${seriesTxt?` ${seriesTxt}`:''}.`;
+  const seriesTxt=realSeries.join('・');
+  const desc=seriesTxt
+    ?`${loc.name}${loc.address?`（${loc.address}）`:''}はタイドラマ・タイGL「${seriesTxt}」のロケ地・聖地です。Googleマップでそのままナビ。Filming location of Thai GL series ${seriesTxt}.`
+    :`${loc.name}${loc.address?`（${loc.address}）`:''}はタイドラマ・タイGLファンに人気の聖地巡礼スポットです。Googleマップでそのままナビ。A spot popular among Thai GL drama fans.`;
   if(_seoEls.desc)_seoEls.desc.setAttribute('content',desc);
   if(_seoEls.ogDesc)_seoEls.ogDesc.setAttribute('content',desc);
 }
@@ -2143,11 +2150,11 @@ function updateMarkBtns(){
   const hint=document.getElementById('mark-login-hint');
   if(hint)hint.style.display=currentUser?'none':'block';
 }
-// スポットの共有リンク（?spot=<id>）
+// スポットの共有リンク（#spot=<id>、クエリ文字列だとGoogleに別URLとしてインデックスされるためハッシュを使う）
 window.shareSpot=async function(){
   if(!selId)return;
   const loc=LOCS.find(l=>l.id===selId);
-  const url=location.origin+location.pathname+'?spot='+enc(selId);
+  const url=location.origin+location.pathname+'#spot='+enc(selId);
   if(navigator.share){
     try{await navigator.share({title:loc?loc.name:'Thai Series Map',url});}catch(e){}
   }else{

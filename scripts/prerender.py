@@ -116,25 +116,36 @@ def render_spot(loc, apps, locs_by_series, name_by_id):
 
     series = series_of(apps)
     real_series = [s for s in series if is_real_series(s)]
-    headline_series = real_series[0] if real_series else (series[0] if series else "")
-    series_txt = "・".join(series)
+    # headline（title用）・description用の文言は real_series のみを使う。
+    # プライベート等のタグしかない場合、それをドラマ名のように出すと
+    # 「GMM Grammy Place Building — プライベート ロケ地」のような意味不明な表記になるため。
+    headline_series = real_series[0] if real_series else ""
+    series_txt = "・".join(real_series)
 
     canonical = f"{BASE}spot/{lid}/"
-    map_url = f"{BASE}?spot={lid}"
+    # クエリ文字列(?spot=)はGoogleに別URLとしてインデックスされ canonical と競合するため、
+    # クロール対象にならないURLフラグメント(#spot=)でSPAへ誘導する。
+    map_url = f"{BASE}#spot={lid}"
 
     # ── title / description（アプリ側 setSpotTitle と同じ体裁 + タイ語一文）──
     title = name + (f" — {headline_series} ロケ地 / Filming Location" if headline_series else "") + " | Thai Series Map"
-    desc = (
-        name
-        + (f"（{address}）" if address else "")
-        + "はタイドラマ・タイGL"
-        + (f"「{series_txt}」" if series_txt else "")
-        + "のロケ地・聖地です。Googleマップでそのままナビ。"
-        + "Filming location of Thai GL series"
-        + (f" {series_txt}" if series_txt else "")
-        + "."
-        + (f" สถานที่ถ่ายทำซีรีส์วาย {series_txt}." if series_txt else " สถานที่ถ่ายทำซีรีส์วาย.")
-    )
+    if series_txt:
+        desc = (
+            name
+            + (f"（{address}）" if address else "")
+            + f"はタイドラマ・タイGL「{series_txt}」のロケ地・聖地です。Googleマップでそのままナビ。"
+            + f"Filming location of Thai GL series {series_txt}."
+            + f" สถานที่ถ่ายทำซีรีส์วาย {series_txt}."
+        )
+    else:
+        # ドラマのロケ地ではない（事務所・カフェ・グッズ売り場などファンが訪れるスポット）
+        desc = (
+            name
+            + (f"（{address}）" if address else "")
+            + "はタイドラマ・タイGLファンに人気の聖地巡礼スポットです。Googleマップでそのままナビ。"
+            + "A spot popular among Thai GL drama fans."
+            + " สถานที่ที่แฟนซีรีส์วายไทยนิยมไปเยือน."
+        )
 
     # ── Googleマップ導線 ──
     if gmap:
